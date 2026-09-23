@@ -93,6 +93,8 @@ struct Settings {
 
   // The bake.
   float exposure = 0.18f;
+  float denoise = 0.35f;
+  int supersample = 2;
   float stepFrac = 0.15f;
   int maxSteps = 600;
   int lightRes = 96;

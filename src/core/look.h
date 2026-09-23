@@ -35,6 +35,8 @@ struct Look {
   int lightRes, lightSteps;
   float exposure;
 
+  float denoise;    // the bilateral filter's tolerance; 0 turns it off
+  int supersample;  // rays per texel along each side, 1 or 2
 };
 
 }  // namespace starcanopy

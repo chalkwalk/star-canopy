@@ -5,6 +5,7 @@ set(STARCANOPY_SHADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/shaders/galaxy.glsl
   ${CMAKE_CURRENT_SOURCE_DIR}/shaders/light.shader
   ${CMAKE_CURRENT_SOURCE_DIR}/shaders/bake.shader
+  ${CMAKE_CURRENT_SOURCE_DIR}/shaders/denoise.shader
   ${CMAKE_CURRENT_SOURCE_DIR}/shaders/galaxy.shader
   ${CMAKE_CURRENT_SOURCE_DIR}/shaders/galaxy_probe.shader
   ${CMAKE_CURRENT_SOURCE_DIR}/shaders/stars.shader

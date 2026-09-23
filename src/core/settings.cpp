@@ -124,6 +124,9 @@ const Dial kDials[] = {
   INT("galaxy-res", "texels per face of the galaxy's glow", galaxyRes, 64.0f, 2048.0f),
 
   REAL("exposure", "scales the nebula before the tonemapper", exposure, 0.0001f, 100.0f),
+  REAL("denoise", "tolerance of the filter that takes out the march's grain; 0 is off", denoise,
+       0.0f, 4.0f),
+  INT("supersample", "rays per texel along each side, box averaged down", supersample, 1.0f, 2.0f),
   REAL("step-frac", "march step as a fraction of the shell's thickness", stepFrac, 0.02f, 1.0f),
   INT("max-steps", "march steps allowed per bubble", maxSteps, 50.0f, 4000.0f),
   INT("light-res", "voxels per side of each bubble's light volume", lightRes, 16.0f, 256.0f),
@@ -280,6 +283,8 @@ Sky buildSky(const Settings& s) {
   l.lightRes = s.lightRes;
   l.lightSteps = s.lightSteps;
   l.exposure = s.exposure;
+  l.denoise = s.denoise;
+  l.supersample = s.supersample;
 
   GalaxyParams& g = sky.galaxy;
   g.style = s.galaxyStyle;

@@ -114,6 +114,7 @@ Baker::Baker() {
   built = built && stars_.build({"stars.shader"}, {"f_FragColor"}, error);
   built = built && galaxy_.build({"field.glsl", "galaxy.glsl", "galaxy.shader"}, {"f_FragColor"},
                                  error);
+  built = built && denoise_.build({"denoise.shader"}, {"f_FragColor"}, error);
   if (!built) {
     buildError_ = error;
   }
@@ -148,6 +149,7 @@ Baker::~Baker() {
   glDeleteTextures(2, tau_);
   glDeleteBuffers(1, &starBuffer_);
   glDeleteVertexArrays(1, &starVertexArray_);
+  glDeleteTextures(1, &marched_);
   glDeleteVertexArrays(1, &emptyVertexArray_);
   glDeleteFramebuffers(1, &framebuffer_);
 }
@@ -367,11 +369,12 @@ void Baker::begin(CubemapTarget& target, const Scene& s, const std::vector<Star>
   target_ = &target;
   scene_ = s;
   look_ = look;
-  int supersample = 1;
+  int supersample = look.supersample > 1 ? look.supersample : 1;
   int size = target.size() * supersample;
   if (size != marchSize_) {
     allocTexture2D(tau_[0], size);
     allocTexture2D(tau_[1], size);
+    allocTexture2D(marched_, size);
     glBindTexture(GL_TEXTURE_2D, 0);
     marchSize_ = size;
   }
@@ -437,15 +440,42 @@ void Baker::uploadBake() {
 }
 
 void Baker::attachMarch() {
-  const Tile& tile = tiles_[next_];
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-                         GL_TEXTURE_CUBE_MAP_POSITIVE_X + tile.face, target_->texture(), 0);
+  // The march goes to a scratch texture, not the face: it is denoised into the
+  // face once the whole face is done. See denoiseFace().
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, marched_, 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, tau_[0], 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, tau_[1], 0);
   static const GLenum buffers[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,
                                     GL_COLOR_ATTACHMENT2};
   glDrawBuffers(3, buffers);
   glViewport(0, 0, marchSize_, marchSize_);
+}
+
+// The marched face, box averaged down by the supersampling and then through the
+// bilateral filter, into the cubemap's face. Leaves the face attached as the
+// only colour target, which is what the star pass wants next.
+//
+// The supersampling marches at the higher resolution and averages here, not
+// several rays in each fragment, though the rays are the same. Measured at
+// 2048 a face, two by two: 15 s this way, 25 s the other -- the whole march
+// inside a loop holds far more in registers, fewer fragments fit on the GPU at
+// once, and it hides its memory latency worse. Many short fragments beat a few
+// long ones.
+void Baker::denoiseFace(int face) {
+  const Program& p = denoise_;
+  const Look& look = look_;
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
+                         target_->texture(), 0);
+  glDrawBuffer(GL_COLOR_ATTACHMENT0);
+  glViewport(0, 0, target_->size(), target_->size());
+  glUseProgram(p.id());
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, marched_);
+  glUniform1i(p.uniform("u_Marched"), 0);
+  glUniform1f(p.uniform("u_Strength"), look.denoise);
+  glUniform1i(p.uniform("u_Supersample"), marchSize_ / target_->size());
+  glBindVertexArray(emptyVertexArray_);
+  glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 // Every star into face f, over the march's result for that face, reading back
@@ -531,6 +561,7 @@ bool Baker::step() {
   // The face is complete, and with it the depths its stars need. Denoised
   // first, so the filter never softens a star.
   if (next_ % static_cast<size_t>(tilesPerFace_) == 0) {
+    denoiseFace(tile.face);
     drawStars(tile.face);
   }
   // Wait for the tile, so the driver never holds a queue of them that together

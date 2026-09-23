@@ -62,11 +62,13 @@ private:
   void uploadField(const Program& p, const Scene& s, const Look& look);
   void uploadBake();
   void attachMarch();
+  void denoiseFace(int face);
   void drawStars(int face);
 
   Program light_;
   Program bake_;
   Program stars_, galaxy_;
+  Program denoise_;
   std::string buildError_;
   GLuint noise_ = 0, framebuffer_ = 0, emptyVertexArray_ = 0;
   GLuint lightTexture_ = 0;
@@ -75,6 +77,8 @@ private:
   GLuint tau_[2] = {0, 0};
   GLuint starBuffer_ = 0, starVertexArray_ = 0;
   int starVertices_ = 0;
+  // Where a face is marched before it is denoised into the cubemap.
+  GLuint marched_ = 0;
   int marchSize_ = 0;
 
   // The bake in progress.
