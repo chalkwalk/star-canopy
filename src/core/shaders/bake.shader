@@ -133,6 +133,31 @@ vec3 light_depth(int b, vec3 p)
 	return light_depth_at(b, p);
 }
 
+/* Which of bubble b's capsules this ray, from origin along d in the bubble's frame, passes
+ * near enough to matter -- the bits nsky_pillars() then looks at.  Each capsule is bounded by
+ * a sphere: half its length plus its thickest radius, padded for everything that can move
+ * its surface or draw fine steps toward it -- three radii of noise and near zone, and for a
+ * pillar, which is placed in the WARPED frame, the most the fold warp can displace it.
+ * Conservative: a capsule missed here would simply vanish from this texel. */
+void capsule_mask(int b, vec3 origin, vec3 d, float s0, float s1)
+{
+	int first = int(u_PillarRange[b].x), n = int(u_PillarRange[b].y), i;
+	float warp = 1.1 * u_BubbleShape[b].y;
+
+	nsky_mask[0] = 0u;
+	nsky_mask[1] = 0u;
+	for (i = 0; i < n; i++) {
+		vec4 a = u_PillarBase[first + i], t = u_PillarTip[first + i];
+		vec3 mid = 0.5 * (a.xyz + t.xyz);
+		float reach = 0.5 * length(t.xyz - a.xyz) + 3.2 * max(abs(a.w), t.w) +
+				(a.w < 0.0 ? 0.0 : warp);
+		float along = clamp(dot(mid - origin, d), s0, s1);
+		vec3 off = origin + d * along - mid;
+
+		if (dot(off, off) < reach * reach)
+			nsky_mask[i >> 5] |= 1u << uint(i & 31);
+	}
+}
 
 /* Henyey-Greenstein, normalised to 1 for isotropic scattering, as the old nebula lab found it
  * had to be: with the 4 pi left in, the scattered light is two orders of magnitude under the
@@ -198,6 +223,7 @@ void main()
 		float s_end = leave[k] / radius;
 		float s = enter[k] / radius + ds_fine * jitter;
 
+		capsule_mask(b, origin, d, s, s_end);
 
 
 		for (i = 0; i < u_MaxSteps && s < s_end; i++) {
@@ -312,6 +338,11 @@ void main()
 				}
 
 
+				/* A pillar's core neither glows nor scatters: starlight does not
+				 * reach it.  The light volume is coarser than a pillar is wide and
+				 * cannot say so -- left to it, the dust in the core scatters blue
+				 * and the pillar comes out a hollow tube with a bright outline. */
+				src *= 1.0 - g.core;
 
 				/* Integrated exactly over the step for a constant source and
 				 * extinction, rather than as source times step, so a dense step

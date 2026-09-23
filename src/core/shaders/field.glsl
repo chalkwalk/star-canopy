@@ -40,6 +40,14 @@ uniform vec4 u_BubbleShape[NSKY_MAX_BUBBLES];
  * A luminosity of zero is an unused slot. */
 uniform vec4 u_Cluster[NSKY_MAX_BUBBLES * NSKY_CLUSTERS];
 
+/* Pillars: base and tip in the warped bubble frame, with their radii, and each bubble's range
+ * of them as (first, count).  See struct Pillar. */
+#define NSKY_MAX_PILLARS 56
+uniform vec4 u_PillarBase[NSKY_MAX_PILLARS];
+uniform vec4 u_PillarTip[NSKY_MAX_PILLARS];
+uniform vec2 u_PillarRange[NSKY_MAX_BUBBLES];
+uniform float u_PillarDensity;	/* relative to the shell's */
+uniform float u_CloudDensity;	/* the dark clouds adrift in the cavity, likewise */
 
 uniform float u_FoldScale;	/* fold warp frequency, cycles per bubble radius */
 uniform float u_OuterSharpness;	/* how much harder the shell's outer edge is than its inner */
@@ -60,7 +68,19 @@ uniform float u_DustOpacity;	/* extra extinction of the dust */
  * its default, which is coarse, since the light volume holds nothing finer anyway. */
 float nsky_footprint = 0.02;
 
+/* Which of the current bubble's capsules are worth measuring at all, as a bit per capsule
+ * in its range.  The view march sets it once per ray from each capsule's bounding sphere
+ * (see capsule_mask() in the bake): most capsules are nowhere near most rays, and measuring
+ * every one at every sample was half the bake.  All set by default, for the light pass,
+ * whose rays go everywhere. */
+uint nsky_mask[2] = uint[2](0xffffffffu, 0xffffffffu);
 
+/* The weight an octave of this feature size gets at the current footprint: 1 well above it,
+ * fading to 0 at twice it.  The same rule nsky_detail() uses. */
+float nsky_octave(float feature)
+{
+	return clamp(feature / (2.0 * nsky_footprint) - 1.0, 0.0, 1.0);
+}
 
 /* What the coarse field says about a point. */
 struct nsky_gas {
@@ -80,6 +100,101 @@ vec4 nsky_noise(vec3 p)
 	return texture(u_Noise, p * (1.0 / NSKY_NOISE_PERIOD)) * 2.0 - 1.0;
 }
 
+/* How deep inside the nearest of bubble b's pillars q is: 1 in the core, 0 outside.  A
+ * tapered capsule: the distance to its axis over the radius there, with rounded ends.  core
+ * is the same measure taken tighter, for how much of the pillar is dark molecular gas
+ * rather than lit skin.
+ *
+ * The same for the dark clouds adrift in the cavity, which are capsules too, marked by a
+ * negative base radius, and returned apart in drift: they are measured at p, the UNWARPED
+ * point, having no wall to follow, and the holes in the wall do not apply to them. */
+float nsky_pillars(int b, vec3 q, vec3 p, out float core, out float width, out float near,
+			out float drift, out float near_width)
+{
+	int first = int(u_PillarRange[b].x), n = int(u_PillarRange[b].y), i;
+	float inside = 0.0;
+
+	core = 0.0;
+	width = 1.0;
+	near = 0.0;
+	drift = 0.0;
+	near_width = 1.0;
+	for (i = 0; i < n; i++) {
+		vec4 a, t;
+		bool adrift;
+
+		if (((nsky_mask[i >> 5] >> uint(i & 31)) & 1u) == 0u)
+			continue;
+		a = u_PillarBase[first + i];
+		t = u_PillarTip[first + i];
+		adrift = a.w < 0.0;
+		vec3 x = adrift ? p : q;
+		vec3 ab = t.xyz - a.xyz;
+		float h = clamp(dot(x - a.xyz, ab) / dot(ab, ab), 0.0, 1.0);
+		float radius = mix(abs(a.w), t.w, h);
+		float d = length(x - a.xyz - ab * h) / radius;
+		float amount;
+		vec4 n1, n2;
+
+		/* Lumpy, not a tube: a clean capsule reads as a wax finger however it is lit.
+		 * But lumpy on the column's own terms.  The noise is read in a frame squashed
+		 * along the axis, so its lumps run three times longer than they are wide --
+		 * striations down the column and a few big knots, as a real pillar has --
+		 * where isotropic lumps the size of its width crumple it until the eye cannot
+		 * find the column at all.  Only near the surface is it worth the fetches. */
+		if (d < 1.8) {
+			/* Measured from the capsule's own base, and over its base radius, which
+			 * is constant along it.  Over the local radius instead, which tapers, a
+			 * step along the axis rescales the whole coordinate -- a large one, it
+			 * being a position -- and sweeps the noise past, which bands the capsule
+			 * with stripes across its length. */
+			vec3 along = ab / length(ab);
+			vec3 rel = x - a.xyz;
+			vec3 w = (rel - along * (dot(rel, along) * 0.67)) / abs(a.w);
+
+			n1 = nsky_noise(w * 0.9 + float(i) * 7.3);
+			n2 = nsky_noise(w * 2.3 + float(i) * 3.1);
+			/* Clouds more ragged than pillars: a pillar is shaped by the light
+			 * streaming past it, a dark cloud only by its own turbulence -- so a
+			 * third, finer octave, and more of each. */
+			/* Each octave faded out as it nears the sample's size, as the shell's
+			 * detail is; unfiltered, the finest of them is far below the step near a
+			 * cloud and aliases into grain along its edge. */
+			float r0 = abs(a.w);
+			float w1 = nsky_octave(r0 / 0.9), w2 = nsky_octave(r0 / 2.3);
+
+			if (adrift) {
+				float w3 = nsky_octave(r0 / 5.7);
+
+				d += 0.9 * w1 * n1.x + 0.45 * w2 * n2.y;
+				if (w3 > 0.0)
+					d += 0.22 * w3 * nsky_noise(w * 5.7 + float(i) * 1.7).z;
+			} else {
+				d += 0.4 * w1 * n1.x + 0.12 * w2 * n2.y;
+			}
+		}
+		if (d < 1.3)
+			width = min(width, radius);
+		/* How near, smoothly, so the march's step can ease into and out of the fine
+		 * steps a capsule needs rather than switching at a boundary that shows. */
+		if (d < 3.0 && radius < near_width * (3.0 - d)) {
+			near = max(near, 1.0 - smoothstep(2.0, 3.0, d));
+			near_width = min(near_width, radius);
+		}
+
+		/* A wide ramp, so the erosion has a gradient to eat into and the edges come
+		 * out ragged rather than a smooth tube. */
+		/* A cloud's edge is narrower than a pillar's: near the camera a wide ramp is
+		 * simply a blur. */
+		amount = adrift ? 1.0 - smoothstep(0.6, 1.1, d) : 1.0 - smoothstep(0.2, 1.3, d);
+		if (adrift)
+			drift = max(drift, amount);
+		else
+			inside = max(inside, amount);
+		core = max(core, 1.0 - smoothstep(0.3, 0.85, d));
+	}
+	return inside;
+}
 
 
 nsky_gas nsky_coarse(int b, vec3 p)
@@ -143,6 +258,30 @@ nsky_gas nsky_coarse(int b, vec3 p)
 		(1.0 - smoothstep(0.5, 2.0, s * s));
 	g.shell *= keep * (1.0 + 3.0 * g.dust);
 
+	/* Pillars, only where they can be: near the wall.  Dense and dusty, since they are the
+	 * molecular gas the front has not yet eaten; the light volume sees them, so they shadow
+	 * the wall behind, and the fine self shadowing lights their tips.  keep applies, so no
+	 * pillar stands in a hole with nothing to be rooted in. */
+	if (u_PillarRange[b].y > 0.0 &&
+			(abs(r - 1.0) < 0.5 || length(p) < 0.85)) {
+		float core, width, drift;
+		float pillar = nsky_pillars(b, g.q, p, core, width, g.near_pillar, drift,
+						g.near_width) * keep;
+
+		/* The holes in the wall cut pillars, which stand on it, and not the clouds. */
+		core *= max(keep, step(0.001, drift));
+		g.shell = max(g.shell, max(pillar * u_PillarDensity, drift * u_CloudDensity));
+		pillar = max(pillar, drift);
+		/* All dust in the core, so only the skin glows.  The light volume is coarser
+		 * than a pillar is wide and would light the whole body; a real pillar is a dark
+		 * column with a bright edge. */
+		g.dust = max(g.dust, core);
+		g.core = core;
+		/* Detail no finer than a quarter of the pillar's width, inside one: the shell's
+		 * erosion is scaled to the shell, and at a pillar's size its finest octaves only
+		 * crinkle the surface. */
+		g.min_feature = mix(g.min_feature, (drift > 0.0 ? 0.1 : 0.25) * width, pillar);
+	}
 
 	/* The ionised gas inside the shell sits in a layer against it, not in a ball on the
 	 * stars: the clusters' winds have blown their surroundings clear, which is the cavity

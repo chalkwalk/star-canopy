@@ -56,6 +56,16 @@ const Dial kDials[] = {
   REAL("contrast",
        "spread of the gas's column density: 0 even fog, higher clear gaps and solid clouds",
        contrast, 0.0f, 3.0f),
+  INT("pillars", "pillars on the main bubble's wall, pointing at its clusters", pillars, 0.0f,
+      static_cast<float>(kMaxPillars)),
+  REAL("pillar-length", "in bubble radii", pillarLength, 0.02f, 0.8f),
+  REAL("pillar-width", "base radius, in bubble radii", pillarWidth, 0.005f, 0.2f),
+  REAL("pillar-density", "relative to the shell's", pillarDensity, 0.1f, 20.0f),
+  INT("clouds", "dark clouds adrift in the cavity, in front of the wall", clouds, 0.0f, 12.0f),
+  REAL("cloud-length", "in bubble radii", cloudLength, 0.01f, 0.8f),
+  REAL("cloud-width", "in bubble radii", cloudWidth, 0.003f, 0.2f),
+  REAL("cloud-distance", "farthest from the viewer, in bubble radii", cloudDistance, 0.05f, 1.5f),
+  REAL("cloud-density", "relative to the shell's", cloudDensity, 0.1f, 20.0f),
   REAL("hardness", "0 soft eroded edges, 1 crisp ones", hardness, 0.0f, 1.0f),
   REAL("dust", "how much of the shell is dark molecular cloud", dust, 0.0f, 1.0f),
   REAL("dust-scale", "size of the dark clouds, cycles per bubble radius", dustScale, 0.2f, 40.0f),
@@ -183,6 +193,13 @@ Sky buildSky(const Settings& s) {
   p.thickness = s.thickness;
   p.fold = s.fold;
   p.keep = s.keep;
+  p.pillars = s.pillars;
+  p.pillarLength = s.pillarLength;
+  p.pillarWidth = s.pillarWidth;
+  p.clouds = s.clouds;
+  p.cloudLength = s.cloudLength;
+  p.cloudWidth = s.cloudWidth;
+  p.cloudDistance = s.cloudDistance;
   p.distantCount = s.distantCount;
   p.distantMinDegrees = s.distantMinDegrees;
   p.distantMaxDegrees = std::fmax(s.distantMaxDegrees, s.distantMinDegrees);
@@ -198,6 +215,8 @@ Sky buildSky(const Settings& s) {
   l.filament = s.filament;
   l.hardness = s.hardness;
   l.contrast = s.contrast;
+  l.pillarDensity = s.pillarDensity;
+  l.cloudDensity = s.cloudDensity;
   l.dustAmount = s.dust;
   l.dustScale = s.dustScale;
   l.density = s.density;

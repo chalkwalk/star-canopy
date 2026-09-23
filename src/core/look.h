@@ -10,6 +10,7 @@ struct Look {
   float foldScale, outerSharpness, holeScale, cavityDensity;
   float detailScale, detailGain, erosion, filament, hardness;
   float contrast;
+  float pillarDensity, cloudDensity;
   float dustAmount, dustScale;
 
   // The light.

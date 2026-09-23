@@ -33,6 +33,15 @@ struct Settings {
   float erosion = 0.65f;
   float filament = 0.5f;
   float contrast = 1.5f;
+  int pillars = 9;
+  float pillarLength = 0.3f;
+  float pillarWidth = 0.045f;
+  float pillarDensity = 2.5f;
+  int clouds = 4;
+  float cloudLength = 0.15f;
+  float cloudWidth = 0.022f;
+  float cloudDistance = 0.35f;
+  float cloudDensity = 3.0f;
   float hardness = 0.5f;
   float dust = 0.6f;
   float dustScale = 4.0f;

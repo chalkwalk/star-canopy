@@ -72,6 +72,22 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
     }
     std::memcpy(rot[i], b.rot, sizeof(b.rot));
   }
+  float base[kMaxPillars][4] = {}, tip[kMaxPillars][4] = {}, range[kMaxBubbles][2] = {};
+  for (int i = 0; i < s.pillarCount; i++) {
+    std::memcpy(base[i], s.pillar[i].base, sizeof(s.pillar[i].base));
+    // A negative radius marks a capsule adrift rather than rooted; see
+    // nsky_pillars().
+    base[i][3] = s.pillar[i].adrift ? -s.pillar[i].baseRadius : s.pillar[i].baseRadius;
+    std::memcpy(tip[i], s.pillar[i].tip, sizeof(s.pillar[i].tip));
+    tip[i][3] = s.pillar[i].tipRadius;
+  }
+  for (int i = 0; i < s.bubbleCount; i++) {
+    range[i][0] = static_cast<float>(s.bubble[i].firstPillar);
+    range[i][1] = static_cast<float>(s.bubble[i].pillarCount);
+  }
+  glUniform4fv(p.uniform("u_PillarBase"), kMaxPillars, &base[0][0]);
+  glUniform4fv(p.uniform("u_PillarTip"), kMaxPillars, &tip[0][0]);
+  glUniform2fv(p.uniform("u_PillarRange"), kMaxBubbles, &range[0][0]);
   glUniform4fv(p.uniform("u_BubbleSphere"), kMaxBubbles, &sphere[0][0]);
   glUniform4fv(p.uniform("u_BubbleShape"), kMaxBubbles, &shape[0][0]);
   glUniform4fv(p.uniform("u_Cluster"), kAllClusters, &cluster[0][0]);
@@ -87,6 +103,8 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
   glUniform1f(p.uniform("u_Filament"), look.filament);
   glUniform1f(p.uniform("u_Hardness"), look.hardness);
   glUniform1f(p.uniform("u_Contrast"), look.contrast);
+  glUniform1f(p.uniform("u_PillarDensity"), look.pillarDensity);
+  glUniform1f(p.uniform("u_CloudDensity"), look.cloudDensity);
   glUniform1f(p.uniform("u_DustAmount"), look.dustAmount);
   glUniform1f(p.uniform("u_DustScale"), look.dustScale);
   glUniform1f(p.uniform("u_DustOpacity"), look.dustOpacity);
