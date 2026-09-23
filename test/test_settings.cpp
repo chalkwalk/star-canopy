@@ -1,0 +1,53 @@
+// The dials: one table, every name unique, every default in its own range, and
+// every value set by name read back the same.
+
+#include "check.h"
+#include "settings.h"
+
+#include <cstdio>
+#include <set>
+#include <string>
+
+using namespace starcanopy;
+
+int main() {
+  int count = 0;
+  const Dial* d = dials(count);
+  Settings defaults;
+  std::set<std::string> names;
+  for (int i = 0; i < count; i++) {
+    CHECK(names.insert(d[i].name).second);
+    CHECK((d[i].real != nullptr) + (d[i].integer != nullptr) + (d[i].seed != nullptr) == 1);
+    if (d[i].real) {
+      float v = defaults.*d[i].real;
+      if (v < d[i].lo || v > d[i].hi) {
+        std::printf("%s: default %g outside %g..%g\n", d[i].name, v, d[i].lo, d[i].hi);
+      }
+      CHECK(v >= d[i].lo && v <= d[i].hi);
+    }
+    // Round trip: its own text sets it to the same value.
+    Settings s;
+    std::string error, text = dialValue(defaults, d[i]);
+    CHECK(setDial(s, d[i].name, text, error));
+    CHECK(dialValue(s, d[i]) == text);
+  }
+
+  Settings s;
+  std::string error;
+  CHECK(setDial(s, "seed", "4294967295", error) && s.seed == 4294967295u);
+  CHECK(!setDial(s, "seed", "4294967296", error));
+  CHECK(!setDial(s, "seed", "-1", error));
+  CHECK(setDial(s, "density", "2.5", error) && s.density == 2.5f);
+  CHECK(!setDial(s, "density", "1000", error));  // out of range
+  CHECK(!setDial(s, "density", "fast", error));
+  CHECK(!setDial(s, "density", "", error));
+  CHECK(!setDial(s, "no-such-dial", "1", error));
+  CHECK(setDial(s, "line-colors", "hoo", error) && s.lineColors == 2);
+  CHECK(!setDial(s, "line-colors", "purple", error));
+  CHECK(!setDial(s, "max-steps", "1.5", error));
+
+  // The same dials make the same sky description.
+  Sky a = buildSky(defaults), b = buildSky(defaults);
+  CHECK(a.look.exposure == b.look.exposure && a.scene.seed == b.scene.seed);
+  return test::finish();
+}

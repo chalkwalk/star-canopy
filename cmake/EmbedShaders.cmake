@@ -2,7 +2,9 @@
 # by "|") as a NUL-terminated byte array, looked up by file name.
 #
 # Bytes rather than raw string literals: MSVC caps a single string literal at
-# about 16 KB, and the model's bake shader is larger than that.
+# about 16 KB, and the model's bake shader is larger than that. Unsigned, so a
+# byte over 127 is not a narrowing error -- though shaders should be ASCII,
+# which is all GLSL's character set promises.
 #
 # Run as: cmake -DOUTPUT=... -DSHADERS=... -P EmbedShaders.cmake
 
@@ -16,8 +18,8 @@ foreach(path IN LISTS SHADERS)
   get_filename_component(name "${path}" NAME)
   file(READ "${path}" hex HEX)
   string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," bytes "${hex}")
-  string(APPEND body "// ${name}\nconst char kShader${index}[] = {\n  ${bytes}0x00};\n\n")
-  string(APPEND table "  {\"${name}\", kShader${index}},\n")
+  string(APPEND body "// ${name}\nconst unsigned char kShader${index}[] = {\n  ${bytes}0x00};\n\n")
+  string(APPEND table "  {\"${name}\", reinterpret_cast<const char*>(kShader${index})},\n")
   math(EXPR index "${index} + 1")
 endforeach()
 string(APPEND body "struct Embedded {\n  const char* name;\n  const char* source;\n};\n\n")

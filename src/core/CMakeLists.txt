@@ -1,6 +1,9 @@
+# Shared code first where a program concatenates several (field.glsl before
+# the passes that evaluate the gas).
 set(STARCANOPY_SHADERS
-  ${CMAKE_CURRENT_SOURCE_DIR}/shaders/fullscreen.vert
-  ${CMAKE_CURRENT_SOURCE_DIR}/shaders/empty_bake.frag)
+  ${CMAKE_CURRENT_SOURCE_DIR}/shaders/field.glsl
+  ${CMAKE_CURRENT_SOURCE_DIR}/shaders/bake.shader
+  )
 
 # Shaders are compiled into the binary, so a render depends on nothing but the
 # project (PRINCIPLES §7) -- not on files beside the executable.
@@ -17,15 +20,17 @@ add_custom_command(
   VERBATIM)
 
 add_library(starcanopy_core STATIC
+  bake.cpp
   cubemap.cpp
   cubemap_target.cpp
-  empty_bake.cpp
   gl_context.cpp
   noise.cpp
   pfm.cpp
   random.cpp
   scene.cpp
+  settings.cpp
   shader.cpp
+  sky.cpp
   tiles.cpp
   ${embedded})
 target_include_directories(starcanopy_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

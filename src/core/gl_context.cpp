@@ -3,7 +3,9 @@
 #include <glad/gl.h>
 #include <SDL3/SDL.h>
 
+#include <cstdlib>
 #include <cstring>
+#include <string>
 
 #ifdef STARCANOPY_HAVE_EGL
 #include <EGL/egl.h>
@@ -205,6 +207,27 @@ private:
   SDL_GLContext context_ = nullptr;
 };
 
+// The same bake on the same machine must be the same pixels (PRINCIPLES §7).
+// Mesa's radeonsi driver breaks that by default: it starts drawing with a
+// quickly built variant of each shader and swaps in an optimized one when a
+// background thread has compiled it, and the two differ in the last bit of a
+// few results. Where in a bake the swap lands depends on thread timing, so two
+// bakes of one sky differed by a half-float step in a scatter of texels. Asking
+// for monolithic shaders from the start makes every draw use the optimized one
+// (measured: three bakes of one seed, bit-identical). The only cost is a
+// slower first draw. It must be set before the driver loads; other drivers
+// ignore it.
+void requestDeterministicShaders() {
+#ifdef __linux__
+  const char* current = std::getenv("AMD_DEBUG");
+  if (!current || !*current) {
+    setenv("AMD_DEBUG", "mono", 1);
+  } else if (!std::strstr(current, "mono")) {
+    setenv("AMD_DEBUG", (std::string(current) + ",mono").c_str(), 1);
+  }
+#endif
+}
+
 template <typename T>
 std::unique_ptr<GlContext> tryCreate(std::string& error) {
   auto context = std::make_unique<T>();
@@ -236,6 +259,7 @@ bool parseContextKind(const std::string& text, ContextKind& kind) {
 }
 
 std::unique_ptr<GlContext> GlContext::create(ContextKind want, std::string& error) {
+  requestDeterministicShaders();
   std::string eglError = "EGL: not built in";
   std::unique_ptr<GlContext> context;
   if (want == ContextKind::Egl || want == ContextKind::Auto) {

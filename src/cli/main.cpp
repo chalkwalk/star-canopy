@@ -1,7 +1,9 @@
 #include "cubemap.h"
-#include "empty_bake.h"
+#include "cubemap_target.h"
 #include "gl_context.h"
 #include "pfm.h"
+#include "settings.h"
+#include "sky.h"
 
 #include <chrono>
 #include <cstdio>
@@ -11,27 +13,64 @@
 namespace {
 
 const char kUsage[] =
-    "usage: starcanopy bake-empty [--size N] [--context auto|egl|window] [--out DIR]\n"
+    "usage: starcanopy bake [--size N] [--set NAME=VALUE]... [--context K] [--out DIR]\n"
+    "       starcanopy dials\n"
     "\n"
-    "Bakes a black cubemap through the same context, tiling and readback the\n"
-    "model will use, and writes its faces as DIR/px.pfm ... DIR/nz.pfm (linear\n"
-    "float). A check of the machine's GL, until `starcanopy render` exists.\n"
+    "bake    bakes a sky and writes its faces as DIR/px.pfm .. DIR/nz.pfm, linear\n"
+    "        float HDR -- a stopgap format until the OpenEXR and KTX2 writers exist\n"
+    "  --size N         texels per face side (default 512)\n"
+    "  --set NAME=VALUE a raw dial, repeatable; `starcanopy dials` lists them.\n"
+    "                   These are overrides for scripting, not the interface: the\n"
+    "                   macros that will steer a sky are made of them\n"
+    "  --context K      auto (default): EGL, else a hidden window; egl: headless\n"
+    "                   only; window: a hidden SDL window, which needs a display\n"
+    "  --out DIR        existing directory to write into (default: write nothing)\n"
     "\n"
-    "  --size N      texels per face side (default 256)\n"
-    "  --context K   auto (default): EGL, else a hidden window; egl: headless\n"
-    "                only; window: a hidden SDL window, which needs a display\n"
-    "  --out DIR     existing directory to write into (default: write nothing)\n";
+    "dials   lists every raw dial with its value and range\n";
 
-int bakeEmpty(int argc, char** argv) {
+int listDials() {
   using namespace starcanopy;
-  int size = 256;
+  int count = 0;
+  const Dial* d = dials(count);
+  Settings defaults;
+  for (int i = 0; i < count; i++) {
+    std::string range;
+    if (d[i].choices) {
+      for (int k = 0; k < d[i].choiceCount; k++) {
+        range += std::string(k ? "|" : "") + d[i].choices[k];
+      }
+    } else if (!d[i].seed) {
+      char buf[64];
+      std::snprintf(buf, sizeof(buf), "%g..%g", static_cast<double>(d[i].lo),
+                    static_cast<double>(d[i].hi));
+      range = buf;
+    }
+    std::printf("%-20s %-10s %-24s %s\n", d[i].name, dialValue(defaults, d[i]).c_str(),
+                range.c_str(), d[i].help);
+  }
+  return 0;
+}
+
+int bake(int argc, char** argv) {
+  using namespace starcanopy;
+  int size = 512;
   ContextKind kind = ContextKind::Auto;
-  std::string out;
+  std::string out, error;
+  Settings settings;
   for (int i = 2; i < argc; i++) {
     std::string arg = argv[i];
     bool hasValue = i + 1 < argc;
     if (arg == "--size" && hasValue) {
       size = std::atoi(argv[++i]);
+    } else if (arg == "--set" && hasValue) {
+      std::string assignment = argv[++i];
+      size_t eq = assignment.find('=');
+      if (eq == std::string::npos ||
+          !setDial(settings, assignment.substr(0, eq), assignment.substr(eq + 1), error)) {
+        std::fprintf(stderr, "starcanopy: %s\n",
+                     eq == std::string::npos ? "--set wants NAME=VALUE" : error.c_str());
+        return 2;
+      }
     } else if (arg == "--context" && hasValue) {
       if (!parseContextKind(argv[++i], kind)) {
         std::fprintf(stderr, "starcanopy: unknown context '%s'\n", argv[i]);
@@ -49,7 +88,6 @@ int bakeEmpty(int argc, char** argv) {
     return 2;
   }
 
-  std::string error;
   auto context = GlContext::create(kind, error);
   if (!context) {
     std::fprintf(stderr, "starcanopy: no OpenGL 3.3 context: %s\n", error.c_str());
@@ -58,16 +96,14 @@ int bakeEmpty(int argc, char** argv) {
   std::printf("context: %s\n", context->description().c_str());
 
   auto start = std::chrono::steady_clock::now();
-  EmptyBake bake(size);
-  if (!bake.ok(error)) {
+  CubemapTarget target(size);
+  if (!bakeSky(settings, target, error)) {
     std::fprintf(stderr, "starcanopy: %s\n", error.c_str());
     return 1;
   }
-  while (bake.step()) {
-  }
-  Cubemap cubemap = bake.target().read();
+  Cubemap cubemap = target.read();
   double seconds = std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
-  std::printf("baked 6 x %d x %d in %.3f s\n", size, size, seconds);
+  std::printf("baked seed %u, 6 x %d x %d, in %.2f s\n", settings.seed, size, size, seconds);
 
   if (!out.empty()) {
     for (int face = 0; face < 6; face++) {
@@ -76,8 +112,8 @@ int bakeEmpty(int argc, char** argv) {
         std::fprintf(stderr, "starcanopy: %s\n", error.c_str());
         return 1;
       }
-      std::printf("wrote %s\n", path.c_str());
     }
+    std::printf("wrote %s/{px,nx,py,ny,pz,nz}.pfm\n", out.c_str());
   }
   return 0;
 }
@@ -85,9 +121,14 @@ int bakeEmpty(int argc, char** argv) {
 }  // namespace
 
 int main(int argc, char** argv) {
-  if (argc >= 2 && std::string(argv[1]) == "bake-empty") {
-    return bakeEmpty(argc, argv);
+  std::string command = argc >= 2 ? argv[1] : "";
+  if (command == "bake") {
+    return bake(argc, argv);
   }
-  std::fputs(kUsage, argc >= 2 && std::string(argv[1]) == "--help" ? stdout : stderr);
-  return argc >= 2 && std::string(argv[1]) == "--help" ? 0 : 2;
+  if (command == "dials") {
+    return listDials();
+  }
+  bool help = command == "--help" || command == "-h";
+  std::fputs(kUsage, help ? stdout : stderr);
+  return help ? 0 : 2;
 }
