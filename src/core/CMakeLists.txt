@@ -21,13 +21,14 @@ add_library(starcanopy_core STATIC
   cubemap_target.cpp
   empty_bake.cpp
   gl_context.cpp
+  noise.cpp
   pfm.cpp
   shader.cpp
   tiles.cpp
   ${embedded})
 target_include_directories(starcanopy_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(starcanopy_core
-  PUBLIC glad
+  PUBLIC glad mtwist
   PRIVATE SDL3::SDL3-static starcanopy_warnings)
 
 # Headless contexts come from EGL where there is one (Linux); elsewhere, and

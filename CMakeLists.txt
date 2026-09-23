@@ -32,6 +32,10 @@ set(SDL_INSTALL OFF CACHE BOOL "" FORCE)
 set(SDL_X11_XTEST OFF CACHE BOOL "" FORCE)
 add_subdirectory(extern/SDL EXCLUDE_FROM_ALL SYSTEM)
 
+# The labs' Mersenne Twister, unchanged, so a seed is the same sky here as there.
+add_library(mtwist STATIC extern/mtwist/mtwist.c)
+target_include_directories(mtwist SYSTEM PUBLIC extern/mtwist)
+
 add_library(glad STATIC extern/glad/src/gl.c)
 target_include_directories(glad SYSTEM PUBLIC extern/glad/include)
 

@@ -1,4 +1,4 @@
-foreach(name tiles pfm empty_bake)
+foreach(name tiles pfm noise empty_bake)
   add_executable(test_${name} test_${name}.cpp)
   target_link_libraries(test_${name} PRIVATE starcanopy_core starcanopy_warnings)
 endforeach()
@@ -8,6 +8,7 @@ file(MAKE_DIRECTORY ${scratch})
 
 add_test(NAME tiles COMMAND test_tiles)
 add_test(NAME pfm COMMAND test_pfm ${scratch})
+add_test(NAME noise COMMAND test_noise)
 
 # The headless path must work wherever the tests run; the hidden window skips
 # when there is no display to open one on.
