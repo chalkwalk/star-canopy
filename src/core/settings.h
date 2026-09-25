@@ -46,6 +46,7 @@ struct Settings {
   float dust = 0.6f;
   float dustScale = 4.0f;
   float cavityDensity = 0.006f;
+  float blister = 0.8f;
   int distantCount = 3;
   float distantMinDegrees = 3.0f;
   float distantMaxDegrees = 14.0f;

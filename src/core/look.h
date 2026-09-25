@@ -8,6 +8,7 @@ namespace starcanopy {
 struct Look {
   // The field; see field.glsl.
   float foldScale, outerSharpness, holeScale, cavityDensity;
+  float blister;
   float detailScale, detailGain, erosion, filament, hardness;
   float contrast;
   float pillarDensity, cloudDensity;

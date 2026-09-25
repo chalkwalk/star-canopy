@@ -53,6 +53,13 @@ uniform float u_FoldScale;	/* fold warp frequency, cycles per bubble radius */
 uniform float u_OuterSharpness;	/* how much harder the shell's outer edge is than its inner */
 uniform float u_HoleScale;	/* frequency of the holes and thickness variation */
 uniform float u_CavityDensity;	/* faint gas filling the cavity */
+/* Each bubble's dense side, unnormalised; zero for none.  See nsky_blister(). */
+uniform vec3 u_BlisterAxis[NSKY_MAX_BUBBLES];
+uniform float u_Blister;	/* how far the far side is blown out, 0..1 */
+/* Each bubble's squeeze along its own axes (1 or more) and outer edge hardness relative to
+ * u_OuterSharpness.  See struct Bubble. */
+uniform vec4 u_BubbleForm[NSKY_MAX_BUBBLES];
+uniform float u_BubbleDensity[NSKY_MAX_BUBBLES];	/* multiplies each bubble's gas */
 uniform float u_DetailScale;	/* the coarsest detail octave, cycles per bubble radius */
 uniform float u_DetailGain;	/* amplitude kept per octave */
 uniform float u_Erosion;	/* how far detail eats into the shell, 0..1 */
@@ -196,6 +203,29 @@ float nsky_pillars(int b, vec3 q, vec3 p, out float core, out float width, out f
 	return inside;
 }
 
+/* How much of the gas survives at the direction dir from the bubble's centre, given a
+ * noise to rag the edge with: 1 on the dense side, down to a faint haze on the open side.
+ *
+ * Real HII regions are rarely whole bubbles.  The stars are born at the edge of a molecular
+ * cloud, the ionised gas breaks out wherever the cloud is thinnest, and what is left is a
+ * blister: a dense, bright wall on the cloud's side and gas streaming away on the other.
+ * The Orion Nebula is one, seen from the open side.  Seen from inside, the dense wall is the
+ * part of the sky the light is on and the rest is open to the stars, which is the one place
+ * in the sky a picture of it has to look -- rather than a bright wall all the way round.
+ *
+ * The haze left is the outflow, and it is what stops the open side reading as a cut. */
+float nsky_blister(int b, vec3 dir, float rag)
+{
+	vec3 axis = u_BlisterAxis[b];
+	float len = length(axis), side, edge;
+
+	if (u_Blister <= 0.0 || len < 1e-4)
+		return 1.0;
+	side = dot(dir, axis / len) + 0.6 * rag;
+	/* 0 opens nothing, 1 leaves a cap about a third of the sky across. */
+	edge = mix(-1.9, 0.45, u_Blister);
+	return mix(0.04, 1.0, smoothstep(edge - 0.3, edge + 0.3, side));
+}
 
 nsky_gas nsky_coarse(int b, vec3 p)
 {
@@ -216,7 +246,7 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	g.near_pillar = 0.0;
 	g.near_width = 1.0;
 	g.core = 0.0;
-	r = length(g.q);
+	r = length(g.q * u_BubbleForm[b].xyz);
 
 	n = nsky_noise(g.q * u_HoleScale + o * 0.37);
 	thick = shape.x * (0.6 + 0.8 * clamp(n.y + 0.5, 0.0, 1.0));
@@ -224,7 +254,7 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	/* Harder on the outside than the in.  Vela's filaments have a sharp edge away from the
 	 * remnant's centre and fade over several times that toward it, which is the shock
 	 * running outward into cold gas with the hot interior behind it. */
-	g.shell = exp(-s * s * (s > 0.0 ? u_OuterSharpness : 1.0));
+	g.shell = exp(-s * s * (s > 0.0 ? max(u_OuterSharpness * u_BubbleForm[b].w, 1.0) : 1.0));
 	/* Contrast ACROSS the shell's face.  A shell of even density is about one optical depth
 	 * through wherever it is looked at, so the whole sky comes out half veiled -- fog, with
 	 * nothing either clear or solid.  Real interstellar gas has a lognormal column density:
@@ -247,6 +277,8 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	 * is where the distant sky shows through, and the layering that gives is half the
 	 * depth in the picture. */
 	keep = smoothstep(0.95 - 1.2 * shape.z, 1.07 - 1.2 * shape.z, n.x + 0.5);
+	open = nsky_blister(b, normalize(g.q), n.x);
+	keep *= open;
 
 	/* Dark lanes: the ridges of one noise, where it crosses zero, broken into lengths by a
 	 * second.  Lanes and not blobs, because a real HII region's dark clouds are threaded
@@ -291,6 +323,8 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	/* Clumped the same way as the shell, from a noise of its own: the ionised gas glows in
 	 * patches, so it does not lay a veil over every gap in the shell. */
 	g.cavity *= exp(u_Contrast * 2.5 * contrast_noise) / exp(0.03 * u_Contrast * u_Contrast * 6.25);
+	/* The ionised layer lines the wall, so it goes where the wall goes. */
+	g.cavity *= open;
 	return g;
 }
 
@@ -374,5 +408,5 @@ float nsky_density(int b, vec3 p, float footprint, out nsky_gas g)
 	 * faster than any stride through the cavity can follow, and every change of stride --
 	 * near a pillar, near a cloud -- shows in it as a seam or a ripple. */
 	return (max(g.shell - cut, 0.0) / max(1.0 - cut, 0.05) * (0.4 + e) * dense +
-		g.cavity);
+		g.cavity) * u_BubbleDensity[b];
 }

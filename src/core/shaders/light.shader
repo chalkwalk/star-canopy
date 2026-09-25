@@ -51,7 +51,7 @@ float depth_to(vec3 p, vec4 cluster)
 
 		tau += g.shell;
 	}
-	return tau * dt * u_Sigma;
+	return tau * dt * u_Sigma * u_BubbleDensity[u_Bubble];
 }
 
 

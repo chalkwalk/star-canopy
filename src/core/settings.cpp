@@ -71,6 +71,8 @@ const Dial kDials[] = {
   REAL("dust-scale", "size of the dark clouds, cycles per bubble radius", dustScale, 0.2f, 40.0f),
   REAL("cavity-density", "the ionised gas filling the cavity, whose glow is the heart",
        cavityDensity, 0.0f, 0.5f),
+  REAL("blister", "how far the gas is blown out on the side away from the clusters, 0..1", blister,
+       0.0f, 1.0f),
   INT("distant-count", "more distant nebulae beyond the main one", distantCount, 0.0f,
       static_cast<float>(kMaxBubbles - 1)),
   REAL("distant-min-deg", "smallest apparent radius of a distant one", distantMinDegrees, 0.2f,
@@ -209,6 +211,7 @@ Sky buildSky(const Settings& s) {
   l.outerSharpness = s.outerSharpness;
   l.holeScale = s.holeScale;
   l.cavityDensity = s.cavityDensity;
+  l.blister = s.blister;
   l.detailScale = s.detailScale;
   l.detailGain = s.detailGain;
   l.erosion = s.erosion;

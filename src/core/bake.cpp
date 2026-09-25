@@ -11,6 +11,55 @@ namespace {
 
 constexpr int kAllClusters = kMaxBubbles * kMaxClusters;
 
+// Which side of bubble b is its dense wall, given the clusters' brightness-
+// weighted position in its frame; see nsky_blister(). Toward the clusters,
+// since the stars are born against the cloud, but also away from the viewer:
+// we see the nebula from its open side, as we see Orion. Dense on the viewer's
+// side instead puts the wall close all round the eye, and it fills the sky
+// however much of the rest is blown out.
+//
+// From well outside, though, away from the viewer is the wrong way: then we
+// look through the opening at the lit inside of the far wall, a bright disc,
+// the coin again. A shell open to one side and seen side on is an arc or a
+// crescent, which is what distant nebulae look like; so for those the dense
+// side is the clusters' direction with the line of sight taken out of it.
+//
+// Left unnormalised when there is no side to choose, and a zero length tells
+// the shader so.
+void blisterAxis(const Bubble& b, float axis[3]) {
+  float away[3];
+  // The viewer is at the sky's origin; away from it, in the bubble's frame.
+  for (int i = 0; i < 3; i++) {
+    away[i] = 0.0f;
+    for (int j = 0; j < 3; j++) {
+      away[i] += b.rot[i * 3 + j] * b.center[j];
+    }
+  }
+  float len = sqrtf(away[0] * away[0] + away[1] * away[1] + away[2] * away[2]);
+  float distance = len / b.radius;
+  if (len > 1e-6f) {
+    for (int i = 0; i < 3; i++) {
+      away[i] /= len;
+    }
+  }
+  if (distance > 1.5f) {
+    float along = axis[0] * away[0] + axis[1] * away[1] + axis[2] * away[2];
+    for (int i = 0; i < 3; i++) {
+      axis[i] -= along * away[i];
+    }
+    return;
+  }
+  len = sqrtf(axis[0] * axis[0] + axis[1] * axis[1] + axis[2] * axis[2]);
+  if (len > 1e-6f) {
+    for (int i = 0; i < 3; i++) {
+      axis[i] /= len;
+    }
+  }
+  for (int i = 0; i < 3; i++) {
+    axis[i] += away[i];
+  }
+}
+
 
 }  // namespace
 
@@ -57,6 +106,8 @@ bool Baker::ok(std::string& error) const {
 void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
   float sphere[kMaxBubbles][4] = {}, shape[kMaxBubbles][4] = {};
   float cluster[kAllClusters][4] = {}, rot[kMaxBubbles][9] = {};
+  float axis[kMaxBubbles][3] = {}, form[kMaxBubbles][4] = {};
+  float density[kMaxBubbles] = {};
   for (int i = 0; i < s.bubbleCount; i++) {
     const Bubble& b = s.bubble[i];
     std::memcpy(sphere[i], b.center, sizeof(b.center));
@@ -69,7 +120,16 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
       float* slot = cluster[i * kMaxClusters + c];
       std::memcpy(slot, b.cluster[c].pos, sizeof(b.cluster[c].pos));
       slot[3] = b.cluster[c].luminosity;
+      // The clusters' positions weighted by how bright each is: the dense side
+      // is where the light comes from.
+      for (int k = 0; k < 3; k++) {
+        axis[i][k] += b.cluster[c].pos[k] * b.cluster[c].luminosity;
+      }
     }
+    blisterAxis(b, axis[i]);
+    std::memcpy(form[i], b.squeeze, sizeof(b.squeeze));
+    form[i][3] = b.edge;
+    density[i] = b.density;
     std::memcpy(rot[i], b.rot, sizeof(b.rot));
   }
   float base[kMaxPillars][4] = {}, tip[kMaxPillars][4] = {}, range[kMaxBubbles][2] = {};
@@ -97,6 +157,10 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
   glUniform1f(p.uniform("u_OuterSharpness"), look.outerSharpness);
   glUniform1f(p.uniform("u_HoleScale"), look.holeScale);
   glUniform1f(p.uniform("u_CavityDensity"), look.cavityDensity);
+  glUniform3fv(p.uniform("u_BlisterAxis"), kMaxBubbles, &axis[0][0]);
+  glUniform1f(p.uniform("u_Blister"), look.blister);
+  glUniform4fv(p.uniform("u_BubbleForm"), kMaxBubbles, &form[0][0]);
+  glUniform1fv(p.uniform("u_BubbleDensity"), kMaxBubbles, density);
   glUniform1f(p.uniform("u_DetailScale"), look.detailScale);
   glUniform1f(p.uniform("u_DetailGain"), look.detailGain);
   glUniform1f(p.uniform("u_Erosion"), look.erosion);
