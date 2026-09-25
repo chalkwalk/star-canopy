@@ -23,6 +23,8 @@ add_library(starcanopy_core STATIC
   gl_context.cpp
   noise.cpp
   pfm.cpp
+  random.cpp
+  scene.cpp
   shader.cpp
   tiles.cpp
   ${embedded})
