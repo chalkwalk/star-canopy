@@ -222,6 +222,11 @@ void main()
 		float ds_fine = thick * u_StepFrac;
 		float s_end = leave[k] / radius;
 		float s = enter[k] / radius + ds_fine * jitter;
+		/* Where the last stride started and how many depths the stars need had been
+		 * recorded by then, whether it was a long one, and how far the fine stride must
+		 * hold after one landed in gas; see below. */
+		float s_prev = s, fine_until = s;
+		bool was_long = false;
 
 		capsule_mask(b, origin, d, s, s_end);
 
@@ -237,10 +242,54 @@ void main()
 			float rho = nsky_density(b, p, max(s * pixel_angle, 0.2 * ds_fine), g);
 			float ds;
 
-			ds = ds_fine;
+			/* A long stride that lands in gas has overshot its edge by anything up to
+			 * the stride, differently in every texel, and the first sample inside
+			 * then stands for a step's worth of gas wherever it happened to land --
+			 * the sandy grain on every cloud's edge.  So go back to where the stride
+			 * started and come in at the fine stride instead -- and forget the stars'
+			 * depths recorded on the way, which have gas in front of them after all. */
+			if (was_long && g.shell + g.cavity >= 0.05) {
+				fine_until = s;
+				s = s_prev;
+				was_long = false;
+				continue;
+			}
+			/* Long strides through the cavity's faint, smooth fill and the empty
+			 * space around the shell; short ones in it.  Three fine strides and not
+			 * five: gas too thin to count as landed in is still eroded into wisps,
+			 * and at five a single sample stood for too much of one. */
+			was_long = g.shell + g.cavity < 0.05 && s >= fine_until;
+			ds = was_long ? ds_fine * 3.0 : ds_fine;
 
+			/* And near a pillar or a cloud, a fraction of its width.  A capsule's lit
+			 * skin, between its dark core and its edge, is only about a quarter of its
+			 * radius thick; a step longer than that either lands in the skin or steps
+			 * clean over it into the core, and which is decided by each texel's jitter
+			 * -- bright or black texel by texel, a fixed pepper over every cloud near
+			 * the camera. */
+			if (g.near_pillar > 0.0)
+				ds = mix(ds, min(ds, 0.12 * g.near_width), g.near_pillar);
 
+			/* Shorter still where the gas is dense, so no one step spans more than
+			 * about a third of an optical depth: a coarse step through opaque gas is
+			 * what shows the start jitter as hatching.  The dust's extra opacity
+			 * counts: left out, a step through a dusty lane, pillar or cloud spans
+			 * several optical depths, and whether a texel's step happens to land in
+			 * the dust or skip it decides between black and bright -- pepper. */
+			if (rho > 0.0)
+				ds = clamp(0.35 / max(rho * u_Density * u_Sigma *
+						(1.0 + u_DustOpacity * g.dust), 1e-4),
+						0.12 * ds_fine, ds);
 
+			/* Every step a little random in length, not only the first.  Wherever the
+			 * stride changes -- entering the shell from the cavity, nearing a cloud,
+			 * the clamp above taking over -- it changes at almost the same place for
+			 * neighbouring texels, and from there on they sample in lockstep whatever
+			 * jitter they started with: the thin structures beyond come out in
+			 * contour lines.  Jittering each step, after every rule that sets it,
+			 * keeps them out of step, and the lines become grain. */
+			ds *= 0.75 + 0.5 * start_jitter(gl_FragCoord.xy + vec2(float(i) * 17.0,
+									float(k) * 5.0));
 
 			if (rho > 0.0) {
 				vec3 tau = light_depth(b, p);
@@ -352,6 +401,7 @@ void main()
 				glow += transmit * src * (vec3(1.0) - att) / max(sigma_t, vec3(1e-6));
 				transmit *= att;
 			}
+			s_prev = s;
 			s += ds;
 			if (max(transmit.r, max(transmit.g, transmit.b)) < 0.002) {
 				opaque = true;
