@@ -15,6 +15,7 @@ namespace {
 
 const char* const kLineColorNames[] = {"natural", "hubble-sho", "hoo"};
 const char* const kGradeNames[] = {"physical", "auto"};
+const char* const kHueTypeNames[] = {"auto", "single", "fan", "split"};
 const char* const kFamilyNames[] = {"auto", "warm", "green", "teal", "blue"};
 const char* const kOnOffNames[] = {"off", "on"};
 const char* const kGalaxyStyleNames[] = {"barred-spiral", "grand-design", "flocculent"};
@@ -105,6 +106,9 @@ const Dial kDials[] = {
   REAL("shoulder", "ceiling the brightest gas eases toward, not clipped; 0 is off", shoulder, 0.0f,
        4.0f),
   REAL("grade-dust", "how far the dust takes its own colour, 0..1", gradeDust, 0.0f, 1.0f),
+  CHOICE("hue-type",
+         "one palette, a second fanned across the sky, or two regions of their own; auto by seed",
+         hueType, kHueTypeNames),
   CHOICE("palette-family", "the auto grade's family of colour; auto by seed", paletteFamily,
          kFamilyNames),
   REAL("grade-galaxy", "how far the galaxy's band is graded, 0..1; 0 its own colour", gradeGalaxy,
@@ -324,6 +328,7 @@ Sky buildSky(const Settings& s) {
   choice.family = s.paletteFamily - 1;
   choice.strength = s.gradeStrength;
   choice.dust = s.gradeDust;
+  choice.hueType = s.hueType;
   buildGrade(s.seed, choice, l);
   l.starGrade = s.grade == 0 ? 0.0f : s.gradeStars;
   l.gradeGalaxy = s.gradeGalaxy;

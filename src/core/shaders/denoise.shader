@@ -68,6 +68,18 @@ uniform vec3 u_DustRamp[RAMP_STOPS];	/* the same, for dust */
 uniform float u_Grade;		/* how far toward the ramp, 0..1 */
 uniform float u_Shoulder;	/* the brightest channel's ceiling; 0 is none */
 uniform float u_DisplayGain;	/* the gain the display curve is applied with */
+uniform int u_Face;		/* which cube face this is */
+/* A second palette over part of the sky: its ramp; the share of the sky it covers, 0 for none;
+ * where a smooth field of three waves -- each a direction and a frequency in u_HueWave, a phase
+ * in u_HuePhase -- passes u_Ramp2Threshold, over u_Ramp2Soft either side; and the displayed
+ * lightness by which it has given way to the first. */
+uniform vec3 u_Ramp2[RAMP_STOPS];
+uniform float u_Ramp2Share;
+uniform float u_Ramp2Threshold;
+uniform float u_Ramp2Soft;
+uniform float u_Ramp2Top;
+uniform vec4 u_HueWave[3];
+uniform vec3 u_HuePhase;
 
 out vec4 f_FragColor;
 
@@ -85,6 +97,35 @@ float displayed(float y)
 	return clamp(u_DisplayGain * (x * (6.2 * x + 0.5)) / (x * (6.2 * x + 1.7) + 0.06), 0.0, 1.0);
 }
 
+/* The bake's face_direction(): the direction through (s, t) of face f. */
+vec3 face_direction(int face, vec2 st)
+{
+	if (face == 0)
+		return vec3(1.0, -st.y, -st.x);
+	if (face == 1)
+		return vec3(-1.0, -st.y, st.x);
+	if (face == 2)
+		return vec3(st.x, 1.0, st.y);
+	if (face == 3)
+		return vec3(st.x, -1.0, -st.y);
+	if (face == 4)
+		return vec3(st.x, -st.y, 1.0);
+	return vec3(-st.x, -st.y, -1.0);
+}
+
+/* How much of the second palette in this direction, 0..1. */
+float second_weight(void)
+{
+	vec2 st = gl_FragCoord.xy / vec2(textureSize(u_Marched, 0) / u_Supersample) * 2.0 - 1.0;
+	vec3 dir = normalize(face_direction(u_Face, st));
+	float s = 0.0;
+	int k;
+
+	for (k = 0; k < 3; k++)
+		s += sin(u_HueWave[k].w * dot(dir, u_HueWave[k].xyz) + u_HuePhase[k]);
+	s /= 1.8;
+	return smoothstep(u_Ramp2Threshold - u_Ramp2Soft, u_Ramp2Threshold + u_Ramp2Soft, s);
+}
 
 vec3 grade(vec3 c, vec4 info)
 {
@@ -99,6 +140,14 @@ vec3 grade(vec3 c, vec4 info)
 		f = clamp(displayed(y) * float(RAMP_STOPS) - 0.5, 0.0, float(RAMP_STOPS - 1));
 		i = min(int(f), RAMP_STOPS - 2);
 		gas = mix(u_Ramp[i], u_Ramp[i + 1], f - float(i));
+		/* The second palette where the field puts it, giving way in the highlights -- and in
+		 * the near black of the empty sky, which is the first's dark tint all over, so the
+		 * edge of the field's region shows only in the gas: two objects of their own colour
+		 * on one sky, not a sky cut in two. */
+		if (u_Ramp2Share > 0.0)
+			gas = mix(gas, mix(u_Ramp2[i], u_Ramp2[i + 1], f - float(i)), second_weight() *
+					smoothstep(0.03, 0.12, displayed(y)) *
+					(1.0 - smoothstep(u_Ramp2Top - 0.15, u_Ramp2Top, displayed(y))));
 		dark = mix(u_DustRamp[i], u_DustRamp[i + 1], f - float(i));
 		ramp = mix(gas, dark, clamp(dust, 0.0, 1.0));
 		c = mix(c, y * ramp, u_Grade);

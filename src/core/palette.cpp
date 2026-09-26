@@ -86,6 +86,87 @@ Palette dustPalette(const Palette& g) {
   return d;
 }
 
+// A second palette, for a fan of colour across the sky or two regions of their
+// own: 6 and 2 of the 23 references. Blended in over part of the sky by a
+// smooth field of three seeded waves: softly and over less of it for a fan,
+// whose second hue lives in the darks and middle tones, more sharply and over
+// more for two regions, each a whole palette to near its top. The share is
+// found by sampling the field, so it is the share of the sky.
+//
+// A fan's second palette is its first with the dark end's hue moved 35-75
+// degrees along the strip the references use: in every one of their fans the
+// second hue is the first's neighbour, and a fan of two families far apart puts
+// hard lines of colour across the sky. Two regions pair by colour, warm against
+// cool; but a split wants a break in the gas to change colour at, and the field
+// knows nothing of the gas, so the seed never picks one -- only hue-type does.
+void buildSecond(uint32_t seed, const PaletteChoice& choice, const Palette& g, int family,
+                 Look& l) {
+  static const int pair[kFamilyCount][2] = {
+    {kBlue, kTeal},  // warm
+    {kWarm, kTeal},  // green
+    {kWarm, kWarm},  // teal
+    {kWarm, kWarm},  // blue
+  };
+  uint32_t h = seed * 2654435761u + 0x1b873593u;
+  float u = seedUniform(h);
+  for (int k = 0; k < 3; k++) {
+    float z = 2.0f * seedUniform(h) - 1.0f, a = 2.0f * kPi * seedUniform(h);
+    float r = sqrtf(fmaxf(1.0f - z * z, 0.0f));
+    l.hueWave[k][0] = r * cosf(a);
+    l.hueWave[k][1] = z;
+    l.hueWave[k][2] = r * sinf(a);
+    l.hueWave[k][3] = 1.2f + 1.8f * seedUniform(h);
+    l.huePhase[k] = 2.0f * kPi * seedUniform(h);
+  }
+  int type = choice.hueType;
+  if (type == 0) {
+    type = u < 0.65f ? 1 : 2;
+  }
+  l.ramp2Share = 0.0f;
+  if (!choice.grade || type == 1) {
+    return;
+  }
+  Palette g2;
+  if (type == 2) {
+    float turn = 35.0f + 40.0f * seedUniform(h);
+    // Toward whichever end of the strip has room for it, 17 to 258 degrees.
+    if (g.hue + turn > 258.0f || (g.hue - turn >= 17.0f && seedUniform(h) < 0.5f)) {
+      turn = -turn;
+    }
+    g2 = g;
+    g2.hue = g.hue + turn;
+    if (family == kBlue) {
+      g2.top = g.top + turn;
+    }
+  } else {
+    drawFrom(pair[family][seedUniform(h) < 0.5f], h, g2);
+  }
+  paletteRamp(g2, l.ramp2);
+  l.ramp2Share = type == 2 ? 0.15f + 0.15f * seedUniform(h) : 0.3f + 0.2f * seedUniform(h);
+  l.ramp2Soft = type == 2 ? 0.35f : 0.15f;
+  // Where the second palette gives way, as displayed lightness: OKLab 0.7 for a
+  // fan, 0.85 for two regions.
+  float top = type == 2 ? 0.7f : 0.85f;
+  float lt = top * top * top;
+  l.ramp2Top = lt <= 0.0031308f ? 12.92f * lt : 1.055f * powf(lt, 1.0f / 2.4f) - 0.055f;
+  // The field's value above which that share of the sky lies: evenly spread
+  // directions (a Fibonacci sphere), sorted.
+  constexpr int n = 512;
+  float field[n];
+  for (int k = 0; k < n; k++) {
+    float z = 1.0f - 2.0f * (k + 0.5f) / n, r = sqrtf(fmaxf(1.0f - z * z, 0.0f));
+    float a = 2.39996323f * k, d[3] = {r * cosf(a), z, r * sinf(a)}, v = 0.0f;
+    for (int j = 0; j < 3; j++) {
+      v += sinf(l.hueWave[j][3] *
+                    (d[0] * l.hueWave[j][0] + d[1] * l.hueWave[j][1] + d[2] * l.hueWave[j][2]) +
+                l.huePhase[j]);
+    }
+    field[k] = v / 1.8f;
+  }
+  std::sort(field, field + n);
+  l.ramp2Threshold = field[static_cast<int>((1.0f - l.ramp2Share) * (n - 1))];
+}
+
 }  // namespace
 
 int drawPalette(uint32_t seed, int family, Palette& p) {
@@ -148,7 +229,7 @@ void buildGrade(uint32_t seed, const PaletteChoice& choice, Look& l) {
     }
     l.grade = choice.strength;
   }
-  (void)family;
+  buildSecond(seed, choice, g, family, l);
 }
 
 }  // namespace starcanopy

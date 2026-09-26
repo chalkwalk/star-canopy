@@ -67,6 +67,7 @@ struct Settings {
   float haze = 0.004f;
   float shoulder = 0.8f;
   float gradeDust = 1.0f;
+  int hueType = 0;  // auto
   int paletteFamily = 0;  // auto
   float gradeGalaxy = 0.2f;
   float gradeStars = 0.6f;

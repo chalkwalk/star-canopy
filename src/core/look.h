@@ -53,6 +53,13 @@ struct Look {
   float ramp[kRampStops][3];
   float dustRamp[kRampStops][3];
   float grade;
+  // A second palette over part of the sky: its ramp; the share of the sky it
+  // covers, 0 for none; where a smooth field of three waves -- each a direction
+  // and a frequency, with their phases -- passes the threshold, soft either
+  // side; and the displayed lightness it gives way to the first by.
+  float ramp2[kRampStops][3];
+  float ramp2Share, ramp2Threshold, ramp2Soft, ramp2Top;
+  float hueWave[3][4], huePhase[3];
   // How far the galaxy's light is graded with the rest; 0 leaves it its own.
   float gradeGalaxy;
   // A faint glow over everything, linear HDR after exposure, so the darkest

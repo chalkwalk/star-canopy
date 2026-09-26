@@ -40,6 +40,7 @@ struct PaletteChoice {
   int family = -1;        // a PaletteFamily, or -1 to draw one by seed
   float strength = 1.0f;  // how far toward the grade, 0..1
   float dust = 1.0f;      // how far the dust takes its own colour, 0..1
+  int hueType = 0;        // 0 by seed, 1 one palette, 2 a fan, 3 two regions
 };
 
 // A palette of the family for this seed, or of a family drawn by the weights

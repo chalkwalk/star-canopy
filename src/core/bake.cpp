@@ -500,6 +500,14 @@ void Baker::denoiseFace(int face) {
   glUniform1f(p.uniform("u_Grade"), look.grade);
   glUniform1f(p.uniform("u_Shoulder"), look.shoulder);
   glUniform1f(p.uniform("u_DisplayGain"), kDisplayGain);
+  glUniform1i(p.uniform("u_Face"), face);
+  glUniform4fv(p.uniform("u_HueWave"), 3, &look.hueWave[0][0]);
+  glUniform3fv(p.uniform("u_HuePhase"), 1, look.huePhase);
+  glUniform3fv(p.uniform("u_Ramp2"), kRampStops, &look.ramp2[0][0]);
+  glUniform1f(p.uniform("u_Ramp2Share"), look.ramp2Share);
+  glUniform1f(p.uniform("u_Ramp2Threshold"), look.ramp2Threshold);
+  glUniform1f(p.uniform("u_Ramp2Soft"), look.ramp2Soft);
+  glUniform1f(p.uniform("u_Ramp2Top"), look.ramp2Top);
   glBindVertexArray(emptyVertexArray_);
   glDrawArrays(GL_TRIANGLES, 0, 3);
 }
