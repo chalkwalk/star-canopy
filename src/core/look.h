@@ -20,11 +20,13 @@ struct Look {
   float dustAlbedo[3];
   float anisotropy, reflection;
   float reddening[3];
+  float rimShadow;
   float ionOpacity, dustOpacity;
 
   // The march.
   float stepFrac;
   int maxSteps;
+  int lightRes, lightSteps;
   float exposure;
 
 };

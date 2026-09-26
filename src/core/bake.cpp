@@ -17,6 +17,7 @@ constexpr int kAllClusters = kMaxBubbles * kMaxClusters;
 Baker::Baker() {
   std::string error;
   bool built = true;
+  built = built && light_.build({"field.glsl", "light.shader"}, {"f_FragColor"}, error);
   built = built && bake_.build({"field.glsl", "bake.shader"}, {"f_FragColor"}, error);
   if (!built) {
     buildError_ = error;
@@ -42,6 +43,7 @@ Baker::Baker() {
 
 Baker::~Baker() {
   glDeleteTextures(1, &noise_);
+  glDeleteTextures(1, &lightTexture_);
   glDeleteVertexArrays(1, &emptyVertexArray_);
   glDeleteFramebuffers(1, &framebuffer_);
 }
@@ -94,6 +96,66 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
   glUniform1i(p.uniform("u_Noise"), 0);
 }
 
+void Baker::bakeLight(const Scene& s, const Look& look) {
+  int res = look.lightRes;
+  if (!light_.id() || s.bubbleCount == 0) {
+    return;
+  }
+  if (!lightTexture_ || lightRes_ != res || lightSlabs_ != s.bubbleCount) {
+    if (!lightTexture_) {
+      glGenTextures(1, &lightTexture_);
+    }
+    glBindTexture(GL_TEXTURE_3D, lightTexture_);
+    // One channel per cluster, and one slab per bubble stacked along z. GLSL
+    // 1.50 cannot index an array of samplers with a loop variable, so eight
+    // bubbles cannot have eight textures; one tall texture and a clamp per slab
+    // does the same job.
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA16F, res, res, res * s.bubbleCount, 0, GL_RGBA, GL_FLOAT,
+                 nullptr);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_3D, 0);
+    lightRes_ = res;
+    lightSlabs_ = s.bubbleCount;
+  }
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
+  glUseProgram(light_.id());
+  uploadField(light_, s, look);
+  glUniform1f(light_.uniform("u_Res"), static_cast<float>(res));
+  glUniform1i(light_.uniform("u_LightSteps"), look.lightSteps);
+  // The light volume carries the density dial too, so it and the bake's own
+  // extinction are the same gas, and the ionising opacity, since what it holds
+  // is how much ultraviolet is left.
+  glUniform1f(light_.uniform("u_Sigma"), look.sigma * look.density * look.ionOpacity);
+  glViewport(0, 0, res, res);
+  glBindVertexArray(emptyVertexArray_);
+  glDrawBuffer(GL_COLOR_ATTACHMENT0);
+  for (int b = 0; b < s.bubbleCount; b++) {
+    glUniform1i(light_.uniform("u_Bubble"), b);
+    glUniform1f(light_.uniform("u_Bound"), bubbleBound(s.bubble[b]));
+    for (int z = 0; z < res; z++) {
+      glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, lightTexture_, 0, b * res + z);
+      glUniform1f(light_.uniform("u_Slice"), (static_cast<float>(z) + 0.5f) / static_cast<float>(res));
+      // A slice in four strips, each its own job: a thick mass lit by clusters
+      // of a size is many times the work of a shell lit by points, and one draw
+      // of a whole slice ran long enough for the driver to decide the GPU had
+      // hung and reset it.
+      glEnable(GL_SCISSOR_TEST);
+      for (int t = 0; t < 4; t++) {
+        glScissor(0, t * res / 4, res, (t + 1) * res / 4 - t * res / 4);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glFlush();
+      }
+      glDisable(GL_SCISSOR_TEST);
+    }
+  }
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glFinish();
+}
+
 void Baker::begin(CubemapTarget& target, const Scene& s, const Look& look) {
   target_ = &target;
   scene_ = s;
@@ -120,6 +182,11 @@ void Baker::uploadBake() {
   glUniform1i(p.uniform("u_BubbleCount"), scene_.bubbleCount);
   glUniform1fv(p.uniform("u_BubbleBound"), kMaxBubbles, bound);
   glUniform1f(p.uniform("u_FaceSize"), static_cast<float>(marchSize_));
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_3D, lightTexture_);
+  glUniform1i(p.uniform("u_Light"), 1);
+  glUniform1f(p.uniform("u_LightRes"), static_cast<float>(lightRes_));
+  glUniform1f(p.uniform("u_LightSlabs"), static_cast<float>(lightSlabs_));
   glUniform1f(p.uniform("u_Density"), look.density);
   glUniform1f(p.uniform("u_Sigma"), look.sigma);
   glUniform1f(p.uniform("u_StepFrac"), look.stepFrac);
@@ -130,6 +197,7 @@ void Baker::uploadBake() {
   glUniform3fv(p.uniform("u_DustAlbedo"), 1, look.dustAlbedo);
   glUniform1f(p.uniform("u_Anisotropy"), look.anisotropy);
   glUniform1f(p.uniform("u_Reflection"), look.reflection);
+  glUniform1f(p.uniform("u_RimShadow"), look.rimShadow);
   glUniform1f(p.uniform("u_IonOpacity"), look.ionOpacity);
   glUniform3fv(p.uniform("u_Reddening"), 1, look.reddening);
   glUniform1f(p.uniform("u_Exposure"), look.exposure);

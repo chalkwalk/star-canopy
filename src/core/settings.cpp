@@ -82,11 +82,14 @@ const Dial kDials[] = {
   REAL("ion-opacity", "how much more opaque the gas is to ionising light; sharpens the fronts",
        ionOpacity, 1.0f, 200.0f),
   REAL("dust-opacity", "extra extinction of the dark clouds", dustOpacity, 0.0f, 100.0f),
+  REAL("rim-shadow", "fine self shadowing, for bright rims; 0 is off", rimShadow, 0.0f, 6.0f),
 
 
   REAL("exposure", "scales the nebula before the tonemapper", exposure, 0.0001f, 100.0f),
   REAL("step-frac", "march step as a fraction of the shell's thickness", stepFrac, 0.02f, 1.0f),
   INT("max-steps", "march steps allowed per bubble", maxSteps, 50.0f, 4000.0f),
+  INT("light-res", "voxels per side of each bubble's light volume", lightRes, 16.0f, 256.0f),
+  INT("light-steps", "march steps from each voxel to its cluster", lightSteps, 8.0f, 256.0f),
 };
 
 #undef REAL
@@ -215,10 +218,13 @@ Sky buildSky(const Settings& s) {
   l.reddening[2] = 1.3f;
   l.anisotropy = s.anisotropy;
   l.reflection = s.reflection;
+  l.rimShadow = s.rimShadow;
   l.ionOpacity = s.ionOpacity;
   l.dustOpacity = s.dustOpacity;
   l.stepFrac = s.stepFrac;
   l.maxSteps = s.maxSteps;
+  l.lightRes = s.lightRes;
+  l.lightSteps = s.lightSteps;
   l.exposure = s.exposure;
 
   return sky;

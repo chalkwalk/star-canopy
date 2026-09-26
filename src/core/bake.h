@@ -13,6 +13,7 @@ namespace starcanopy {
 
 // Turning a scene into a cubemap, on the GPU.
 //
+// The light volume is built once per scene and look, in strips.
 // The faces are then marched a tile at a time, so that a bake of many seconds
 // can be spread across an interface's frames, and so that no single draw runs
 // long enough for the driver's watchdog to decide the GPU has hung and reset
@@ -30,6 +31,10 @@ public:
   // False, with the reason, if the shaders would not build.
   bool ok(std::string& error) const;
 
+  // The light volume for this scene and look. Before any begin() whose scene or
+  // look differs from the last one lit.
+  void bakeLight(const Scene& s, const Look& look);
+
   // Start baking into the target, whose size is the face's.
   void begin(CubemapTarget& target, const Scene& s, const Look& look);
 
@@ -44,9 +49,12 @@ private:
   void uploadBake();
   void attachMarch();
 
+  Program light_;
   Program bake_;
   std::string buildError_;
   GLuint noise_ = 0, framebuffer_ = 0, emptyVertexArray_ = 0;
+  GLuint lightTexture_ = 0;
+  int lightRes_ = 0, lightSlabs_ = 0;
   int marchSize_ = 0;
 
   // The bake in progress.

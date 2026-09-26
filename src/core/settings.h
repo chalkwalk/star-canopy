@@ -53,12 +53,15 @@ struct Settings {
   float anisotropy = 0.5f;
   float ionOpacity = 8.0f;
   float dustOpacity = 6.0f;
+  float rimShadow = 2.0f;
 
 
   // The bake.
   float exposure = 0.18f;
   float stepFrac = 0.15f;
   int maxSteps = 600;
+  int lightRes = 96;
+  int lightSteps = 48;
 };
 
 // One raw parameter, as the command line names it.

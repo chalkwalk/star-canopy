@@ -2,6 +2,7 @@
 # the passes that evaluate the gas).
 set(STARCANOPY_SHADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/shaders/field.glsl
+  ${CMAKE_CURRENT_SOURCE_DIR}/shaders/light.shader
   ${CMAKE_CURRENT_SOURCE_DIR}/shaders/bake.shader
   )
 
