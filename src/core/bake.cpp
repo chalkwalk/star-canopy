@@ -238,6 +238,7 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
   glUniform1f(p.uniform("u_MassDensity"), look.massDensity);
   glUniform1f(p.uniform("u_MassWarp"), look.massWarp);
   glUniform1f(p.uniform("u_ClusterSize"), look.clusterSize);
+  glUniform1f(p.uniform("u_MassFine"), look.massFine);
   glUniform1f(p.uniform("u_DetailScale"), look.detailScale);
   glUniform1f(p.uniform("u_DetailGain"), look.detailGain);
   glUniform1f(p.uniform("u_Erosion"), look.erosion);
@@ -459,6 +460,9 @@ void Baker::uploadBake() {
   glUniform1i(p.uniform("u_GalaxySky"), 3);
   glUniform1f(p.uniform("u_GalaxyGlow"), galaxyTexture_ ? look.galaxyGlow : 0.0f);
   glUniform1f(p.uniform("u_Exposure"), look.exposure);
+  glUniform1f(p.uniform("u_Fill"), look.fill);
+  glUniform1f(p.uniform("u_FillShadow"), look.fillShadow);
+  glUniform1f(p.uniform("u_Graze"), look.graze);
   glUniform3fv(p.uniform("u_Haze"), 1, look.haze);
 }
 

@@ -96,6 +96,9 @@ const Dial kDials[] = {
       massClusters, 1.0f, static_cast<float>(kMaxClusters)),
   REAL("mass-cavity", "a mass's cavity glow: gas in front of all of it, lifting its darks; 0 none",
        massCavity, 0.0f, 0.5f),
+  REAL("mass-fine", "fine lumps carved into a mass's surface; 0 none", massFine, 0.0f, 3.0f),
+  REAL("graze", "a mass's fine lumps shadowing each other toward the light; 0 none", graze, 0.0f,
+       5.0f),
   REAL("mass-blister", "how far a mass's far side is blown out, 0..1", massBlister, 0.0f, 1.0f),
   REAL("mass-cluster-size",
        "a mass's clusters' radius, bubble radii: softens their shadows; 0 a point",
@@ -105,6 +108,9 @@ const Dial kDials[] = {
   REAL("mass-warp", "how far the fold's swirl bends the mass, 0..1", massWarp, 0.0f, 1.0f),
   REAL("cluster-size", "a cluster's radius, bubble radii: softens its shadows; 0 a point",
        clusterSize, 0.0f, 0.5f),
+  REAL("fill-shadow", "how hard the fill light's small shadows are", fillShadow, 0.5f, 100.0f),
+  REAL("fill", "a mass's dim light raking across every face, shadowed only near at hand; 0 none",
+       fill, 0.0f, 2.0f),
   REAL("blister", "how far the gas is blown out on the side away from the clusters, 0..1", blister,
        0.0f, 1.0f),
   INT("distant-count", "more distant nebulae beyond the main one", distantCount, 0.0f,
@@ -323,6 +329,11 @@ Sky buildSky(const Settings& s) {
   l.massScale = s.massScale;
   l.massDensity = s.massDensity;
   l.massWarp = s.massWarp;
+  l.massFine = s.massFine;
+  l.graze = s.graze;
+  // The raking fill is the mass's: a shell's thin sheet has no unlit bulk.
+  l.fill = s.form == 1 ? s.fill : 0.0f;
+  l.fillShadow = s.fillShadow;
   l.clusterSize = s.form == 1 ? s.massClusterSize : s.clusterSize;
   l.detailScale = s.detailScale;
   l.detailGain = s.detailGain;

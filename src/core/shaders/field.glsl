@@ -63,6 +63,7 @@ uniform float u_MassLobes;	/* how far its lobes reach in from that, in bubble ra
 uniform float u_MassScale;	/* its billows, cycles per bubble radius */
 uniform float u_MassDensity;	/* its density, relative to the shell's */
 uniform float u_MassWarp;	/* how far the fold warp bends it, 0..1 */
+uniform float u_MassFine;	/* fine lumps on its surface, 0 none */
 /* Each bubble's squeeze along its own axes (1 or more) and outer edge hardness relative to
  * u_OuterSharpness.  See struct Bubble. */
 uniform vec4 u_BubbleForm[NSKY_MAX_BUBBLES];
@@ -297,6 +298,21 @@ nsky_gas nsky_coarse(int b, vec3 p)
 			billow += amp * 1.6 * nsky_noise(bq).x;
 			amp *= 0.4;
 			bq = bq * 2.07 + 7.3;
+		}
+		/* And finer lumps on those, each octave a smaller displacement of the surface the
+		 * larger ones made -- carved into the form, not sprinkled through the gas -- so a big
+		 * smooth bulge still has a skin of small ones for a grazing light to pick out.  As
+		 * many octaves as the sample can hold; see nsky_octave(). */
+		if (u_MassFine > 0.0) {
+			float fine = 0.0, fa = 1.0, feature = 1.0 / (u_MassScale * 4.28);
+
+			for (k = 0; k < 4; k++) {
+				fine += fa * nsky_octave(feature) * nsky_noise(bq).y;
+				fa *= 0.5;
+				feature *= 0.483;
+				bq = bq * 2.07 + 3.1;
+			}
+			billow += u_MassFine * 0.35 * fine;
 		}
 		rin = clamp(u_MassInner - u_MassLobes * max(lobe + 0.15, 0.0), 0.1, 0.95);
 		dens = smoothstep(-0.02, 0.1, r - rin + 0.12 * billow) *

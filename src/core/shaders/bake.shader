@@ -81,6 +81,11 @@ uniform float u_TauDepth[NSKY_TAU_LAYERS - 1];
 
 uniform vec3 u_Haze;		/* the haze behind everything, after exposure */
 uniform float u_Exposure;
+/* A dim light toward the clusters, shadowed only near at hand; see the march. */
+uniform float u_Fill;
+uniform float u_FillShadow;	/* how hard the fill's near shadows are */
+/* A mass's fine lumps shadowing each other toward the light, 0 none; see the march. */
+uniform float u_Graze;
 
 out vec4 f_FragColor;
 /* Optical depth, at the green channel's extinction, out to each of u_TauDepth and then to
@@ -346,8 +351,28 @@ void main()
 						best_dir = normalize(lc);
 					}
 				}
+				/* Neither the grazing shadows nor the raking fill below can show
+				 * where almost none of this point reaches the eye, the gas in front
+				 * having taken it.  Their samples are at full detail and were most
+				 * of the bake.  (Not where the main light is nearly shadowed away:
+				 * near a cluster a hundredth of its light is still bright.) */
+				bool seen = transmit.g > 0.01;
 
-				if (u_RimShadow > 0.0 && best > 0.0) {
+				if (u_Graze > 0.0 && best > 0.0 && u_Form == 1 && b == 0 && seen) {
+					/* A mass's fine lumps shadowing each other: two samples
+					 * at full detail a little way toward the light, a lump's
+					 * and a few lumps' width.  Where the light grazes the
+					 * surface every lump casts a small shadow and catches a
+					 * small highlight, and a big smooth bulge shows a skin
+					 * of them -- the light volume is far too coarse to. */
+					nsky_gas g1, g2;
+					float fp = max(s * pixel_angle, 0.004);
+					float d1 = nsky_density(b, p + best_dir * 0.01, fp, g1);
+					float d2 = nsky_density(b, p + best_dir * 0.03, fp, g2);
+
+					tau[best_c] += u_Graze * u_Sigma * u_IonOpacity * u_Density *
+						(0.01 * d1 + 0.02 * d2);
+				} else if (u_RimShadow > 0.0 && best > 0.0) {
 					/* What the light volume is too coarse to hold: the
 					 * gas's own detail shadowing itself, within a shell's
 					 * thickness of this point, toward whichever cluster
@@ -424,6 +449,38 @@ void main()
 							1.0 + u_DustOpacity * g.dust));
 				}
 
+				/* Fill light: a dim light raking across whatever face is seen.  The
+				 * clusters' light is shadowed by the whole mass between, and leaves
+				 * the faces turned from them black -- in the reference skyboxes those
+				 * faces still show a subtle texture, as if lit from the side.  So its
+				 * direction is the main cluster's, turned square to the line of
+				 * sight, and it is shadowed only near at hand: the fine lumps within a
+				 * few lumps' width and the gas within a tenth of a radius.  Every face
+				 * catches it; each lump on it casts a small shadow and takes a small
+				 * highlight, where unshadowed light would lay the face flat. */
+				if (u_Fill > 0.0 && seen) {
+					float lum = 0.0, fp = max(s * pixel_angle, 0.004), near_tau;
+					vec3 rake = u_Cluster[first].xyz - p;
+					nsky_gas ga, gb, gc;
+					float da, db;
+
+					for (c = 0; c < NSKY_CLUSTERS; c++)
+						lum += max(u_Cluster[first + c].w, 0.0);
+					rake -= dot(rake, d) * d;
+					if (dot(rake, rake) < 1e-8)
+						rake = cross(d, abs(d.y) < 0.9 ? vec3(0.0, 1.0, 0.0) :
+								vec3(1.0, 0.0, 0.0));
+					rake = normalize(rake);
+					da = nsky_density(b, p + rake * 0.01, fp, ga);
+					db = nsky_density(b, p + rake * 0.03, fp, gb);
+					gc = nsky_coarse(b, p + rake * 0.08);
+					near_tau = u_Sigma * u_Density * u_FillShadow * (0.01 * da + 0.02 * db +
+						0.05 * gc.shell * u_BubbleDensity[b]);
+					src += u_Fill * lum * u_Sigma * u_IonOpacity * rho *
+						exp(-near_tau) * nsky_dust_glow(g.dust) *
+						(u_LineColor[1] * u_LineStrength.y +
+						u_LineColor[2] * u_LineStrength.z);
+				}
 
 				/* A pillar's core neither glows nor scatters: starlight does not
 				 * reach it.  The light volume is coarser than a pillar is wide and

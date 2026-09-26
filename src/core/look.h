@@ -21,6 +21,8 @@ struct Look {
   // The main bubble's form, 0 a shell, 1 a mass, and the mass's shape.
   int form;
   float massInner, massLobes, massScale, massDensity, massWarp;
+  float massFine, graze;
+  float fill, fillShadow;
   // A cluster's radius in bubble radii, which softens its shadows; 0 a point.
   float clusterSize;
   float blister;
