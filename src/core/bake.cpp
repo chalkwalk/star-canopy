@@ -11,6 +11,35 @@ namespace {
 
 constexpr int kAllClusters = kMaxBubbles * kMaxClusters;
 
+// The distances at which the march records the optical depth so far, for the
+// stars: a geometric series from kTauNearest, and the whole line of sight last.
+// Must match NSKY_TAU_LAYERS in the shaders. 0.1 to about 50 sky units covers
+// the near wall of a bubble the viewer is inside through to the farthest of
+// the distant ones.
+constexpr int kTauLayers = 8;
+constexpr float kTauNearest = 0.1f;
+constexpr float kTauSpacing = 2.8f;
+
+// A star vertex: direction, distance, flux.
+constexpr int kStarFloats = 7;
+// Star flux in the units the look's star brightness of 1 means. The faintest
+// field star has flux 1, and at this scale it lands as a dim but plain point
+// on a 2048 face at the default exposure.
+constexpr float kStarFluxUnit = 1.0e-6f;
+
+void tauDepths(float depth[kTauLayers - 1]) {
+  for (int i = 0; i < kTauLayers - 1; i++) {
+    depth[i] = kTauNearest * powf(kTauSpacing, static_cast<float>(i));
+  }
+}
+
+// The colour the grade gives the stars: its ramp's midtones, where its chroma
+// peaks, averaged, at a luminance of 1. That is where the reference skies'
+// stars sit -- measured as each star's excess over the sky around it, their
+// hues cluster at the palette's and they are at least as colourful as its gas.
+// Taken higher up the ramp, where it pales, a blue tint is too weak to outweigh
+// what is left of a star's own yellow-white, and the stars come out grey.
+
 // Which side of bubble b is its dense wall, given the clusters' brightness-
 // weighted position in its frame; see nsky_blister(). Toward the clusters,
 // since the stars are born against the cloud, but also away from the viewer:
@@ -60,6 +89,19 @@ void blisterAxis(const Bubble& b, float axis[3]) {
   }
 }
 
+void allocTexture2D(GLuint& texture, int size) {
+  if (!texture) {
+    glGenTextures(1, &texture);
+  }
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, size, size, 0, GL_RGBA, GL_HALF_FLOAT, nullptr);
+  // Nearest: a star reads the depth of the texel it sits in, and a filtered read
+  // across the edge of a dark lane would half hide a star that is wholly clear.
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
 
 }  // namespace
 
@@ -67,7 +109,11 @@ Baker::Baker() {
   std::string error;
   bool built = true;
   built = built && light_.build({"field.glsl", "light.shader"}, {"f_FragColor"}, error);
-  built = built && bake_.build({"field.glsl", "bake.shader"}, {"f_FragColor"}, error);
+  built = built && bake_.build({"field.glsl", "bake.shader"}, {"f_FragColor", "f_Tau0", "f_Tau1"},
+                               error);
+  built = built && stars_.build({"stars.shader"}, {"f_FragColor"}, error);
+  built = built && galaxy_.build({"field.glsl", "galaxy.glsl", "galaxy.shader"}, {"f_FragColor"},
+                                 error);
   if (!built) {
     buildError_ = error;
   }
@@ -88,11 +134,20 @@ Baker::Baker() {
   // Core profile draws need a bound vertex array, even when the vertex shader
   // makes its positions up out of gl_VertexID.
   glGenVertexArrays(1, &emptyVertexArray_);
+  glGenBuffers(1, &starBuffer_);
+  glGenVertexArrays(1, &starVertexArray_);
+  // Filter across cube face edges when sampling the galaxy's glow, or every
+  // edge of the sky is a seam wherever the band crosses one.
+  glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 }
 
 Baker::~Baker() {
   glDeleteTextures(1, &noise_);
   glDeleteTextures(1, &lightTexture_);
+  glDeleteTextures(1, &galaxyTexture_);
+  glDeleteTextures(2, tau_);
+  glDeleteBuffers(1, &starBuffer_);
+  glDeleteVertexArrays(1, &starVertexArray_);
   glDeleteVertexArrays(1, &emptyVertexArray_);
   glDeleteFramebuffers(1, &framebuffer_);
 }
@@ -238,16 +293,105 @@ void Baker::bakeLight(const Scene& s, const Look& look) {
   glFinish();
 }
 
-void Baker::begin(CubemapTarget& target, const Scene& s, const Look& look) {
+void Baker::bakeGalaxy(const Galaxy& g, const float reddening[3], int res) {
+  if (!galaxy_.id()) {
+    return;
+  }
+  if (!galaxyTexture_) {
+    glGenTextures(1, &galaxyTexture_);
+  }
+  glBindTexture(GL_TEXTURE_CUBE_MAP, galaxyTexture_);
+  for (int i = 0; i < 6; i++) {
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGBA16F, res, res, 0, GL_RGBA,
+                 GL_HALF_FLOAT, nullptr);
+  }
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+
+  const Program& p = galaxy_;
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
+  glUseProgram(p.id());
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_3D, noise_);
+  glUniform1i(p.uniform("u_Noise"), 0);
+  uploadGalaxy(p, g);
+  glUniform3fv(p.uniform("u_Reddening"), 1, reddening);
+  glUniform1f(p.uniform("u_FaceSize"), static_cast<float>(res));
+
+  glDrawBuffer(GL_COLOR_ATTACHMENT0);
+  glViewport(0, 0, res, res);
+  glBindVertexArray(emptyVertexArray_);
+  for (int i = 0; i < 6; i++) {
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                           galaxyTexture_, 0);
+    glUniform1i(p.uniform("u_Face"), i);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    // A face at a time, so no one draw runs long enough to worry a watchdog.
+    glFinish();
+  }
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void uploadGalaxy(const Program& p, const Galaxy& g) {
+  glUniformMatrix3fv(p.uniform("u_GalRot"), 1, GL_TRUE, g.rot);
+  glUniform3fv(p.uniform("u_GalObserver"), 1, g.observer);
+  glUniform4f(p.uniform("u_GalDisc"), g.scaleLength, g.scaleHeight, g.flareStart, g.flareLength);
+  glUniform1f(p.uniform("u_GalEdge"), g.edge);
+  glUniform4f(p.uniform("u_GalArms"), g.arms, g.pitchTan, g.armPhase, g.armStrength);
+  glUniform2f(p.uniform("u_GalArmShape"), g.armSharpness, g.flocculence);
+  glUniform4f(p.uniform("u_GalBar"), g.barAngle, g.barLength, g.barStrength, g.bulgeStrength);
+  glUniform2f(p.uniform("u_GalDust"), g.dust, g.dustHeight);
+  glUniform3f(p.uniform("u_GalWarp"), g.warp, g.warpStart, g.warpPhase);
+  glUniform3f(p.uniform("u_GalWaves"), g.waves, g.waveLength, g.wavePhase);
+  float dir[kMaxExternalGalaxies][4] = {}, major[kMaxExternalGalaxies][4] = {};
+  float bright[kMaxExternalGalaxies] = {};
+  for (int i = 0; i < g.externalCount; i++) {
+    std::memcpy(dir[i], g.external[i].dir, sizeof(g.external[i].dir));
+    dir[i][3] = g.external[i].radius;
+    std::memcpy(major[i], g.external[i].major, sizeof(g.external[i].major));
+    major[i][3] = g.external[i].axisRatio;
+    bright[i] = g.external[i].brightness;
+  }
+  glUniform1i(p.uniform("u_ExternalCount"), g.externalCount);
+  glUniform4fv(p.uniform("u_ExternalDir"), kMaxExternalGalaxies, &dir[0][0]);
+  glUniform4fv(p.uniform("u_ExternalMajor"), kMaxExternalGalaxies, &major[0][0]);
+  glUniform1fv(p.uniform("u_ExternalBrightness"), kMaxExternalGalaxies, bright);
+}
+
+void Baker::begin(CubemapTarget& target, const Scene& s, const std::vector<Star>& stars,
+                  const Look& look) {
   target_ = &target;
   scene_ = s;
   look_ = look;
   int supersample = 1;
   int size = target.size() * supersample;
   if (size != marchSize_) {
+    allocTexture2D(tau_[0], size);
+    allocTexture2D(tau_[1], size);
     glBindTexture(GL_TEXTURE_2D, 0);
     marchSize_ = size;
   }
+  // Six vertices a star, every one carrying the whole star: GL 3.3 core has
+  // instancing, but at a few tens of thousands of stars the duplication is a
+  // few megabytes, once per bake, and keeps the star pass a plain draw.
+  std::vector<float> v(stars.size() * 6 * kStarFloats);
+  for (size_t i = 0; i < stars.size(); i++) {
+    for (int k = 0; k < 6; k++) {
+      float* o = &v[(i * 6 + k) * kStarFloats];
+      std::memcpy(&o[0], stars[i].dir, sizeof(stars[i].dir));
+      o[3] = stars[i].distance;
+      std::memcpy(&o[4], stars[i].flux, sizeof(stars[i].flux));
+    }
+  }
+  glBindBuffer(GL_ARRAY_BUFFER, starBuffer_);
+  glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(v.size() * sizeof(float)), v.data(),
+               GL_STATIC_DRAW);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  starVertices_ = static_cast<int>(stars.size() * 6);
   tiles_ = cubemapTiles(size);
   tilesPerFace_ = static_cast<int>(tiles_.size() / 6);
   next_ = 0;
@@ -264,6 +408,9 @@ void Baker::uploadBake() {
   glUniform1i(p.uniform("u_BubbleCount"), scene_.bubbleCount);
   glUniform1fv(p.uniform("u_BubbleBound"), kMaxBubbles, bound);
   glUniform1f(p.uniform("u_FaceSize"), static_cast<float>(marchSize_));
+  float depth[kTauLayers - 1];
+  tauDepths(depth);
+  glUniform1fv(p.uniform("u_TauDepth"), kTauLayers - 1, depth);
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_3D, lightTexture_);
   glUniform1i(p.uniform("u_Light"), 1);
@@ -282,6 +429,10 @@ void Baker::uploadBake() {
   glUniform1f(p.uniform("u_RimShadow"), look.rimShadow);
   glUniform1f(p.uniform("u_IonOpacity"), look.ionOpacity);
   glUniform3fv(p.uniform("u_Reddening"), 1, look.reddening);
+  glActiveTexture(GL_TEXTURE3);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, galaxyTexture_);
+  glUniform1i(p.uniform("u_GalaxySky"), 3);
+  glUniform1f(p.uniform("u_GalaxyGlow"), galaxyTexture_ ? look.galaxyGlow : 0.0f);
   glUniform1f(p.uniform("u_Exposure"), look.exposure);
 }
 
@@ -289,8 +440,68 @@ void Baker::attachMarch() {
   const Tile& tile = tiles_[next_];
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                          GL_TEXTURE_CUBE_MAP_POSITIVE_X + tile.face, target_->texture(), 0);
-  glDrawBuffer(GL_COLOR_ATTACHMENT0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, tau_[0], 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, tau_[1], 0);
+  static const GLenum buffers[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,
+                                    GL_COLOR_ATTACHMENT2};
+  glDrawBuffers(3, buffers);
   glViewport(0, 0, marchSize_, marchSize_);
+}
+
+// Every star into face f, over the march's result for that face, reading back
+// the depths the march recorded for it.
+void Baker::drawStars(int face) {
+  const Program& p = stars_;
+  const Look& look = look_;
+  if (!starVertices_) {
+    return;
+  }
+  glDrawBuffer(GL_COLOR_ATTACHMENT0);
+  glViewport(0, 0, target_->size(), target_->size());
+  glUseProgram(p.id());
+  glUniform3fv(p.uniform("u_Reddening"), 1, look.reddening);
+  float depth[kTauLayers - 1];
+  tauDepths(depth);
+  glUniform1fv(p.uniform("u_TauDepth"), kTauLayers - 1, depth);
+  glUniform1i(p.uniform("u_Face"), face);
+  glUniform1f(p.uniform("u_FaceSize"), static_cast<float>(target_->size()));
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, tau_[0]);
+  glUniform1i(p.uniform("u_Tau0"), 1);
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D, tau_[1]);
+  glUniform1i(p.uniform("u_Tau1"), 2);
+  // Exposure too, so that one dial brightens the whole sky together.
+  glUniform1f(p.uniform("u_Brightness"), look.starBrightness * look.exposure * kStarFluxUnit);
+  glUniform1f(p.uniform("u_Cutoff"), 0.002f);
+  glUniform1f(p.uniform("u_HaloAngle"), look.starHaloDegrees * 3.14159265358979323846f / 180.0f);
+  glUniform1f(p.uniform("u_Halo"), look.starHalo);
+  glUniform1f(p.uniform("u_Spike"), look.starSpike);
+  glUniform1f(p.uniform("u_SpikeFlux"),
+              look.starSpikeFlux * look.starBrightness * look.exposure * kStarFluxUnit);
+
+  glEnable(GL_BLEND);
+  // Added onto the colour; the alpha, the transmittance, is left as it was.
+  glBlendFuncSeparate(GL_ONE, GL_ONE, GL_ZERO, GL_ONE);
+  glBindVertexArray(starVertexArray_);
+  glBindBuffer(GL_ARRAY_BUFFER, starBuffer_);
+  auto attribute = [&](const char* name, int size, int offset) {
+    GLint loc = glGetAttribLocation(p.id(), name);
+    if (loc < 0) {
+      return;
+    }
+    glEnableVertexAttribArray(static_cast<GLuint>(loc));
+    glVertexAttribPointer(static_cast<GLuint>(loc), size, GL_FLOAT, GL_FALSE,
+                          kStarFloats * sizeof(float),
+                          reinterpret_cast<void*>(static_cast<size_t>(offset) * sizeof(float)));
+  };
+  attribute("a_Dir", 3, 0);
+  attribute("a_Distance", 1, 3);
+  attribute("a_Flux", 3, 4);
+  glDrawArrays(GL_TRIANGLES, 0, starVertices_);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glDisable(GL_BLEND);
+  glBlendFunc(GL_ONE, GL_ZERO);
 }
 
 bool Baker::step() {
@@ -320,6 +531,7 @@ bool Baker::step() {
   // The face is complete, and with it the depths its stars need. Denoised
   // first, so the filter never softens a star.
   if (next_ % static_cast<size_t>(tilesPerFace_) == 0) {
+    drawStars(tile.face);
   }
   // Wait for the tile, so the driver never holds a queue of them that together
   // run long enough to trip its watchdog.

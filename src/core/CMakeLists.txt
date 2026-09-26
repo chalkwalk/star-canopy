@@ -2,8 +2,12 @@
 # the passes that evaluate the gas).
 set(STARCANOPY_SHADERS
   ${CMAKE_CURRENT_SOURCE_DIR}/shaders/field.glsl
+  ${CMAKE_CURRENT_SOURCE_DIR}/shaders/galaxy.glsl
   ${CMAKE_CURRENT_SOURCE_DIR}/shaders/light.shader
   ${CMAKE_CURRENT_SOURCE_DIR}/shaders/bake.shader
+  ${CMAKE_CURRENT_SOURCE_DIR}/shaders/galaxy.shader
+  ${CMAKE_CURRENT_SOURCE_DIR}/shaders/galaxy_probe.shader
+  ${CMAKE_CURRENT_SOURCE_DIR}/shaders/stars.shader
   )
 
 # Shaders are compiled into the binary, so a render depends on nothing but the
@@ -24,6 +28,7 @@ add_library(starcanopy_core STATIC
   bake.cpp
   cubemap.cpp
   cubemap_target.cpp
+  galaxy.cpp
   gl_context.cpp
   noise.cpp
   pfm.cpp
@@ -32,6 +37,7 @@ add_library(starcanopy_core STATIC
   settings.cpp
   shader.cpp
   sky.cpp
+  stars.cpp
   tiles.cpp
   ${embedded})
 target_include_directories(starcanopy_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

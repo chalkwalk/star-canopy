@@ -64,16 +64,28 @@ uniform float u_RimShadow;	/* fine self shadowing toward the cluster; 0 is off *
 uniform float u_IonOpacity;
 uniform vec3 u_Reddening;	/* relative extinction per channel */
 
+/* The galaxy's glow as seen from here, baked separately and far smaller; see
+ * galaxy.shader.  It lies beyond every nebula. */
+uniform samplerCube u_GalaxySky;
+uniform float u_GalaxyGlow;
 
 /* A cluster's light as if spread over a core this size, squared, in bubble radii.  A point
  * source's inverse square runs to infinity at the stars, and any gas near them burns white;
  * a real association is tens of parsecs across anyway. */
 #define NSKY_CORE2 0.04
+#define NSKY_TAU_LAYERS 8
 
+/* The distances, in sky units, at which the optical depth so far is recorded for the star
+ * pass.  The last layer is the whole line of sight and needs no distance. */
+uniform float u_TauDepth[NSKY_TAU_LAYERS - 1];
 
 uniform float u_Exposure;
 
 out vec4 f_FragColor;
+/* Optical depth, at the green channel's extinction, out to each of u_TauDepth and then to
+ * infinity.  Bound to colour attachments 1 and 2 by name before linking; see bake.cpp. */
+out vec4 f_Tau0;
+out vec4 f_Tau1;
 
 vec3 face_direction(int face, vec2 st)
 {
@@ -179,6 +191,10 @@ void main()
 	float jitter = start_jitter(gl_FragCoord.xy + vec2(float(u_Face) * 37.0, 0.0));
 	float enter[NSKY_MAX_BUBBLES], leave[NSKY_MAX_BUBBLES];
 	int order[NSKY_MAX_BUBBLES];
+	/* Optical depth so far at each recorded distance, for the stars; filled in as the
+	 * march passes each one. */
+	float tau_at[NSKY_TAU_LAYERS];
+	int recorded = 0;
 	vec3 transmit = vec3(1.0), glow = vec3(0.0), base, haze;
 	int n = 0, i, j, k, c;
 	bool opaque = false;
@@ -226,10 +242,17 @@ void main()
 		 * recorded by then, whether it was a long one, and how far the fine stride must
 		 * hold after one landed in gas; see below. */
 		float s_prev = s, fine_until = s;
+		int recorded_prev = recorded;
 		bool was_long = false;
 
 		capsule_mask(b, origin, d, s, s_end);
 
+		/* Nothing lies between bubbles, so any distance passed getting here has the
+		 * depth there was on leaving the last one. */
+		while (recorded < NSKY_TAU_LAYERS - 1 && u_TauDepth[recorded] <= enter[k]) {
+			tau_at[recorded] = -log(max(transmit.g, 1e-6));
+			recorded++;
+		}
 
 		for (i = 0; i < u_MaxSteps && s < s_end; i++) {
 			vec3 p = origin + d * s;
@@ -251,6 +274,7 @@ void main()
 			if (was_long && g.shell + g.cavity >= 0.05) {
 				fine_until = s;
 				s = s_prev;
+				recorded = recorded_prev;
 				was_long = false;
 				continue;
 			}
@@ -402,15 +426,30 @@ void main()
 				transmit *= att;
 			}
 			s_prev = s;
+			recorded_prev = recorded;
 			s += ds;
+			while (recorded < NSKY_TAU_LAYERS - 1 &&
+					u_TauDepth[recorded] <= s * radius) {
+				tau_at[recorded] = -log(max(transmit.g, 1e-6));
+				recorded++;
+			}
 			if (max(transmit.r, max(transmit.g, transmit.b)) < 0.002) {
 				opaque = true;
 				break;
 			}
 		}
 	}
+	/* Whatever is past the gas carries the whole line of sight's depth. */
+	for (; recorded < NSKY_TAU_LAYERS; recorded++)
+		tau_at[recorded] = -log(max(transmit.g, 1e-6));
+
+	/* Behind everything, the galaxy's glow.  The stars are not drawn here; see
+	 * stars.shader. */
+	base = texture(u_GalaxySky, dir).rgb * u_GalaxyGlow * u_Exposure;
 	glow *= u_Exposure;
-	f_FragColor = vec4(glow, dot(transmit, vec3(1.0 / 3.0)));
+	f_FragColor = vec4(base * transmit + glow, dot(transmit, vec3(1.0 / 3.0)));
+	f_Tau0 = vec4(tau_at[0], tau_at[1], tau_at[2], tau_at[3]);
+	f_Tau1 = vec4(tau_at[4], tau_at[5], tau_at[6], tau_at[7]);
 }
 
 #endif

@@ -24,6 +24,10 @@ struct Look {
   float reddening[3];
   float rimShadow;
   float ionOpacity, dustOpacity;
+  float starBrightness, starHalo, starHaloDegrees;
+  float starSpike;      // share of a spiked star's light in its spikes
+  float starSpikeFlux;  // stars brighter than this get spikes
+  float galaxyGlow;
 
   // The march.
   float stepFrac;

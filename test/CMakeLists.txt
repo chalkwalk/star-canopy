@@ -1,4 +1,5 @@
 set(tests tiles pfm noise scene settings bake)
+list(APPEND tests galaxy)
 foreach(name ${tests})
   add_executable(test_${name} test_${name}.cpp)
   target_link_libraries(test_${name} PRIVATE starcanopy_core starcanopy_warnings)
@@ -21,6 +22,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 add_test(NAME bake_window COMMAND test_bake window)
 set_tests_properties(bake_window PROPERTIES SKIP_RETURN_CODE 77)
+add_test(NAME galaxy COMMAND test_galaxy)
 
 add_test(NAME cli_bake
   COMMAND starcanopy bake --size 32 --set seed=3 --context auto --out ${scratch})

@@ -1,0 +1,86 @@
+#pragma once
+
+#include <cstdint>
+
+namespace starcanopy {
+
+// The galaxy the sky is seen from inside, as a 3D density, so the sky is what
+// it would be from where the observer actually sits rather than a stripe
+// painted round it.
+//
+// Seen from inside, a galaxy is not a uniform band. Its disc is exponential in
+// radius and flares -- thickens -- outward; young stars and dust are thinner
+// still and gather in the spiral arms; there may be a bar and there is a bulge;
+// the outer disc is warped, up on one side and down on the other, and rippled
+// by bending waves. Every one of those shows from inside: the arms as bright
+// knots where the line of sight runs along one, the dust as a rift down the
+// band, the warp as a band that is not a great circle, and the observer's own
+// position as where the light is. Near the centre the bulge fills the sky; out
+// at the edge nearly all the light is on one side.
+//
+// Units are kiloparsecs in the galaxy's own frame: centre at the origin, disc
+// in the xy plane. The same density is evaluated in galaxy.glsl for the glow
+// and here for the stars: one specification, two twins, tested against each
+// other (PRINCIPLES §13).
+
+enum GalaxyStyle {
+  kBarredSpiral,  // a bar, and two or four arms off its ends
+  kGrandDesign,   // two strong, continuous arms; no bar to speak of
+  kFlocculent,    // many short, broken arm fragments
+};
+
+constexpr int kMaxExternalGalaxies = 8;
+
+struct GalaxyParams {
+  int style = kBarredSpiral;
+  // The Sun is at about three scale lengths; 3.5 is out toward the edge, where
+  // the galaxy's light is decidedly on one side of the sky.
+  float observerRadius = 3.5f;  // from the centre, in disc scale lengths
+  float observerHeight = 0.03f;  // above the midplane, kpc
+  float dust = 1.0f;             // multiplies the dust
+  float warp = 1.0f;             // multiplies the warp
+  float waves = 1.0f;            // multiplies the bending waves
+  int externalGalaxies = 4;      // other galaxies, far off
+};
+
+struct ExternalGalaxy {
+  float dir[3];
+  float major[3];     // the long axis, perpendicular to dir
+  float radius;       // angular, radians
+  float axisRatio;    // minor over major
+  float brightness;
+};
+
+struct Galaxy {
+  float rot[9];       // sky direction -> galaxy frame, row major
+  float observer[3];  // kpc, galaxy frame
+  float scaleLength;  // of the disc, kpc
+  float scaleHeight;  // of the old disc at the observer's radius...
+  float flareStart, flareLength;  // ...growing as exp((R - start) / length) beyond
+  float edge;                     // where the disc is truncated, kpc
+  float arms, pitchTan, armPhase, armStrength;
+  float armSharpness, flocculence;
+  float barAngle, barLength, barStrength, bulgeStrength;
+  float dust, dustHeight;
+  float warp, warpStart, warpPhase;
+  float waves, waveLength, wavePhase;
+  int externalCount;
+  ExternalGalaxy external[kMaxExternalGalaxies];
+};
+
+struct GalaxySample {
+  float old;    // old disc, bar and bulge: warm light
+  float young;  // the arms' young stars: blue light
+  float dust;   // extinction per kpc
+};
+
+Galaxy generateGalaxy(uint32_t seed, const GalaxyParams& p);
+
+// The density at p, kpc in the galaxy frame. Must match gal_density() in
+// galaxy.glsl.
+GalaxySample galaxyDensity(const Galaxy& g, const float p[3]);
+
+// A sky direction into the galaxy frame.
+void galaxyToFrame(const Galaxy& g, const float sky[3], float out[3]);
+
+}  // namespace starcanopy

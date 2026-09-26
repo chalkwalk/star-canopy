@@ -12,6 +12,8 @@ namespace starcanopy {
 namespace {
 
 const char* const kLineColorNames[] = {"natural", "hubble-sho", "hoo"};
+const char* const kOnOffNames[] = {"off", "on"};
+const char* const kGalaxyStyleNames[] = {"barred-spiral", "grand-design", "flocculent"};
 
 // Line colours per palette: [O III], H-alpha, [S II].
 //
@@ -96,6 +98,30 @@ const Dial kDials[] = {
   REAL("dust-opacity", "extra extinction of the dark clouds", dustOpacity, 0.0f, 100.0f),
   REAL("rim-shadow", "fine self shadowing, for bright rims; 0 is off", rimShadow, 0.0f, 6.0f),
 
+  REAL("star-brightness", "all the stars together", starBrightness, 0.0f, 1000.0f),
+  INT("star-count", "field stars, drawn from the galaxy about the observer", starCount, 100.0f,
+      400000.0f),
+  REAL("star-reach", "kpc; nearer stars are points, further ones glow", starReach, 0.1f, 10.0f),
+  REAL("nebula-scale", "kpc per sky unit: the main bubble's radius", nebulaScale, 0.005f, 1.0f),
+  REAL("cluster-stars", "the lighting clusters' own stars", clusterStars, 0.0f, 100.0f),
+  INT("young", "fainter young stars about each cluster", young, 0.0f, 500.0f),
+  REAL("star-halo", "fraction of a star's light in its halo", starHalo, 0.0f, 1.0f),
+  REAL("star-halo-deg", "the halo's angular radius", starHaloDegrees, 0.02f, 10.0f),
+  REAL("spike", "fraction of the brightest stars' light in diffraction spikes", spike, 0.0f, 0.5f),
+  REAL("spike-flux", "how bright a star must be to get spikes", spikeFlux, 1.0f, 100000.0f),
+  CHOICE("nebula", "the nebula itself; off shows the galaxy and stars alone", nebula, kOnOffNames),
+  CHOICE("galaxy-style", "the galaxy's structure", galaxyStyle, kGalaxyStyleNames),
+  REAL("galaxy-radius",
+       "our distance from the galaxy's centre, in disc scale lengths; the Sun is 3",
+       galaxyRadius, 0.0f, 8.0f),
+  REAL("galaxy-height", "kpc above the galaxy's midplane", galaxyHeight, -5.0f, 5.0f),
+  REAL("galaxy-glow", "the unresolved light of the galaxy's distant stars", galaxyGlow, 0.0f, 10.0f),
+  REAL("galaxy-dust", "the galaxy's dust, which makes the rift", galaxyDust, 0.0f, 20.0f),
+  REAL("galaxy-warp", "how much the outer disc is warped", galaxyWarp, 0.0f, 5.0f),
+  REAL("galaxy-waves", "the bending waves rippling the outer disc", galaxyWaves, 0.0f, 5.0f),
+  INT("external-galaxies", "other galaxies, far beyond this one", externalGalaxies, 0.0f,
+      static_cast<float>(kMaxExternalGalaxies)),
+  INT("galaxy-res", "texels per face of the galaxy's glow", galaxyRes, 64.0f, 2048.0f),
 
   REAL("exposure", "scales the nebula before the tonemapper", exposure, 0.0001f, 100.0f),
   REAL("step-frac", "march step as a fraction of the shell's thickness", stepFrac, 0.02f, 1.0f),
@@ -243,12 +269,36 @@ Sky buildSky(const Settings& s) {
   l.rimShadow = s.rimShadow;
   l.ionOpacity = s.ionOpacity;
   l.dustOpacity = s.dustOpacity;
+  l.starBrightness = s.starBrightness;
+  l.starHalo = s.starHalo;
+  l.starHaloDegrees = s.starHaloDegrees;
+  l.starSpike = s.spike;
+  l.starSpikeFlux = s.spikeFlux;
+  l.galaxyGlow = s.galaxyGlow;
   l.stepFrac = s.stepFrac;
   l.maxSteps = s.maxSteps;
   l.lightRes = s.lightRes;
   l.lightSteps = s.lightSteps;
   l.exposure = s.exposure;
 
+  GalaxyParams& g = sky.galaxy;
+  g.style = s.galaxyStyle;
+  g.observerRadius = s.galaxyRadius;
+  g.observerHeight = s.galaxyHeight;
+  g.dust = s.galaxyDust;
+  g.warp = s.galaxyWarp;
+  g.waves = s.galaxyWaves;
+  g.externalGalaxies = s.externalGalaxies;
+  sky.galaxyRes = s.galaxyRes;
+
+  StarParams& st = sky.stars;
+  st.count = s.starCount;
+  st.reach = s.starReach;
+  st.kpcPerSkyUnit = s.nebulaScale;
+  std::memcpy(st.reddening, l.reddening, sizeof(st.reddening));
+  st.youngPerCluster = s.young;
+  st.clusterBrightness = s.clusterStars;
+  sky.nebula = s.nebula != 0;
   return sky;
 }
 

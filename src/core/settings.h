@@ -1,7 +1,9 @@
 #pragma once
 
+#include "galaxy.h"
 #include "look.h"
 #include "scene.h"
+#include "stars.h"
 
 #include <cstdint>
 #include <string>
@@ -65,6 +67,29 @@ struct Settings {
   float dustOpacity = 6.0f;
   float rimShadow = 2.0f;
 
+  // The stars and the galaxy.
+  float starBrightness = 0.55f;
+  int starCount = 30000;
+  float starReach = 1.5f;
+  float nebulaScale = 0.08f;
+  float clusterStars = 1.0f;
+  int young = 40;
+  float starHalo = 0.1f;
+  float starHaloDegrees = 0.4f;
+  // Diffraction spikes are off: baked into a sky they read as a telescope's
+  // artefact, not as a star.
+  float spike = 0.0f;
+  float spikeFlux = 5000.0f;
+  int nebula = 1;
+  int galaxyStyle = 0;  // barred spiral
+  float galaxyRadius = 3.5f;
+  float galaxyHeight = 0.03f;
+  float galaxyGlow = 1.5f;
+  float galaxyDust = 1.0f;
+  float galaxyWarp = 1.0f;
+  float galaxyWaves = 1.0f;
+  int externalGalaxies = 4;
+  int galaxyRes = 512;
 
   // The bake.
   float exposure = 0.18f;
@@ -101,6 +126,10 @@ std::string dialValue(const Settings& s, const Dial& d);
 struct Sky {
   SceneParams scene;
   Look look;
+  GalaxyParams galaxy;
+  StarParams stars;
+  int galaxyRes;
+  bool nebula;
 };
 
 Sky buildSky(const Settings& s);
