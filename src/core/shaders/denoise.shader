@@ -18,6 +18,30 @@
  * of a degree, so five of them is still finer than anything the eye can read as blur.
  *
  * Alpha, the transmittance, is filtered the same way.
+ *
+ * Last, the grade, which is where the sky gets its colour.  The physics gives each line its
+ * own fixed hue, so the sky is two or three colours mixed in different amounts wherever it is
+ * looked at, and its channels rise and fall together from the shadows to the highlights.
+ * Every reference sky measured, sampled in bands of lightness, has one hue family instead,
+ * and its colour moves with its lightness: saturated in the shadows and the
+ * midtones, paling toward cream or white in the highlights.  So the colour of each texel is
+ * moved toward a ramp indexed by its lightness AS DISPLAYED, through the display curve the
+ * look was judged through, keeping its luminance: the grade changes hue and never brightness.
+ *
+ * Then a shoulder on the brightest channel.  Past the curve's knee a channel clips to white,
+ * and a clipped highlight has lost its hue; eased toward a ceiling instead, every channel
+ * scaled together, the brightest gas stays the colour it was graded.  Stars are drawn after
+ * this and keep theirs.
+ *
+ * Dust gets a ramp of its own.  By lightness alone a dark cloud is just dark, and the ramp is
+ * near grey at its dark end, so every dark cloud came out neutral black -- ink on the glow.
+ * In the reference skies the dust is a different colour from the gas at the same lightness,
+ * dark brown against green, its lit edges cream and orange.  The march says how much of each
+ * texel's view the dust took, and the grade moves that far toward the dust's ramp.
+ *
+ * And the galaxy's light may be spared.  It is graded with the rest by default, the sky one
+ * palette; with less, the band keeps some of its own colour: what the grade made of the
+ * galaxy's light is taken back out and the light itself, as the march recorded it, put in.
  */
 
 #if defined(INCLUDE_VS)
@@ -34,8 +58,16 @@ void main()
 #if defined(INCLUDE_FS)
 
 uniform sampler2D u_Marched;
+uniform sampler2D u_GradeInfo;	/* per marched texel: dust's share of the view, the galaxy's light */
+uniform float u_GradeGalaxy;	/* how far the galaxy is graded, 0..1 */
 uniform int u_Supersample;	/* the march's texels per face texel, along each side */
 uniform float u_Strength;	/* how different in brightness a neighbour may be, relative */
+#define RAMP_STOPS 8		/* must match kRampStops */
+uniform vec3 u_Ramp[RAMP_STOPS];	/* colour by displayed lightness, luminance 1 each */
+uniform vec3 u_DustRamp[RAMP_STOPS];	/* the same, for dust */
+uniform float u_Grade;		/* how far toward the ramp, 0..1 */
+uniform float u_Shoulder;	/* the brightest channel's ceiling; 0 is none */
+uniform float u_DisplayGain;	/* the gain the display curve is applied with */
 
 out vec4 f_FragColor;
 
@@ -44,8 +76,42 @@ float luma(vec3 c)
 	return dot(c, vec3(0.2126, 0.7152, 0.0722));
 }
 
+/* Lightness as displayed, 0..1: the filmic curve the look was judged through -- Space Nerds
+ * In Space's, where the sky was first made, at its gain of 1.18.  See look.h. */
+float displayed(float y)
+{
+	float x = max(y - 0.004, 0.0);
+
+	return clamp(u_DisplayGain * (x * (6.2 * x + 0.5)) / (x * (6.2 * x + 1.7) + 0.06), 0.0, 1.0);
+}
 
 
+vec3 grade(vec3 c, vec4 info)
+{
+	vec3 ramp;
+	float dust = info.x;
+	float y = luma(c), f, m, k;
+	vec3 gas, dark;
+	int i;
+
+	if (u_Grade > 0.0 && y > 0.0) {
+		/* The ramp's stops are the centres of equal bands of lightness. */
+		f = clamp(displayed(y) * float(RAMP_STOPS) - 0.5, 0.0, float(RAMP_STOPS - 1));
+		i = min(int(f), RAMP_STOPS - 2);
+		gas = mix(u_Ramp[i], u_Ramp[i + 1], f - float(i));
+		dark = mix(u_DustRamp[i], u_DustRamp[i + 1], f - float(i));
+		ramp = mix(gas, dark, clamp(dust, 0.0, 1.0));
+		c = mix(c, y * ramp, u_Grade);
+		/* The galaxy's light, back as its own colour, luminance kept. */
+		c = max(c + u_Grade * (1.0 - u_GradeGalaxy) *
+				(info.yzw - luma(info.yzw) * ramp), vec3(0.0));
+	}
+	m = max(c.r, max(c.g, c.b));
+	k = 0.5 * u_Shoulder;
+	if (u_Shoulder > 0.0 && m > k)
+		c *= (k + (m - k) / (1.0 + (m - k) / (u_Shoulder - k))) / m;
+	return c;
+}
 
 /* Face texel p, as the mean of its block of marched texels. */
 vec4 face_texel(ivec2 p)
@@ -59,6 +125,18 @@ vec4 face_texel(ivec2 p)
 	return sum / float(u_Supersample * u_Supersample);
 }
 
+/* The same for what the grade needs to know. */
+vec4 face_info(ivec2 p)
+{
+	vec4 sum = vec4(0.0);
+	int x, y;
+
+	for (y = 0; y < u_Supersample; y++)
+		for (x = 0; x < u_Supersample; x++)
+			sum += texelFetch(u_GradeInfo, p * u_Supersample + ivec2(x, y), 0);
+	return sum / float(u_Supersample * u_Supersample);
+}
+
 void main()
 {
 	ivec2 at = ivec2(gl_FragCoord.xy);
@@ -68,10 +146,11 @@ void main()
 	float l0;
 	vec4 sum = vec4(0.0);
 	float total = 0.0;
+	vec4 info = vec4(0.0);
 	int x, y;
 
 	if (u_Strength <= 0.0) {
-		f_FragColor = centre;
+		f_FragColor = vec4(grade(centre.rgb, face_info(at)), centre.a);
 		return;
 	}
 	for (y = -1; y <= 1; y++) {
@@ -98,11 +177,12 @@ void main()
 					exp(-dl * dl / (u_Strength * u_Strength));
 
 			sum += c * w;
+			info += face_info(p) * w;
 			total += w;
 		}
 	}
 	sum /= total;
-	f_FragColor = sum;
+	f_FragColor = vec4(grade(sum.rgb, info / total), sum.a);
 }
 
 #endif

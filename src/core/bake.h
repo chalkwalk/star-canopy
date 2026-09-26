@@ -79,6 +79,9 @@ private:
   int starVertices_ = 0;
   // Where a face is marched before it is denoised into the cubemap.
   GLuint marched_ = 0;
+  // What the grade needs of each marched texel: how much of its view dust
+  // took, and the galaxy's light in it.
+  GLuint gradeInfo_ = 0;
   int marchSize_ = 0;
 
   // The bake in progress.

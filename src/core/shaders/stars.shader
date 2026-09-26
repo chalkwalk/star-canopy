@@ -33,6 +33,8 @@ uniform float u_Cutoff;		/* radiance below which a halo is not worth drawing */
 uniform float u_HaloAngle;	/* radians */
 uniform float u_Halo;		/* fraction of a star's light in its halo */
 uniform float u_SpikeFlux;	/* stars above this get diffraction spikes */
+uniform vec3 u_StarTint;	/* the grade's colour for stars, luminance 1 */
+uniform float u_StarGrade;	/* how far toward it, 0..1 */
 
 in vec3 a_Dir;
 in float a_Distance;
@@ -101,6 +103,7 @@ void main()
 	/* The galaxy's own dust is already in a_Flux, worked out when the star was placed. */
 	tau = tau_at(clamp(st * 0.5 + 0.5, 0.0, 1.0), a_Distance);
 	v_Flux = a_Flux * u_Brightness * exp(-tau * u_Reddening);
+	v_Flux = mix(v_Flux, dot(v_Flux, vec3(0.2126, 0.7152, 0.0722)) * u_StarTint, u_StarGrade);
 
 	/* How far out the light is worth drawing: the core's three sigma, or the radius at
 	 * which the halo's far wing, falling as the fourth power, drops under the cutoff. */

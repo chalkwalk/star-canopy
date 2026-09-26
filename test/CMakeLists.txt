@@ -1,5 +1,6 @@
 set(tests tiles pfm noise scene settings bake)
 list(APPEND tests galaxy)
+list(APPEND tests palette)
 foreach(name ${tests})
   add_executable(test_${name} test_${name}.cpp)
   target_link_libraries(test_${name} PRIVATE starcanopy_core starcanopy_warnings)
@@ -13,6 +14,7 @@ add_test(NAME pfm COMMAND test_pfm ${scratch})
 add_test(NAME noise COMMAND test_noise)
 add_test(NAME scene COMMAND test_scene)
 add_test(NAME settings COMMAND test_settings)
+add_test(NAME palette COMMAND test_palette)
 
 # The headless path must work wherever the tests run; the hidden window skips
 # when there is no display to open one on.

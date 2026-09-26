@@ -39,6 +39,18 @@ void tauDepths(float depth[kTauLayers - 1]) {
 // hues cluster at the palette's and they are at least as colourful as its gas.
 // Taken higher up the ramp, where it pales, a blue tint is too weak to outweigh
 // what is left of a star's own yellow-white, and the stars come out grey.
+void starTint(const Look& look, float tint[3]) {
+  for (int j = 0; j < 3; j++) {
+    tint[j] = 0.0f;
+    for (int i = 3; i <= 5; i++) {
+      tint[j] += look.ramp[i][j];
+    }
+  }
+  float lum = 0.2126f * tint[0] + 0.7152f * tint[1] + 0.0722f * tint[2];
+  for (int j = 0; j < 3; j++) {
+    tint[j] /= lum > 1e-6f ? lum : 1e-6f;
+  }
+}
 
 // Which side of bubble b is its dense wall, given the clusters' brightness-
 // weighted position in its frame; see nsky_blister(). Toward the clusters,
@@ -109,8 +121,8 @@ Baker::Baker() {
   std::string error;
   bool built = true;
   built = built && light_.build({"field.glsl", "light.shader"}, {"f_FragColor"}, error);
-  built = built && bake_.build({"field.glsl", "bake.shader"}, {"f_FragColor", "f_Tau0", "f_Tau1"},
-                               error);
+  built = built && bake_.build({"field.glsl", "bake.shader"},
+                               {"f_FragColor", "f_Tau0", "f_Tau1", "f_Grade"}, error);
   built = built && stars_.build({"stars.shader"}, {"f_FragColor"}, error);
   built = built && galaxy_.build({"field.glsl", "galaxy.glsl", "galaxy.shader"}, {"f_FragColor"},
                                  error);
@@ -150,6 +162,7 @@ Baker::~Baker() {
   glDeleteBuffers(1, &starBuffer_);
   glDeleteVertexArrays(1, &starVertexArray_);
   glDeleteTextures(1, &marched_);
+  glDeleteTextures(1, &gradeInfo_);
   glDeleteVertexArrays(1, &emptyVertexArray_);
   glDeleteFramebuffers(1, &framebuffer_);
 }
@@ -375,6 +388,7 @@ void Baker::begin(CubemapTarget& target, const Scene& s, const std::vector<Star>
     allocTexture2D(tau_[0], size);
     allocTexture2D(tau_[1], size);
     allocTexture2D(marched_, size);
+    allocTexture2D(gradeInfo_, size);
     glBindTexture(GL_TEXTURE_2D, 0);
     marchSize_ = size;
   }
@@ -437,6 +451,7 @@ void Baker::uploadBake() {
   glUniform1i(p.uniform("u_GalaxySky"), 3);
   glUniform1f(p.uniform("u_GalaxyGlow"), galaxyTexture_ ? look.galaxyGlow : 0.0f);
   glUniform1f(p.uniform("u_Exposure"), look.exposure);
+  glUniform3fv(p.uniform("u_Haze"), 1, look.haze);
 }
 
 void Baker::attachMarch() {
@@ -445,9 +460,10 @@ void Baker::attachMarch() {
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, marched_, 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, tau_[0], 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, tau_[1], 0);
-  static const GLenum buffers[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,
-                                    GL_COLOR_ATTACHMENT2};
-  glDrawBuffers(3, buffers);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gradeInfo_, 0);
+  static const GLenum buffers[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,
+                                    GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
+  glDrawBuffers(4, buffers);
   glViewport(0, 0, marchSize_, marchSize_);
 }
 
@@ -472,8 +488,18 @@ void Baker::denoiseFace(int face) {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, marched_);
   glUniform1i(p.uniform("u_Marched"), 0);
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, gradeInfo_);
+  glUniform1i(p.uniform("u_GradeInfo"), 1);
+  glUniform1f(p.uniform("u_GradeGalaxy"), look.gradeGalaxy);
+  glActiveTexture(GL_TEXTURE0);
+  glUniform3fv(p.uniform("u_DustRamp"), kRampStops, &look.dustRamp[0][0]);
   glUniform1f(p.uniform("u_Strength"), look.denoise);
   glUniform1i(p.uniform("u_Supersample"), marchSize_ / target_->size());
+  glUniform3fv(p.uniform("u_Ramp"), kRampStops, &look.ramp[0][0]);
+  glUniform1f(p.uniform("u_Grade"), look.grade);
+  glUniform1f(p.uniform("u_Shoulder"), look.shoulder);
+  glUniform1f(p.uniform("u_DisplayGain"), kDisplayGain);
   glBindVertexArray(emptyVertexArray_);
   glDrawArrays(GL_TRIANGLES, 0, 3);
 }
@@ -504,6 +530,10 @@ void Baker::drawStars(int face) {
   // Exposure too, so that one dial brightens the whole sky together.
   glUniform1f(p.uniform("u_Brightness"), look.starBrightness * look.exposure * kStarFluxUnit);
   glUniform1f(p.uniform("u_Cutoff"), 0.002f);
+  float tint[3];
+  starTint(look, tint);
+  glUniform3fv(p.uniform("u_StarTint"), 1, tint);
+  glUniform1f(p.uniform("u_StarGrade"), look.starGrade);
   glUniform1f(p.uniform("u_HaloAngle"), look.starHaloDegrees * 3.14159265358979323846f / 180.0f);
   glUniform1f(p.uniform("u_Halo"), look.starHalo);
   glUniform1f(p.uniform("u_Spike"), look.starSpike);

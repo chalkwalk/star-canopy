@@ -32,6 +32,7 @@ add_library(starcanopy_core STATIC
   galaxy.cpp
   gl_context.cpp
   noise.cpp
+  palette.cpp
   pfm.cpp
   random.cpp
   scene.cpp

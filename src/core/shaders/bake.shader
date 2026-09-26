@@ -79,6 +79,7 @@ uniform float u_GalaxyGlow;
  * pass.  The last layer is the whole line of sight and needs no distance. */
 uniform float u_TauDepth[NSKY_TAU_LAYERS - 1];
 
+uniform vec3 u_Haze;		/* the haze behind everything, after exposure */
 uniform float u_Exposure;
 
 out vec4 f_FragColor;
@@ -86,6 +87,13 @@ out vec4 f_FragColor;
  * infinity.  Bound to colour attachments 1 and 2 by name before linking; see bake.cpp. */
 out vec4 f_Tau0;
 out vec4 f_Tau1;
+/* What the grade needs to know here.  x: how much of the light from behind this texel dust
+ * took out, 0..1, which is what it knows the dust by -- a dark cloud against the glow is
+ * near 1, a lit front near 0.  yzw: the galaxy's light in it, as it reaches the eye, which
+ * the grade may give back its own colour.  Its colour, not merely its share of the light:
+ * restoring a share of the texel's physical colour restores the gas's too, and the faint
+ * wall in front of the band comes out magenta. */
+out vec4 f_Grade;
 
 vec3 face_direction(int face, vec2 st)
 {
@@ -196,6 +204,7 @@ void main()
 	float tau_at[NSKY_TAU_LAYERS];
 	int recorded = 0;
 	vec3 transmit = vec3(1.0), glow = vec3(0.0), base, haze;
+	float dusty = 0.0;
 	int n = 0, i, j, k, c;
 	bool opaque = false;
 
@@ -423,6 +432,12 @@ void main()
 				sigma_t = rho * u_Sigma * (1.0 + u_DustOpacity * g.dust) * u_Reddening;
 				att = exp(-sigma_t * ds);
 				glow += transmit * src * (vec3(1.0) - att) / max(sigma_t, vec3(1e-6));
+				/* The share of this step's extinction that is dust's, times what
+				 * of the light behind it the step took out and the eye would
+				 * otherwise have seen.  Summed, it is the part of the view this ray
+				 * lost to dust -- 1 for a dark cloud against the glow. */
+				/* Physical dust takes the gas's colour, lit as it is lit. */
+				dusty += transmit.g * (1.0 - att.g) * max(g.dust, g.core);
 				transmit *= att;
 			}
 			s_prev = s;
@@ -446,10 +461,26 @@ void main()
 	/* Behind everything, the galaxy's glow.  The stars are not drawn here; see
 	 * stars.shader. */
 	base = texture(u_GalaxySky, dir).rgb * u_GalaxyGlow * u_Exposure;
+	/* And a faint haze over the whole sky: the diffuse gas of the region, too thin and far
+	 * to have any shape but the largest.  Without it the sky between the clouds is black,
+	 * and the tonemapper's toe crushes everything under a few thousandths to exactly that;
+	 * every reference sky's darkest parts are a dim tint of its colour instead.
+	 *
+	 * It is all around, in front of the nebula as much as behind it, so it is added over
+	 * the gas and not seen through it.  Behind, a dark cloud blotted it out and came out
+	 * darker than the empty space beside it; in every one of the reference skyboxes the
+	 * darkest of a nebula is brighter than the sky around it.  Dust can still darken the
+	 * galaxy and the stars behind it, but not below the black of space. */
+	{
+		float n = nsky_noise(dir * 1.3 + 5.1).x + 0.5 * nsky_noise(dir * 3.1 + 9.7).y;
+
+		haze = u_Haze * exp(1.4 * n) * 0.8;
+	}
 	glow *= u_Exposure;
-	f_FragColor = vec4(base * transmit + glow, dot(transmit, vec3(1.0 / 3.0)));
+	f_FragColor = vec4(base * transmit + glow + haze, dot(transmit, vec3(1.0 / 3.0)));
 	f_Tau0 = vec4(tau_at[0], tau_at[1], tau_at[2], tau_at[3]);
 	f_Tau1 = vec4(tau_at[4], tau_at[5], tau_at[6], tau_at[7]);
+	f_Grade = vec4(dusty, texture(u_GalaxySky, dir).rgb * u_GalaxyGlow * u_Exposure * transmit);
 }
 
 #endif

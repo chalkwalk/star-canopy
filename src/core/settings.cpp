@@ -1,5 +1,7 @@
 #include "settings.h"
 
+#include "palette.h"
+
 #include <cerrno>
 #include <cmath>
 #include <cstdio>
@@ -12,6 +14,8 @@ namespace starcanopy {
 namespace {
 
 const char* const kLineColorNames[] = {"natural", "hubble-sho", "hoo"};
+const char* const kGradeNames[] = {"physical", "auto"};
+const char* const kFamilyNames[] = {"auto", "warm", "green", "teal", "blue"};
 const char* const kOnOffNames[] = {"off", "on"};
 const char* const kGalaxyStyleNames[] = {"barred-spiral", "grand-design", "flocculent"};
 
@@ -73,6 +77,9 @@ const Dial kDials[] = {
   REAL("dust-scale", "size of the dark clouds, cycles per bubble radius", dustScale, 0.2f, 40.0f),
   REAL("cavity-density", "the ionised gas filling the cavity, whose glow is the heart",
        cavityDensity, 0.0f, 0.5f),
+  REAL("cavity-spread",
+       "how far each seed's cavity strays from cavity-density, a factor either way; 1 none",
+       cavitySpread, 1.0f, 4.0f),
   REAL("blister", "how far the gas is blown out on the side away from the clusters, 0..1", blister,
        0.0f, 1.0f),
   INT("distant-count", "more distant nebulae beyond the main one", distantCount, 0.0f,
@@ -90,6 +97,20 @@ const Dial kDials[] = {
   REAL("line-h", "H-alpha strength", lineH, 0.0f, 4.0f),
   REAL("line-s", "[S II] strength", lineS, 0.0f, 4.0f),
   CHOICE("line-colors", "how the three lines map to colour", lineColors, kLineColorNames),
+  CHOICE("grade", "the sky's hue family: auto, by seed, or physical, the lines' own", grade,
+         kGradeNames),
+  REAL("grade-strength", "how far the colour goes toward the grade, 0..1", gradeStrength, 0.0f,
+       1.0f),
+  REAL("haze", "faint glow over all the sky: its darkest parts dim, not black", haze, 0.0f, 0.2f),
+  REAL("shoulder", "ceiling the brightest gas eases toward, not clipped; 0 is off", shoulder, 0.0f,
+       4.0f),
+  REAL("grade-dust", "how far the dust takes its own colour, 0..1", gradeDust, 0.0f, 1.0f),
+  CHOICE("palette-family", "the auto grade's family of colour; auto by seed", paletteFamily,
+         kFamilyNames),
+  REAL("grade-galaxy", "how far the galaxy's band is graded, 0..1; 0 its own colour", gradeGalaxy,
+       0.0f, 1.0f),
+  REAL("grade-stars", "how far the stars' colours go toward the grade's, 0..1", gradeStars, 0.0f,
+       1.0f),
   REAL("reflection", "dust scattering the stars' own light", reflection, 0.0f, 10.0f),
   REAL("anisotropy", "Henyey-Greenstein g of the dust; positive is forward", anisotropy, -0.9f,
        0.9f),
@@ -136,6 +157,21 @@ const Dial kDials[] = {
 #undef REAL
 #undef INT
 #undef CHOICE
+
+// A hash of the seed, -1..1: how much the cavity glows, to be spread either way
+// of its dial. The hot ionised gas filling the cavity is the smooth bright
+// heart of an HII region, the calm mass its structure is seen against. How
+// much of it is a matter of taste that differs from sky to sky: judged by eye
+// on three seeds, one was best as faint as 0.002 and two at 0.008.
+float cavityBySeed(uint32_t seed) {
+  uint32_t h = seed * 2654435761u + 0x7f4a7c15u;
+  h ^= h >> 15;
+  h *= 0x2c1b3c6du;
+  h ^= h >> 12;
+  h *= 0x297a2d39u;
+  h ^= h >> 15;
+  return static_cast<float>(h >> 8) / 8388608.0f - 1.0f;
+}
 
 }  // namespace
 
@@ -239,7 +275,7 @@ Sky buildSky(const Settings& s) {
   l.foldScale = s.foldScale;
   l.outerSharpness = s.outerSharpness;
   l.holeScale = s.holeScale;
-  l.cavityDensity = s.cavityDensity;
+  l.cavityDensity = s.cavityDensity * powf(s.cavitySpread, cavityBySeed(s.seed));
   l.blister = s.blister;
   l.detailScale = s.detailScale;
   l.detailGain = s.detailGain;
@@ -283,6 +319,19 @@ Sky buildSky(const Settings& s) {
   l.lightRes = s.lightRes;
   l.lightSteps = s.lightSteps;
   l.exposure = s.exposure;
+  PaletteChoice choice;
+  choice.grade = s.grade == 1;
+  choice.family = s.paletteFamily - 1;
+  choice.strength = s.gradeStrength;
+  choice.dust = s.gradeDust;
+  buildGrade(s.seed, choice, l);
+  l.starGrade = s.grade == 0 ? 0.0f : s.gradeStars;
+  l.gradeGalaxy = s.gradeGalaxy;
+  // The haze takes the grade's darkest colour.
+  for (int i = 0; i < 3; i++) {
+    l.haze[i] = s.haze * l.ramp[0][i];
+  }
+  l.shoulder = s.shoulder;
   l.denoise = s.denoise;
   l.supersample = s.supersample;
 

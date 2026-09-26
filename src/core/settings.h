@@ -48,6 +48,7 @@ struct Settings {
   float dust = 0.6f;
   float dustScale = 4.0f;
   float cavityDensity = 0.006f;
+  float cavitySpread = 1.7f;
   float blister = 0.8f;
   int distantCount = 3;
   float distantMinDegrees = 3.0f;
@@ -61,6 +62,14 @@ struct Settings {
   float lineH = 1.0f;
   float lineS = 0.5f;
   int lineColors = 0;  // natural
+  int grade = 1;  // auto
+  float gradeStrength = 1.0f;
+  float haze = 0.004f;
+  float shoulder = 0.8f;
+  float gradeDust = 1.0f;
+  int paletteFamily = 0;  // auto
+  float gradeGalaxy = 0.2f;
+  float gradeStars = 0.6f;
   float reflection = 0.2f;
   float anisotropy = 0.5f;
   float ionOpacity = 8.0f;
