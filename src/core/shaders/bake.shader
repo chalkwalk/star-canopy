@@ -416,7 +416,8 @@ void main()
 						phase(dot(lc * inversesqrt(max(d2, 1e-8)), d),
 							u_Anisotropy) *
 						exp(-tau[c] / u_IonOpacity *
-							(1.0 + u_DustOpacity * g.dust));
+							(u_DustVein == 2 ? 1.0 :
+							1.0 + u_DustOpacity * g.dust));
 				}
 
 
@@ -437,7 +438,8 @@ void main()
 				 * otherwise have seen.  Summed, it is the part of the view this ray
 				 * lost to dust -- 1 for a dark cloud against the glow. */
 				/* Physical dust takes the gas's colour, lit as it is lit. */
-				dusty += transmit.g * (1.0 - att.g) * max(g.dust, g.core);
+				dusty += transmit.g * (1.0 - att.g) *
+					(u_DustVein == 2 ? g.core : max(g.dust, g.core));
 				transmit *= att;
 			}
 			s_prev = s;

@@ -49,7 +49,8 @@ float depth_to(vec3 p, vec4 cluster)
 		nsky_gas g = nsky_coarse(u_Bubble, p + to_cluster *
 				((float(i) + 0.5) / float(u_LightSteps)));
 
-		tau += g.shell;
+		/* Physical dust is more opaque along the way too, so it casts shadows. */
+		tau += g.shell * (u_DustVein == 2 ? 1.0 + u_DustOpacity * g.dust : 1.0);
 	}
 	return tau * dt * u_Sigma * u_BubbleDensity[u_Bubble];
 }

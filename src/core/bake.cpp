@@ -241,6 +241,7 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
   glUniform1f(p.uniform("u_CloudDensity"), look.cloudDensity);
   glUniform1f(p.uniform("u_DustAmount"), look.dustAmount);
   glUniform1f(p.uniform("u_DustScale"), look.dustScale);
+  glUniform1i(p.uniform("u_DustVein"), look.dustStyle);
   glUniform1f(p.uniform("u_DustOpacity"), look.dustOpacity);
 
   glActiveTexture(GL_TEXTURE0);

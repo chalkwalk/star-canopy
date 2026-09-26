@@ -69,6 +69,7 @@ uniform float u_Contrast;	/* spread of the shell's column density; 0 is uniform 
 uniform float u_DustAmount;	/* how much of the shell is dark molecular cloud, 0..1 */
 uniform float u_DustScale;	/* size of the dark lanes, cycles per bubble radius */
 uniform float u_DustOpacity;	/* extra extinction of the dust */
+uniform int u_DustVein;		/* 0 lanes of flat dark, 1 soft veins, 2 physical; see nsky_coarse() */
 
 /* How big a sample is, in bubble radii: the finest detail it can hold without aliasing is
  * about twice this.  Set by nsky_density() for the view march; the light pass leaves it at
@@ -288,7 +289,20 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	lane = 1.0 - abs(n.z) * 4.0;
 	g.dust = u_DustAmount * smoothstep(0.2, 0.8, lane) * smoothstep(-0.15, 0.15, n.w) *
 		(1.0 - smoothstep(0.5, 2.0, s * s));
-	g.shell *= keep * (1.0 + 3.0 * g.dust);
+	/* Or soft veins: as dark along the centre line, but falling off either side of it as a
+	 * bell, and its lengths fading in and out rather than cut, so a lane is a vein through
+	 * the glow and not a flat black band laid over it -- see nsky_dust_glow() too. */
+	if (u_DustVein == 1)
+		g.dust = u_DustAmount * exp(-(n.z / 0.1) * (n.z / 0.1)) *
+			smoothstep(-0.35, 0.35, n.w) * (1.0 - smoothstep(0.5, 2.0, s * s));
+	/* Or physical dust: where the gas is thickest, its clumps, as molecular cloud is -- not
+	 * drawn on in lanes of its own.  It is gas like the rest, but more opaque: the light volume
+	 * counts it, so it shadows what lies beyond it, and it glows and scatters by whatever
+	 * light reaches it, so it is dark only where the light is blocked.  See the march. */
+	if (u_DustVein == 2)
+		g.dust = u_DustAmount * smoothstep(1.2, 2.8, clump) *
+			(1.0 - smoothstep(0.5, 2.0, s * s));
+	g.shell *= keep * (1.0 + (u_DustVein == 2 ? 1.0 : 3.0) * g.dust);
 
 	/* Pillars, only where they can be: near the wall.  Dense and dusty, since they are the
 	 * molecular gas the front has not yet eaten; the light volume sees them, so they shadow
@@ -334,6 +348,10 @@ nsky_gas nsky_coarse(int b, vec3 p)
  * to how far below the centre line's dust they are, so they are dark only along it. */
 float nsky_dust_glow(float dust)
 {
+	if (u_DustVein == 2)
+		return 1.0;
+	if (u_DustVein == 1)
+		return 1.0 - clamp(dust / max(u_DustAmount, 1e-3), 0.0, 1.0);
 	return 1.0 - smoothstep(0.1, 0.45, dust);
 }
 

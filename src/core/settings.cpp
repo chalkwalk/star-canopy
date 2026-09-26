@@ -17,6 +17,7 @@ const char* const kLineColorNames[] = {"natural", "hubble-sho", "hoo"};
 const char* const kGradeNames[] = {"physical", "auto"};
 const char* const kHueTypeNames[] = {"auto", "single", "fan", "split"};
 const char* const kFamilyNames[] = {"auto", "warm", "green", "teal", "blue"};
+const char* const kDustStyleNames[] = {"lanes", "vein", "physical"};
 const char* const kOnOffNames[] = {"off", "on"};
 const char* const kGalaxyStyleNames[] = {"barred-spiral", "grand-design", "flocculent"};
 
@@ -74,6 +75,9 @@ const Dial kDials[] = {
   REAL("cloud-distance", "farthest from the viewer, in bubble radii", cloudDistance, 0.05f, 1.5f),
   REAL("cloud-density", "relative to the shell's", cloudDensity, 0.1f, 20.0f),
   REAL("hardness", "0 soft eroded edges, 1 crisp ones", hardness, 0.0f, 1.0f),
+  CHOICE("dust-style",
+         "flat dark lanes, soft veins, or physical: in the densest gas, shadowing and lit",
+         dustStyle, kDustStyleNames),
   REAL("dust", "how much of the shell is dark molecular cloud", dust, 0.0f, 1.0f),
   REAL("dust-scale", "size of the dark clouds, cycles per bubble radius", dustScale, 0.2f, 40.0f),
   REAL("cavity-density", "the ionised gas filling the cavity, whose glow is the heart",
@@ -291,6 +295,7 @@ Sky buildSky(const Settings& s) {
   l.cloudDensity = s.cloudDensity;
   l.dustAmount = s.dust;
   l.dustScale = s.dustScale;
+  l.dustStyle = s.dustStyle;
   l.density = s.density;
   l.sigma = s.sigma;
   std::memcpy(l.lineColor, kLineColor[s.lineColors], sizeof(l.lineColor));

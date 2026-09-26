@@ -23,6 +23,7 @@ struct Look {
   float contrast;
   float pillarDensity, cloudDensity;
   float dustAmount, dustScale;
+  int dustStyle;  // 0 lanes, 1 veins, 2 physical
 
   // The light.
   float density, sigma;

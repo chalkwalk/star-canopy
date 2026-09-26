@@ -45,6 +45,7 @@ struct Settings {
   float cloudDistance = 0.35f;
   float cloudDensity = 3.0f;
   float hardness = 0.5f;
+  int dustStyle = 0;  // lanes
   float dust = 0.6f;
   float dustScale = 4.0f;
   float cavityDensity = 0.006f;
