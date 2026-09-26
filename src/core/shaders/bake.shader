@@ -150,7 +150,11 @@ vec3 light_depth(int b, vec3 p)
 	vec3 light = vec3(0.0);
 	int k;
 
-	return light_depth_at(b, p);
+	if (u_ClusterSize <= 0.0)
+		return light_depth_at(b, p);
+	for (k = 0; k < 6; k++)
+		light += exp(-0.3 * light_depth_at(b, p + tap[k] * 0.5 * u_ClusterSize));
+	return -log(max(light / 6.0, vec3(1e-12))) / 0.3;
 }
 
 /* Which of bubble b's capsules this ray, from origin along d in the bubble's frame, passes

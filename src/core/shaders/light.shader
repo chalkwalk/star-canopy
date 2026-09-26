@@ -55,6 +55,40 @@ float depth_to(vec3 p, vec4 cluster)
 	return tau * dt * u_Sigma * u_BubbleDensity[u_Bubble];
 }
 
+/* Depth to a cluster of stars, not a point.  From a point every lump casts a long, straight,
+ * hard shadow, which in a thick mass seen side on is a streak across the sky; a young cluster
+ * is dozens of stars spread over a region, and its shadows have penumbrae that widen with
+ * distance.  So the light arriving from five points over it -- its centre and a tetrahedron
+ * about that -- is averaged, the light and not the depth, and the depth of that average kept. */
+float depth_to_cluster(vec3 p, vec4 cluster)
+{
+	const vec3 corner[4] = vec3[4](vec3(1.0, 1.0, 1.0), vec3(1.0, -1.0, -1.0),
+					vec3(-1.0, 1.0, -1.0), vec3(-1.0, -1.0, 1.0));
+	vec3 h, axis;
+	float light, a;
+	int k;
+
+	if (u_ClusterSize <= 0.0 || cluster.w <= 0.0)
+		return depth_to(p, cluster);
+	/* The tetrahedron turned a different way in every voxel: five fixed points cast five
+	 * hard shadows, offset copies that stack into stripes; turned at random they fall in a
+	 * different place in each voxel, which the bake's lookup then averages into one soft
+	 * penumbra.  See light_depth() there. */
+	h = fract(sin(vec3(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)) + u_Slice * 311.7,
+				dot(gl_FragCoord.yx, vec2(39.346, 11.135)) + u_Slice * 173.3,
+				dot(gl_FragCoord.xy, vec2(73.156, 52.235)) + u_Slice * 97.1)) * 43758.5453);
+	axis = normalize(h * 2.0 - 1.0 + vec3(1e-3));
+	a = h.x * 6.2831853;
+	light = exp(-depth_to(p, cluster));
+	for (k = 0; k < 4; k++) {
+		vec3 c = corner[k] * 0.577;
+
+		/* Rodrigues: c turned by a about axis. */
+		c = c * cos(a) + cross(axis, c) * sin(a) + axis * dot(axis, c) * (1.0 - cos(a));
+		light += exp(-depth_to(p, vec4(cluster.xyz + c * u_ClusterSize, cluster.w)));
+	}
+	return -log(max(light / 5.0, 1e-12));
+}
 
 void main()
 {
@@ -62,9 +96,9 @@ void main()
 	vec3 p = (uvw * 2.0 - 1.0) * u_Bound;
 	int first = u_Bubble * NSKY_CLUSTERS;
 
-	f_FragColor = vec4(depth_to(p, u_Cluster[first]),
-				depth_to(p, u_Cluster[first + 1]),
-				depth_to(p, u_Cluster[first + 2]), 0.0);
+	f_FragColor = vec4(depth_to_cluster(p, u_Cluster[first]),
+				depth_to_cluster(p, u_Cluster[first + 1]),
+				depth_to_cluster(p, u_Cluster[first + 2]), 0.0);
 }
 
 #endif

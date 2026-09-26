@@ -18,6 +18,7 @@ const char* const kGradeNames[] = {"physical", "auto"};
 const char* const kHueTypeNames[] = {"auto", "single", "fan", "split"};
 const char* const kFamilyNames[] = {"auto", "warm", "green", "teal", "blue"};
 const char* const kDustStyleNames[] = {"lanes", "vein", "physical"};
+const char* const kFormNames[] = {"shell", "mass"};
 const char* const kOnOffNames[] = {"off", "on"};
 const char* const kGalaxyStyleNames[] = {"barred-spiral", "grand-design", "flocculent"};
 
@@ -85,6 +86,25 @@ const Dial kDials[] = {
   REAL("cavity-spread",
        "how far each seed's cavity strays from cavity-density, a factor either way; 1 none",
        cavitySpread, 1.0f, 4.0f),
+  CHOICE("form", "the main bubble: a thin shell, or a thick billowing mass round its cavity", form,
+         kFormNames),
+  REAL("mass-inner", "the mass's inner surface, in bubble radii", massInner, 0.1f, 0.95f),
+  REAL("mass-lobes", "how far the mass's lobes reach in over the cavity", massLobes, 0.0f, 0.8f),
+  REAL("mass-scale", "the mass's billows, cycles per bubble radius", massScale, 0.5f, 20.0f),
+  REAL("mass-density", "the mass's density, relative to the shell's", massDensity, 0.01f, 20.0f),
+  INT("mass-clusters", "clusters lighting a mass: one leaves most of it facing away, in shadow",
+      massClusters, 1.0f, static_cast<float>(kMaxClusters)),
+  REAL("mass-cavity", "a mass's cavity glow: gas in front of all of it, lifting its darks; 0 none",
+       massCavity, 0.0f, 0.5f),
+  REAL("mass-blister", "how far a mass's far side is blown out, 0..1", massBlister, 0.0f, 1.0f),
+  REAL("mass-cluster-size",
+       "a mass's clusters' radius, bubble radii: softens their shadows; 0 a point",
+       massClusterSize, 0.0f, 0.5f),
+  REAL("mass-dust", "how much of a mass is dust; blind, it lost to none three times", massDust,
+       0.0f, 1.0f),
+  REAL("mass-warp", "how far the fold's swirl bends the mass, 0..1", massWarp, 0.0f, 1.0f),
+  REAL("cluster-size", "a cluster's radius, bubble radii: softens its shadows; 0 a point",
+       clusterSize, 0.0f, 0.5f),
   REAL("blister", "how far the gas is blown out on the side away from the clusters, 0..1", blister,
        0.0f, 1.0f),
   INT("distant-count", "more distant nebulae beyond the main one", distantCount, 0.0f,
@@ -265,6 +285,14 @@ Sky buildSky(const Settings& s) {
   p.clusterOffset = s.clusterOffset;
   p.luminosity = s.luminosity;
   p.clusters = s.clusters;
+  // A mass is lit its own way: by one cluster, so most of it turns from the
+  // light and only part of it catches it. Two or three inside light its whole
+  // inner face like a lamp in a globe -- measured, three times the reference
+  // skies' share of middle tones -- and one without a glowing cavity, which
+  // lies in front of all of it, scored best of three lightings blind.
+  if (s.form == 1) {
+    p.clusters = s.massClusters;
+  }
   p.thickness = s.thickness;
   p.fold = s.fold;
   p.keep = s.keep;
@@ -283,8 +311,19 @@ Sky buildSky(const Settings& s) {
   l.foldScale = s.foldScale;
   l.outerSharpness = s.outerSharpness;
   l.holeScale = s.holeScale;
-  l.cavityDensity = s.cavityDensity * powf(s.cavitySpread, cavityBySeed(s.seed));
-  l.blister = s.blister;
+  l.cavityDensity = s.form == 1 ? s.massCavity
+                                : s.cavityDensity * powf(s.cavitySpread, cavityBySeed(s.seed));
+  // A mass has its own settings where they were tuned apart from the shell's,
+  // blind: less blister, soft shadows, and no dust, which lost to none three
+  // times.
+  l.blister = s.form == 1 ? s.massBlister : s.blister;
+  l.form = s.form;
+  l.massInner = s.massInner;
+  l.massLobes = s.massLobes;
+  l.massScale = s.massScale;
+  l.massDensity = s.massDensity;
+  l.massWarp = s.massWarp;
+  l.clusterSize = s.form == 1 ? s.massClusterSize : s.clusterSize;
   l.detailScale = s.detailScale;
   l.detailGain = s.detailGain;
   l.erosion = s.erosion;
@@ -293,7 +332,7 @@ Sky buildSky(const Settings& s) {
   l.contrast = s.contrast;
   l.pillarDensity = s.pillarDensity;
   l.cloudDensity = s.cloudDensity;
-  l.dustAmount = s.dust;
+  l.dustAmount = s.form == 1 ? s.massDust : s.dust;
   l.dustScale = s.dustScale;
   l.dustStyle = s.dustStyle;
   l.density = s.density;

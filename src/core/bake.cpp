@@ -231,6 +231,13 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
   glUniform1f(p.uniform("u_Blister"), look.blister);
   glUniform4fv(p.uniform("u_BubbleForm"), kMaxBubbles, &form[0][0]);
   glUniform1fv(p.uniform("u_BubbleDensity"), kMaxBubbles, density);
+  glUniform1i(p.uniform("u_Form"), look.form);
+  glUniform1f(p.uniform("u_MassInner"), look.massInner);
+  glUniform1f(p.uniform("u_MassLobes"), look.massLobes);
+  glUniform1f(p.uniform("u_MassScale"), look.massScale);
+  glUniform1f(p.uniform("u_MassDensity"), look.massDensity);
+  glUniform1f(p.uniform("u_MassWarp"), look.massWarp);
+  glUniform1f(p.uniform("u_ClusterSize"), look.clusterSize);
   glUniform1f(p.uniform("u_DetailScale"), look.detailScale);
   glUniform1f(p.uniform("u_DetailGain"), look.detailGain);
   glUniform1f(p.uniform("u_Erosion"), look.erosion);

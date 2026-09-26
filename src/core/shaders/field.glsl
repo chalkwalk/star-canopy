@@ -56,6 +56,13 @@ uniform float u_CavityDensity;	/* faint gas filling the cavity */
 /* Each bubble's dense side, unnormalised; zero for none.  See nsky_blister(). */
 uniform vec3 u_BlisterAxis[NSKY_MAX_BUBBLES];
 uniform float u_Blister;	/* how far the far side is blown out, 0..1 */
+/* The main bubble's form: 0 a thin shell, 1 a thick billowing mass.  See nsky_coarse(). */
+uniform int u_Form;
+uniform float u_MassInner;	/* the mass's inner surface, in bubble radii */
+uniform float u_MassLobes;	/* how far its lobes reach in from that, in bubble radii */
+uniform float u_MassScale;	/* its billows, cycles per bubble radius */
+uniform float u_MassDensity;	/* its density, relative to the shell's */
+uniform float u_MassWarp;	/* how far the fold warp bends it, 0..1 */
 /* Each bubble's squeeze along its own axes (1 or more) and outer edge hardness relative to
  * u_OuterSharpness.  See struct Bubble. */
 uniform vec4 u_BubbleForm[NSKY_MAX_BUBBLES];
@@ -69,6 +76,7 @@ uniform float u_Contrast;	/* spread of the shell's column density; 0 is uniform 
 uniform float u_DustAmount;	/* how much of the shell is dark molecular cloud, 0..1 */
 uniform float u_DustScale;	/* size of the dark lanes, cycles per bubble radius */
 uniform float u_DustOpacity;	/* extra extinction of the dust */
+uniform float u_ClusterSize;	/* a cluster's radius, bubble radii; 0 a point */
 uniform int u_DustVein;		/* 0 lanes of flat dark, 1 soft veins, 2 physical; see nsky_coarse() */
 
 /* How big a sample is, in bubble radii: the finest detail it can hold without aliasing is
@@ -243,6 +251,11 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	 * and wherever a fold runs along the line of sight the sheet is seen edge on and the
 	 * path through it is long -- which is what a filament in a real shell is. */
 	g.q = p + w * shape.y;
+	/* A mass is modelled, not folded: the fold's swirl, which gives a thin shell its
+	 * filaments, covers a thick one in deep waves, where the references' masses are blocked
+	 * out like clay.  Mostly straightened. */
+	if (u_Form == 1 && b == 0)
+		g.q = p + w * shape.y * u_MassWarp;
 	g.min_feature = 0.0;
 	g.near_pillar = 0.0;
 	g.near_width = 1.0;
@@ -256,6 +269,52 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	 * remnant's centre and fade over several times that toward it, which is the shock
 	 * running outward into cold gas with the hot interior behind it. */
 	g.shell = exp(-s * s * (s > 0.0 ? max(u_OuterSharpness * u_BubbleForm[b].w, 1.0) : 1.0));
+	/* Or, for the main bubble, a thick mass of rounded lumps round the glowing cavity.
+	 *
+	 * The reference skyboxes surround the eye with cloud: stretched, their darkest sky is the
+	 * faintly lit faces of billows almost everywhere, with the light breaking through in a
+	 * few places.  A thin shell cannot be that -- its holes show the smooth haze behind, not
+	 * more cloud, and every part of it is seen lit from the eye's side.  So here the gas fills
+	 * a thick layer from an inner surface out to the bubble's edge.  The inner surface is
+	 * pushed in by a low noise into lobes that reach over the cavity, in front of its glow,
+	 * as part of the one mass and not as clouds of their own.  Its lumps are a smooth noise
+	 * of a few octaves, in the density and on the surface.  Cleared about the viewer: gas at
+	 * the eye is fog over the whole sky. */
+	if (u_Form == 1 && b == 0) {
+		vec3 view = u_BubbleRot[b] * (-u_BubbleSphere[b].xyz / u_BubbleSphere[b].w);
+		/* The lobes from a noise of the point, not of its direction alone: of the direction,
+		 * the inner surface moves in and out the same all along each ray from the centre,
+		 * and every lobe is a prism standing on it, straight-sided, that from off the
+		 * centre shows as streaks and sawteeth.  Of the point, a lobe is a rounded mass. */
+		vec3 lq = g.q * 1.6 + o * 0.23, bq = g.q * u_MassScale + o * 0.41;
+		float lobe = nsky_noise(lq).x + 0.5 * nsky_noise(lq * 2.1 + 3.7).y;
+		float billow = 0.0, amp = 1.0, dens;
+		int k;
+
+		/* Smooth lumps, two octaves: the absolute value of a noise, which is round lumps
+		 * with creases between, reads as cauliflower, and more octaves as crumple. */
+		for (k = 0; k < 2; k++) {
+			billow += amp * 1.6 * nsky_noise(bq).x;
+			amp *= 0.4;
+			bq = bq * 2.07 + 7.3;
+		}
+		rin = clamp(u_MassInner - u_MassLobes * max(lobe + 0.15, 0.0), 0.1, 0.95);
+		dens = smoothstep(-0.02, 0.1, r - rin + 0.12 * billow) *
+			(1.0 - smoothstep(0.92, 1.05, r - 0.06 * billow));
+		dens *= smoothstep(-0.2, 0.4, billow + 0.2);
+		dens *= smoothstep(0.1, 0.3, length(p - view));
+		/* And about each cluster, whose winds have blown their surroundings clear: a star
+		 * buried in the mass lights nothing we can see. */
+		for (k = 0; k < NSKY_CLUSTERS; k++) {
+			vec4 cl = u_Cluster[b * NSKY_CLUSTERS + k];
+
+			if (cl.w > 0.0)
+				dens *= smoothstep(0.12, 0.35, length(p - cl.xyz));
+		}
+		g.shell = dens * u_MassDensity;
+		/* The dust keeps to the body of the mass, which is all of it now. */
+		s = 0.0;
+	}
 	/* Contrast ACROSS the shell's face.  A shell of even density is about one optical depth
 	 * through wherever it is looked at, so the whole sky comes out half veiled -- fog, with
 	 * nothing either clear or solid.  Real interstellar gas has a lognormal column density:
@@ -308,7 +367,7 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	 * molecular gas the front has not yet eaten; the light volume sees them, so they shadow
 	 * the wall behind, and the fine self shadowing lights their tips.  keep applies, so no
 	 * pillar stands in a hole with nothing to be rooted in. */
-	if (u_PillarRange[b].y > 0.0 &&
+	if (u_PillarRange[b].y > 0.0 && !(u_Form == 1 && b == 0) &&
 			(abs(r - 1.0) < 0.5 || length(p) < 0.85)) {
 		float core, width, drift;
 		float pillar = nsky_pillars(b, g.q, p, core, width, g.near_pillar, drift,
@@ -334,6 +393,10 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	 * the Rosette's centre is.  Filling the middle instead puts the densest gas where the
 	 * light is fiercest, and it burns out to white. */
 	g.cavity = u_CavityDensity * smoothstep(0.35, 0.95, r) * (1.0 - smoothstep(0.95, 1.1, r));
+	/* A mass's cavity is inside its inner surface, lobes and all. */
+	if (u_Form == 1 && b == 0)
+		g.cavity = u_CavityDensity * smoothstep(0.1, 0.6, r / rin) *
+				(1.0 - smoothstep(0.9, 1.05, r / rin));
 	/* Clumped the same way as the shell, from a noise of its own: the ionised gas glows in
 	 * patches, so it does not lay a veil over every gap in the shell. */
 	g.cavity *= exp(u_Contrast * 2.5 * contrast_noise) / exp(0.03 * u_Contrast * u_Contrast * 6.25);
