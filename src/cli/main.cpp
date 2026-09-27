@@ -1,4 +1,5 @@
 #include "gl_context.h"
+#include "macros.h"
 #include "project.h"
 #include "render.h"
 #include "settings.h"
@@ -14,21 +15,40 @@ namespace {
 
 const char kUsage[] =
     "usage: starcanopy new PROJECT.toml [--seed N] [--style mass|shell]\n"
-    "       starcanopy render PROJECT.toml [--set NAME=VALUE]... [--size N]\n"
-    "                         [--out DIR] [--context K]\n"
+    "       starcanopy render PROJECT.toml [--macro NAME=VALUE]... [--set NAME=VALUE]...\n"
+    "                         [--size N] [--out DIR] [--context K]\n"
+    "       starcanopy macros\n"
     "       starcanopy dials\n"
     "\n"
     "new     writes a new project, to render and to edit\n"
     "render  bakes a project's sky and writes it in the project's formats,\n"
     "        with NAME.json beside the images: the key light's direction and\n"
     "        what was made\n"
-    "  --set NAME=VALUE a raw dial, over the project's own, repeatable. For\n"
+    "  --macro NAME=VALUE a macro, -1 to 1, over the project's own, repeatable\n"
+    "  --set NAME=VALUE a raw dial's base, over the project's own, repeatable. For\n"
     "                   scripting, not steering: `starcanopy dials` lists them\n"
     "  --size N         texels per face, over the project's\n"
     "  --out DIR        where to write, over the project's\n"
     "  --context K      auto (default): EGL, else a hidden window; egl: headless\n"
     "                   only; window: a hidden SDL window, which needs a display\n"
+    "macros  lists the macros: what each does, and the dials it moves\n"
     "dials   lists every raw dial with its default and range\n";
+
+int listMacros() {
+  using namespace starcanopy;
+  int count = 0;
+  const Macro* m = macros(count);
+  for (int i = 0; i < count; i++) {
+    std::printf("%s\n  -1 %s .. 1 %s: %s\n", m[i].name, m[i].opposite, m[i].name, m[i].help);
+    for (int k = 0; k < m[i].bindingCount; k++) {
+      const Binding& b = m[i].bindings[k];
+      const char* unit = b.pull == Pull::Octaves ? " octaves" : "";
+      std::printf("    %-20s %+g%s at 1, %+g%s at -1\n", b.dial, static_cast<double>(b.up), unit,
+                  static_cast<double>(b.down), unit);
+    }
+  }
+  return 0;
+}
 
 int listDials() {
   using namespace starcanopy;
@@ -113,7 +133,16 @@ int render(int argc, char** argv) {
   for (int i = 3; i < argc; i++) {
     std::string arg = argv[i];
     bool hasValue = i + 1 < argc;
-    if (arg == "--set" && hasValue) {
+    if (arg == "--macro" && hasValue) {
+      std::string assignment = argv[++i];
+      size_t eq = assignment.find('=');
+      if (eq == std::string::npos ||
+          !setMacro(project.macros, assignment.substr(0, eq), assignment.substr(eq + 1), error)) {
+        std::fprintf(stderr, "starcanopy: %s\n",
+                     eq == std::string::npos ? "--macro wants NAME=VALUE" : error.c_str());
+        return 2;
+      }
+    } else if (arg == "--set" && hasValue) {
       std::string assignment = argv[++i];
       size_t eq = assignment.find('=');
       if (eq == std::string::npos ||
@@ -171,6 +200,9 @@ int main(int argc, char** argv) {
   }
   if (command == "new") {
     return newProject(argc, argv);
+  }
+  if (command == "macros") {
+    return listMacros();
   }
   if (command == "dials") {
     return listDials();

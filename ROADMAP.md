@@ -102,7 +102,8 @@ testable without a window and give the A/B tools in-context sheets at once.
 - [ ] Look by eye at the three dials the study saw change nothing -- the
       clusters' own stars (`young`, `cluster-stars`) and `external-galaxies` --
       before keeping or removing them
-- [ ] Macro table (`DESIGN.md` §5) and its resolution, with tests
+- [x] Macro table (`DESIGN.md` §5) and its resolution, with tests: `[macros]` in
+      projects, `render --macro`, `starcanopy macros`
 - [ ] First macro set, iterated with blind scoring
 - [ ] Styles: mass, shell, and the sparse compositions
 

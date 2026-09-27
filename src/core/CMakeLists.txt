@@ -32,6 +32,7 @@ add_library(starcanopy_core STATIC
   galaxy.cpp
   gl_context.cpp
   half.cpp
+  macros.cpp
   noise.cpp
   outputs.cpp
   palette.cpp

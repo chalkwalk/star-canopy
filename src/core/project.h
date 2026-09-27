@@ -1,5 +1,6 @@
 #pragma once
 
+#include "macros.h"
 #include "outputs.h"
 #include "settings.h"
 
@@ -20,7 +21,8 @@ constexpr int kLookVersion = 1;
 //   seed = 7
 //   style = "mass"           # mass | shell
 //
-//   [macros]                 # none exist yet
+//   [macros]                 # -1..1, 0 the seed's own sky: `starcanopy macros`
+//   open = 0.4
 //
 //   [overrides]              # raw dials, for scripting (fence #7)
 //   density = 1.2
@@ -41,10 +43,15 @@ constexpr int kLookVersion = 1;
 // ignored is a sky silently different from the one meant.
 struct Project {
   int look = kLookVersion;
+  // The dials' base values: the defaults, and the overrides over them. The
+  // macros move them from there; resolved() is the sky.
   Settings settings;
+  MacroValues macros;
   float yaw = 0.0f, pitch = 0.0f, roll = 0.0f;
   int size = 2048;
   OutputRequest output;
+
+  Settings resolved() const { return resolveMacros(settings, macros); }
 };
 
 bool loadProject(const std::string& path, Project& project, std::string& error);

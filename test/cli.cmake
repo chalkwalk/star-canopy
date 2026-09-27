@@ -23,7 +23,7 @@ string(REPLACE "yaw = 0.0" "yaw = 30.0" text "${text}")
 file(WRITE ${project} "${text}")
 
 execute_process(COMMAND ${STARCANOPY} render ${project} --size 32 --set exposure=0.2
-                RESULT_VARIABLE result)
+                --macro open=0.5 RESULT_VARIABLE result)
 if(NOT result EQUAL 0)
   message(FATAL_ERROR "render failed")
 endif()
@@ -34,7 +34,7 @@ foreach(f sky_px.exr sky_nz.exr sky_equirect.exr sky.ktx2 sky_px.png sky_cross.p
   endif()
 endforeach()
 file(READ ${SCRATCH}/cli/sky/sky.json sidecar)
-foreach(key "\"look\": 1" "\"seed\": 3" "\"yaw\": 30" "\"key_light\"" "\"light_travels\"")
+foreach(key "\"look\": 1" "\"seed\": 3" "\"macros\": {\"open\": 0.5}" "\"yaw\": 30" "\"key_light\"" "\"light_travels\"")
   string(FIND "${sidecar}" "${key}" at)
   if(at EQUAL -1)
     message(FATAL_ERROR "sidecar lacks ${key}")

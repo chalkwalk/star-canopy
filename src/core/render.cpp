@@ -34,6 +34,19 @@ bool writeSidecar(const std::string& path, const Project& p, const float light[3
       form = dialValue(p.settings, d[i]);
     }
   }
+  // The macros as set, in the table's order; those at 0 are left out.
+  std::string macroList;
+  int macroCount = 0;
+  const Macro* m = macros(macroCount);
+  for (int i = 0; i < macroCount; i++) {
+    auto it = p.macros.find(m[i].name);
+    if (it != p.macros.end() && it->second != 0.0f) {
+      char entry[64];
+      std::snprintf(entry, sizeof(entry), "%s\"%s\": %g", macroList.empty() ? "" : ", ", m[i].name,
+                    static_cast<double>(it->second));
+      macroList += entry;
+    }
+  }
   std::fprintf(f.get(),
                "{\n"
                "  \"generator\": \"StarCanopy\",\n"
@@ -41,6 +54,7 @@ bool writeSidecar(const std::string& path, const Project& p, const float light[3
                "  \"seed\": %u,\n"
                "  \"style\": \"%s\",\n"
                "  \"size\": %d,\n"
+               "  \"macros\": {%s},\n"
                "  \"orientation\": {\"yaw\": %g, \"pitch\": %g, \"roll\": %g},\n"
                "  \"key_light\": {\n"
                "    \"toward\": [%.6f, %.6f, %.6f],\n"
@@ -52,7 +66,7 @@ bool writeSidecar(const std::string& path, const Project& p, const float light[3
                "convention the faces are written in. Azimuth is measured from +z toward +x, "
                "elevation toward +y, as in the equirectangular map, whose centre looks along +z.\",\n"
                "  \"files\": [",
-               p.look, p.settings.seed, form.c_str(), p.size, p.yaw, p.pitch, p.roll, light[0],
+               p.look, p.settings.seed, form.c_str(), p.size, macroList.c_str(), p.yaw, p.pitch, p.roll, light[0],
                light[1], light[2], azimuth, elevation, -light[0], -light[1], -light[2]);
   for (size_t i = 0; i < files.size(); i++) {
     std::fprintf(f.get(), "%s\"%s\"", i ? ", " : "",
@@ -72,7 +86,8 @@ bool renderProject(const Project& p, std::vector<std::string>& written, std::str
     return false;
   }
   CubemapTarget target(p.size);
-  if (!bakeSky(p.settings, target, error)) {
+  Settings settings = p.resolved();
+  if (!bakeSky(settings, target, error)) {
     return false;
   }
   // Orientation is an output decision, not a regeneration (PRINCIPLES §14):
@@ -80,7 +95,7 @@ bool renderProject(const Project& p, std::vector<std::string>& written, std::str
   float r[9], light[3], turned[3];
   rotation(p.yaw, p.pitch, p.roll, r);
   Cubemap sky = rotate(target.read(), r);
-  keyLight(p.settings, light);
+  keyLight(settings, light);
   for (int i = 0; i < 3; i++) {
     turned[i] = r[i * 3 + 0] * light[0] + r[i * 3 + 1] * light[1] + r[i * 3 + 2] * light[2];
   }

@@ -53,9 +53,22 @@ int main(int argc, char** argv) {
   CHECK(p.look == kLookVersion && p.settings.seed == 42 && p.settings.form == 0);
   CHECK(p.size == 2048 && p.output.name == "night" && p.output.directory == dir + "/night");
   CHECK(p.output.formats.size() == 3);
+  // It lists every macro, at 0: the seed's own sky.
+  {
+    int count = 0;
+    const Macro* m = macros(count);
+    std::string text = projectText(42, "shell", "night");
+    for (int i = 0; i < count; i++) {
+      CHECK(text.find(std::string("\n") + m[i].name + " ") != std::string::npos);
+    }
+    CHECK(p.macros.size() == static_cast<size_t>(count));
+    for (const auto& [name, value] : p.macros) {
+      CHECK(value == 0.0f);
+    }
+  }
 
   // Everything a project can say.
-  CHECK(load("look = 1\nseed = 7\nstyle = \"mass\"\n[macros]\n"
+  CHECK(load("look = 1\nseed = 7\nstyle = \"mass\"\n[macros]\nopen = 0.5\nbright = -1\n"
              "[overrides]\ndensity = 1.5\nexposure = 0.25\nline-colors = \"hoo\"\nclouds = 2\n"
              "[orientation]\nyaw = 90\npitch = -10.5\n"
              "[output]\nsize = 512\ndirectory = \"/tmp/x\"\nname = \"a\"\n"
@@ -67,6 +80,9 @@ int main(int argc, char** argv) {
   CHECK(p.settings.seed == 7 && p.settings.form == 1);
   CHECK(p.settings.density == 1.5f && p.settings.exposure == 0.25f);
   CHECK(p.settings.lineColors == 2 && p.settings.clouds == 2);
+  // Macros are kept apart from the overrides, which are their base.
+  CHECK(p.macros.size() == 2 && p.macros["open"] == 0.5f && p.macros["bright"] == -1.0f);
+  CHECK(p.resolved().exposure == 0.125f && p.resolved().density == 1.5f);
   CHECK(p.yaw == 90.0f && p.pitch == -10.5f && p.roll == 0.0f);
   CHECK(p.size == 512 && p.output.directory == "/tmp/x" && p.output.name == "a");
   CHECK(p.output.formats.size() == 2 && p.output.equirectWidth == 1000);
@@ -86,7 +102,10 @@ int main(int argc, char** argv) {
   CHECK(fails("look = 1\n[overrides]\ndensity = 1000\n", "density"));
   CHECK(fails("look = 1\n[overrides]\nseed = 3\n", "seed"));
   CHECK(fails("look = 1\n[overrides]\nform = \"mass\"\n", "style"));
-  CHECK(fails("look = 1\n[macros]\nopen = 0.5\n", "macros"));
+  CHECK(fails("look = 1\n[macros]\nopne = 0.5\n", "opne"));
+  CHECK(fails("look = 1\n[macros]\nopen = 1.5\n", "open"));
+  CHECK(fails("look = 1\n[macros]\nopen = \"wide\"\n", "open"));
+  CHECK(fails("look = 1\n[macros]\ndensity = 1\n", "[overrides]"));
   CHECK(fails("look = 1\n[output]\nsize = 0\n", "size"));
   CHECK(fails("look = 1\n[output]\nname = \"a/b\"\n", "name"));
   CHECK(fails("look = 1\nseed = \n", "project.toml:2"));  // a TOML error, with its line

@@ -103,8 +103,14 @@ bool loadProject(const std::string& path, Project& p, std::string& error) {
     if (!m) {
       return fail("[macros] should be a table");
     }
-    if (!m->empty()) {
-      return fail("no macros exist yet; raw dials go in [overrides]");
+    for (const auto& [key, value] : *m) {
+      std::string name(key.str()), text;
+      if (!valueText(value, text) || !value.is_number()) {
+        return fail("[macros] " + name + " should be a number, -1 to 1");
+      }
+      if (!setMacro(p.macros, name, text, error)) {
+        return fail("[macros] " + error + "; raw dials go in [overrides]");
+      }
     }
   }
 
@@ -204,15 +210,28 @@ bool loadProject(const std::string& path, Project& p, std::string& error) {
 }
 
 std::string projectText(uint32_t seed, const std::string& style, const std::string& name) {
-  char text[2048];
-  std::snprintf(text, sizeof(text),
+  char head[512];
+  std::snprintf(head, sizeof(head),
                 "# A StarCanopy project: how a sky is made again.\n"
                 "\n"
                 "look = %d        # the look version it was made with; do not change it by hand\n"
                 "seed = %u\n"
                 "style = \"%s\"   # mass or shell\n"
                 "\n"
-                "[macros]        # none exist yet\n"
+                "[macros]        # -1..1; 0 is the seed's own sky\n",
+                kLookVersion, seed, style.c_str());
+  std::string text = head;
+  // Every macro, at 0, with its two ends: the controls, where they are seen.
+  int count = 0;
+  const Macro* m = macros(count);
+  for (int i = 0; i < count; i++) {
+    char line[256];
+    std::snprintf(line, sizeof(line), "%-12s = 0.0   # -1 %s .. 1 %s: %s\n", m[i].name,
+                  m[i].opposite, m[i].name, m[i].help);
+    text += line;
+  }
+  char tail[768];
+  std::snprintf(tail, sizeof(tail),
                 "\n"
                 "[overrides]     # raw dials, for scripting: `starcanopy dials` lists them\n"
                 "\n"
@@ -227,8 +246,8 @@ std::string projectText(uint32_t seed, const std::string& style, const std::stri
                 "name = \"%s\"\n"
                 "# exr-faces exr-equirect ktx2 png-faces png-cross png-equirect\n"
                 "formats = [\"exr-faces\", \"ktx2\", \"png-faces\"]\n",
-                kLookVersion, seed, style.c_str(), name.c_str(), name.c_str());
-  return text;
+                name.c_str(), name.c_str());
+  return text + tail;
 }
 
 }  // namespace starcanopy

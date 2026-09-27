@@ -13,8 +13,8 @@ export it at full size, turned to face the way your scene needs.
 
 > **Status: skies render from the command line.** The sky model -- developed and
 > judged blind over many rounds in the Space Nerds In Space labs -- is here, and
-> `starcanopy render` turns a project file into OpenEXR, KTX2 and PNG. The macros
-> and the interface are next; see `ROADMAP.md`. Nothing below marked *planned*
+> `starcanopy render` turns a project file into OpenEXR, KTX2 and PNG, steered by
+> a first set of macros. The interface is next; see `ROADMAP.md`. Nothing below marked *planned*
 > works yet.
 
 ## What it makes
@@ -78,7 +78,8 @@ ctest --test-dir build --output-on-failure
 ```
 
 A **project** is how a sky is made again: a small TOML file with the look version
-it was made with, a seed, a style (`mass` or `shell`), orientation and outputs.
+it was made with, a seed, a style (`mass` or `shell`), macros, orientation and
+outputs.
 `starcanopy new` writes one with every key commented. The same project renders
 the same sky; a project from a newer StarCanopy is refused, not rendered
 differently.
@@ -109,9 +110,17 @@ the light the sky's form is lit by -- as a direction, as azimuth and elevation,
 and as `light_travels`: point your scene's directional light that way and it
 agrees with the sky.
 
+**Macros.** The controls. Each runs from -1 to 1 between two words for the sky
+-- `open` from enveloping to open, `luminous` from brooding to luminous -- and 0 is
+the seed's own sky. Set them in the project's `[macros]`, which `new` fills with
+every macro at 0, or with `render --macro NAME=VALUE`; `starcanopy macros` lists
+them and the dials each one moves. The first set is measured but not yet
+judged blind, so its ends may move (`ROADMAP.md`, *Macros*).
+
 **Overrides.** `starcanopy dials` lists the raw parameters; the project's
-`[overrides]` and `render --set NAME=VALUE` set them. They are for scripting; the
-controls will be macros made of them.
+`[overrides]` and `render --set NAME=VALUE` set them. They are for scripting, not
+steering, and they are the base the macros move from: an override of `exposure`
+is what `bright` doubles.
 
 ## Documentation
 
