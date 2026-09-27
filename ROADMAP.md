@@ -182,6 +182,36 @@ from it goes in `SOURCES.md`.
       the atlas's vantages, not one; `test_look` moves only with a new look
       version
 
+### The shell's retirement, and bubbles
+
+The mass beat the thin shell 9-1 blind. What the shell alone still gives -- open
+sky by default (66-74% of the sky clear against the mass's 11-29%), capsule
+pillars and dark clouds, lane dust, the layered teal and red of a front seen
+face on -- is either reachable from the mass or better made another way. So the
+shell is to be retired completely, not kept by half: as a style, with its
+dials, its capsules and its lane dust. What is worth keeping of it comes back as
+something new, earning its place blind like anything else.
+
+- [ ] Blind A/B: the shell's veil (the labs' *Sparse and lighter skies*) against
+      a translucent mass (`mass-density` near 0.8). If the mass holds its own,
+      nothing is lost that 9-1 did not already give up
+- [ ] Retire the shell style: `form`, the shell-only dials (the parameter study's
+      *style under review*), the capsule pillars and clouds, lane dust; a new
+      look version if any default sky's pixels move
+- [ ] Distant nebulae as masses: the form chosen per bubble, not only for the
+      main one, so a distant nebula is a lumpy glowing cloud seen from outside.
+      Blind against today's distant shells
+- [ ] Bubbles, as their own object: a supernova remnant or wind-blown bubble --
+      thin, transparent, limb-brightened, its wrinkles seen edge on as
+      filaments. The shell's geometry is right for it and its light is not: a
+      remnant glows because a shock heats its whole skin, not because a cluster
+      inside ionises one side of it. A self-glowing skin, no light volume. Blind:
+      a mass sky with one against one without
+- [ ] Pillars and dark clouds that emerge from the mass rather than being
+      placed: the light eroding the gas that faces it, leaving the shadowed
+      tails behind dense knots pointing at it; dense lumps of the mass seen
+      against the glow. Research first (`PRINCIPLES §4`)
+
 ### Carried over from the labs
 
 - [ ] Faint shadow streaks on some seeds

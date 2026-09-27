@@ -96,7 +96,9 @@ a dial that narrows them is prototyped, pending a blind test (`ROADMAP.md`,
 A thin folded sheet: a radial profile read at a point displaced by noise, so folds
 seen edge on become filaments; holes; a lognormal column density so most sight
 lines are thin and a few thick; pillars pointing at their cluster; dark clouds in
-the cavity, backlit. Kept as a form for veils and lighter skies (`PRINCIPLES §11`).
+the cavity, backlit. Kept as a form for veils and lighter skies (`PRINCIPLES §11`)
+-- for now: it is to be retired, and bubbles made anew (`ROADMAP.md`, *The shell's
+retirement, and bubbles*). The distant nebulae are shells in both styles.
 
 ### 3.3 Light and emission
 
