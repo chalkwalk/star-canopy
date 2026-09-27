@@ -14,8 +14,9 @@
 
 *(2026-09-26)*
 
-The documents exist; the code does not yet. The model is proven in the Space Nerds
-In Space labs and moves here next. Order:
+The build exists, with an empty bake that proves the GL context, the tiling and
+the readback headless; CI waits for a remote to run on. The model is proven in the
+Space Nerds In Space labs and moves here next. Order:
 
 1. **Kick-start** -- the build, the licence, the third-party list.
 2. **The lift** -- the model out of the labs, as a readable history.
@@ -32,11 +33,15 @@ In Space labs and moves here next. Order:
 - [x] `PRINCIPLES.md`, `NON-GOALS.md`, `DESIGN.md`, `ROADMAP.md`, `README.md`,
       `AGENTS.md` (with `CLAUDE.md` and `GEMINI.md` symlinks), `CONTRIBUTING.md`,
       `THIRDPARTY.md`, GPLv3 `LICENSE`
-- [ ] CMake build for Linux; SDL3 and Dear ImGui as submodules; glad vendored
-- [ ] An empty bake that writes a black cubemap, headless (EGL) and windowed
-- [ ] `docs/references/SOURCES.md`, including the reference-sky measurements'
+- [x] CMake build for Linux; SDL3 and Dear ImGui as submodules; glad vendored
+- [x] An empty bake that writes a black cubemap, headless (EGL) and windowed
+- [x] `docs/references/SOURCES.md`, including the reference-sky measurements'
       provenance (numbers only, `fence #4`)
-- [ ] CI on Linux; Windows and macOS builds once there is something to build
+- [ ] CI on Linux (`.github/workflows/ci.yml` is written; tick this once it has
+      run green on the remote); Windows and macOS builds once there is
+      something to build
+- [ ] `SOURCES.md`'s open items: how the reference images were obtained, where
+      the measurement scripts live
 
 ### The lift
 

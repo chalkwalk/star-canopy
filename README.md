@@ -11,10 +11,11 @@ field of view, and steer it with a handful of controls that describe the sky --
 more open or more enveloping, brighter or more brooding. When it looks right you
 export it at full size, turned to face the way your scene needs.
 
-> **Status: documents only.** There is no code in this repository yet. The model
-> it will use exists, and was developed and judged blind over many rounds in the
-> Space Nerds In Space labs; it moves here next. See `ROADMAP.md`. Nothing below
-> marked *planned* works yet.
+> **Status: the build and an empty bake.** The code so far builds, makes a GL
+> context headless, and bakes a black cubemap -- the plumbing, proven before the
+> model arrives. The model exists, and was developed and judged blind over many
+> rounds in the Space Nerds In Space labs; it moves here next. See `ROADMAP.md`.
+> Nothing below marked *planned* works yet.
 
 ## What it makes (planned)
 
@@ -49,6 +50,23 @@ direction beside the images.
 ## Requirements (planned)
 
 An OpenGL 3.3-capable GPU. Linux first; Windows and macOS as soon as they build.
+
+## Building
+
+Linux, for now. You need CMake 3.20+, a C++17 compiler, and the development
+packages for EGL, OpenGL and X11 or Wayland (SDL3 and Dear ImGui come with the
+source, as submodules).
+
+```bash
+git clone --recursive <this repository>
+cmake -B build
+cmake --build build -j $(nproc)
+ctest --test-dir build --output-on-failure
+./build/starcanopy bake-empty --size 256 --out /tmp/sky
+```
+
+`bake-empty` checks your machine's OpenGL: it bakes a black sky through the
+same path the real renderer will use and writes its six faces as PFM files.
 
 ## Documentation
 

@@ -26,7 +26,9 @@ cannot be expressed within the principles, it is not ready for the roadmap.
 ## Status
 
 `ROADMAP.md` is the live source; update that file, not this one, when focus
-changes. As of 2026-09-26 the repository holds the documents and nothing else.
+changes. As of 2026-09-26 the repository holds the documents, the build, and an
+empty bake (`starcanopy bake-empty`: a black cubemap through the real context,
+tiling and readback); no model yet.
 The model lives in Space Nerds In Space, `labs/features/nebula_sky` on the
 `nebula-sky` branch (`/home/programming/space-nerds-in-space`), and its open work
 is in `labs/features/nebula_sky/NEXT.md` there.
@@ -58,29 +60,38 @@ including in docs, fixtures or history.
 resets it. Faces are drawn in tiles and the light volume in strips for this
 reason; keep any new pass split the same way.
 
-## Layout map (planned)
+## Layout map
+
+Entries marked *(planned)* do not exist yet.
 
 ```
 CMakeLists.txt
-extern/            # SUBMODULES: SDL3, Dear ImGui; glad vendored
+cmake/             # build helpers: shaders embedded into the binary
+extern/            # SUBMODULES: SDL3, Dear ImGui; glad vendored (generated)
 src/core/          # the model, the bake, the writers -- no window, no UI
-src/core/shaders/  # GLSL 1.50: field, light, bake, denoise, galaxy, stars
+src/core/shaders/  # GLSL 1.50; the model's field, light, bake, denoise,
+                   #   galaxy and stars shaders (planned)
 src/cli/           # starcanopy: project file in, images out
-src/app/           # SDL3 + Dear ImGui interface
-tools/             # A/B sheet builders, look-around capture, measurements
-test/              # unit tests for the pure parts
+src/app/           # SDL3 + Dear ImGui interface (planned)
+tools/             # A/B sheets, look-around capture, measurements (planned)
+test/              # unit tests for the pure parts; bake tests on a real context
 docs/references/   # SOURCES.md: provenance of models and fitted numbers
 ```
 
-## Canonical commands (planned)
+## Canonical commands
 
 ```bash
 git submodule update --init --recursive
 cmake -B build
 cmake --build build -j $(nproc)
 ctest --test-dir build --output-on-failure
-./build/starcanopy render sky.toml
+./build/starcanopy bake-empty --size 256 --out /tmp/sky   # until render exists
+./build/starcanopy render sky.toml                         # planned
 ```
+
+The bake tests need an OpenGL 3.3 context: EGL headless on Linux, which Mesa's
+software renderer can provide, so they run without a display or GPU access. The
+hidden-window test skips when there is no display.
 
 ## Working conventions
 
