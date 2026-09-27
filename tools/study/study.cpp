@@ -8,8 +8,9 @@
 //     does alone: whether anything, how much, which way.
 //
 //   study morris --style mass|shell [--size N] [--trajectories R] [--dials a,b] --out FILE
-//     Morris's elementary effects: trajectories from random points across the
-//     whole space of the dials, stepping one dial at a time. A dial's mean
+//     Morris's elementary effects: trajectories from random points across a
+//     usable space of the dials, near enough their defaults to be skies
+//     someone might make (see interval()), stepping one dial at a time. A dial's mean
 //     effect says how much it matters anywhere; the spread of its effects,
 //     whether that depends on the other dials -- large spread and small effect
 //     at the defaults is a dial that matters only together with others.
@@ -44,6 +45,11 @@ namespace {
 // the seed. The oat sweep measures them too; morris leaves them at defaults.
 const std::set<std::string> kQuality = {"step-frac", "max-steps", "light-res", "light-steps",
                                         "supersample", "denoise", "galaxy-res"};
+// Views for judging the physics, not the look: the nebula off, the lines' own
+// colours ungraded, and their astrophotographic mappings. The oat sweep
+// measures them; morris leaves them at defaults, since one of them alone --
+// the nebula off -- empties the sky.
+const std::set<std::string> kDebug = {"nebula", "grade", "line-colors"};
 
 std::vector<std::string> split(const std::string& list) {
   std::vector<std::string> out;
@@ -75,23 +81,29 @@ double current(const Settings& s, const Dial& d) {
   return d.real ? s.*d.real : s.*d.integer;
 }
 
-// The interval a dial is studied over: its whole range if it steps by
-// amounts; four times either way of its default if by factors, since their
-// declared ranges run to extremes nobody would use (density to fifty times);
-// from its floor to sixty-four times it, if its default is off.
-void interval(const Dial& d, double def, double& lo, double& hi) {
+// The interval a dial is studied over. Wide, for the oat sweep, where the
+// extremes are the point: a dial stepped by amounts over its whole range; one
+// stepped by factors to four times either way of its default, its declared
+// range running to extremes nobody would use; from its floor to sixty-four
+// times it, if its default is off. Narrow, for morris, whose random points
+// must be skies someone might make: a wide interval for every dial at once
+// made nearly every point an empty sky (the median point was 100% clear in
+// both styles). Narrow is a quarter of the range either side of the default,
+// or a factor of two either way, or up to eight times the floor.
+void interval(const Dial& d, double def, bool narrow, double& lo, double& hi) {
   if (!d.geometric) {
-    lo = d.lo;
-    hi = d.hi;
+    double reach = narrow ? 0.25 * (d.hi - d.lo) : static_cast<double>(d.hi - d.lo);
+    lo = narrow ? std::max(static_cast<double>(d.lo), def - reach) : d.lo;
+    hi = narrow ? std::min(static_cast<double>(d.hi), def + reach) : d.hi;
     return;
   }
-  double floor = std::max(static_cast<double>(d.floor), 1e-9);
+  double floor = std::max(static_cast<double>(d.floor), 1e-9), factor = narrow ? 2.0 : 4.0;
   if (def <= 0.0) {
     lo = floor;
-    hi = std::min(static_cast<double>(d.hi), 64.0 * floor);
+    hi = std::min(static_cast<double>(d.hi), (narrow ? 8.0 : 64.0) * floor);
   } else {
-    lo = std::max(std::max(static_cast<double>(d.lo), floor), def / 4.0);
-    hi = std::min(static_cast<double>(d.hi), def * 4.0);
+    lo = std::max(std::max(static_cast<double>(d.lo), floor), def / factor);
+    hi = std::min(static_cast<double>(d.hi), def * factor);
   }
 }
 
@@ -102,7 +114,7 @@ std::string at(const Dial& d, double def, double u) {
     return d.choices[i];
   }
   double lo, hi;
-  interval(d, def, lo, hi);
+  interval(d, def, true, lo, hi);
   double v = d.geometric ? lo * std::pow(hi / lo, u) : lo + u * (hi - lo);
   return text(v, d.integer != nullptr);
 }
@@ -125,7 +137,7 @@ std::vector<std::string> sweep(const Dial& d, const Settings& defaults) {
   std::vector<double> values;
   if (d.geometric) {
     double lo, hi;
-    interval(d, def, lo, hi);
+    interval(d, def, false, lo, hi);
     if (def > 0.0) {
       for (double f : {0.25, 0.5, 2.0, 4.0}) {
         values.push_back(std::min(hi, std::max(lo, def * f)));
@@ -193,7 +205,8 @@ std::vector<const Dial*> chosen(const std::vector<std::string>& names, bool with
   for (int i = 0; i < count; i++) {
     std::string name = all[i].name;
     // The seed, and the style, which is the study's own axis.
-    if (all[i].seed || name == "form" || (!withQuality && kQuality.count(name))) {
+    if (all[i].seed || name == "form" ||
+        (!withQuality && (kQuality.count(name) || kDebug.count(name)))) {
       continue;
     }
     if (names.empty() || std::find(names.begin(), names.end(), name) != names.end()) {
