@@ -36,6 +36,18 @@ add_subdirectory(extern/SDL EXCLUDE_FROM_ALL SYSTEM)
 add_library(mtwist STATIC extern/mtwist/mtwist.c)
 target_include_directories(mtwist SYSTEM PUBLIC extern/mtwist)
 
+# Output formats: OpenEXR through tinyexr, with the miniz it bundles for ZIP
+# compression; PNG through stb_image_write. Each is compiled once, here, in
+# its own translation unit (extern/*/impl), so their implementation macros
+# and warnings stay out of our code. KTX2 is written by our own code.
+add_library(tinyexr STATIC extern/tinyexr/impl.cpp extern/tinyexr/miniz.c)
+target_include_directories(tinyexr SYSTEM PUBLIC extern/tinyexr)
+add_library(stb_image_write STATIC extern/stb/impl.c)
+target_include_directories(stb_image_write SYSTEM PUBLIC extern/stb)
+# Project files: toml++, header only.
+add_library(tomlplusplus INTERFACE)
+target_include_directories(tomlplusplus SYSTEM INTERFACE extern/tomlplusplus)
+
 add_library(glad STATIC extern/glad/src/gl.c)
 target_include_directories(glad SYSTEM PUBLIC extern/glad/include)
 
