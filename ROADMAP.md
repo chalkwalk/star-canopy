@@ -40,8 +40,7 @@ Space Nerds In Space labs and moves here next. Order:
 - [ ] CI on Linux (`.github/workflows/ci.yml` is written; tick this once it has
       run green on the remote); Windows and macOS builds once there is
       something to build
-- [ ] `SOURCES.md`'s open items: how the reference images were obtained, where
-      the measurement scripts live
+- [ ] `SOURCES.md`'s open item: where the measurement scripts live
 
 ### The lift
 

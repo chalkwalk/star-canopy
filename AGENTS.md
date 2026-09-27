@@ -54,7 +54,10 @@ macro.
 
 **4. Reference imagery in the repository (`PRINCIPLES §10`, `fence #4`).**
 Reference skies are used as numbers only. No image of one is ever committed,
-including in docs, fixtures or history.
+including in docs, fixtures or history. Nor are they named: the game they come
+from appears once, in `README.md`, and never in code, parameters, docs or commit
+messages; no palette or parameter says which reference sky it was fitted to.
+The labs' commit messages name it freely -- rewrite them in the lift.
 
 **5. GPU watchdogs.** A single long draw hangs the desktop's GPU driver and
 resets it. Faces are drawn in tiles and the light volume in strips for this

@@ -50,7 +50,6 @@ history.
 | **Tone.** Whole sky, area weighted, CIE L*: 10th percentile 1-4, median 5-16, 90th 17-52; 37-44% of the light in the brightest 10% of the sky. | haze and shoulder were tuned toward these (`DESIGN.md §4.2`) | the three skyboxes | **Does not track blind scores.** A candidate that matched these bands far better than the default lost 10-0, because it hid the open sky. Explanatory only. | `3749dd2e`; labs `NEXT.md` |
 | **Mass lighting.** Two or three clusters inside a mass light its whole inner face; measured, that gave three times the references' share of middle tones. | one cluster lights a mass (`DESIGN.md §3.1`) | the three skyboxes | Yes: one cluster without a glowing cavity scored best of three lightings | labs `lab_nebula_sky_feature.c` |
 | **Star colour.** Measured as each star's excess over the sky around it, the references' stars gather at the palette's hue and are at least as colourful as its gas. | stars tinted with the palette's midtones, at luminance 1 | the three skyboxes | Not separately | labs `nebula_sky_bake.c`, `star_tint()` |
-
 | **Edge width.** Median strong-boundary width (step over steepest slope) at 45 degree field of view: the references' 640-per-face copies 2.03 degrees; ours cut to 640, 1.76; ours at 1024, 1.64. | the *Hard edges* work (`ROADMAP.md`) | 45 degree views cut from 8 reference skies and 6 of ours | **Cannot settle the question**: 640-per-face copies do not show those skies as a game does. Judge by eye. | labs `NEXT.md` |
 
 ## Chosen by eye, not fitted

@@ -88,9 +88,10 @@ as the honest record of how the work is done.
 Its model was developed in the labs of
 [Space Nerds In Space](https://github.com/smcameron/space-nerds-in-space), whose
 author, Stephen M. Cameron, suggested making it a standalone tool. Every change
-to its look was decided by blind comparison, scored by eye, with the skyboxes of
-EVE Online as the standard to reach -- used as measurements only; no reference
-imagery is in this repository.
+to its look was decided by blind comparison, scored by eye. The aim was skies of
+a quality comparable to EVE Online's, made generatively: their skyboxes informed
+only measurements -- how bright, how colourful, at what lightness -- and no
+image of theirs is in this repository.
 
 ## Licence
 
