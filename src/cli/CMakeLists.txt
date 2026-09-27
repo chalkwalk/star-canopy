@@ -1,0 +1,2 @@
+add_executable(starcanopy main.cpp)
+target_link_libraries(starcanopy PRIVATE starcanopy_core starcanopy_warnings)

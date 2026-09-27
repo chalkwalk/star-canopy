@@ -102,4 +102,5 @@ __pycache__/
 *.exr
 *.ktx2
 *.hdr
+*.pfm
 !docs/**/*.png
