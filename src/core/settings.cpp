@@ -259,7 +259,10 @@ bool setDial(Settings& s, const std::string& name, const std::string& value, std
       error = name + ": '" + value + "' is not " + (d.integer ? "a whole number" : "a number");
       return false;
     }
-    if (v < d.lo || v > d.hi) {
+    // Compared as the float it will be stored as: "0.9" read as a double is a
+    // little more than the dial's own limit 0.9f, and was refused.
+    float stored = static_cast<float>(v);
+    if (stored < d.lo || stored > d.hi) {
       char range[64];
       std::snprintf(range, sizeof(range), "%g .. %g", static_cast<double>(d.lo),
                     static_cast<double>(d.hi));

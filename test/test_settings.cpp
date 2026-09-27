@@ -33,6 +33,19 @@ int main() {
       CHECK(v == 0.0 || v >= d[i].floor);
       CHECK(d[i].lo == 0.0f || d[i].lo == d[i].floor);
     }
+    // Its own range's ends, written as a person writes them, are in range.
+    if (!d[i].choices && !d[i].seed) {
+      char lo[32], hi[32];
+      std::snprintf(lo, sizeof(lo), "%g", static_cast<double>(d[i].lo));
+      std::snprintf(hi, sizeof(hi), "%g", static_cast<double>(d[i].hi));
+      Settings e;
+      std::string why;
+      bool ok = setDial(e, d[i].name, lo, why) && setDial(e, d[i].name, hi, why);
+      if (!ok) {
+        std::printf("%s\n", why.c_str());
+      }
+      CHECK(ok);
+    }
     // Round trip: its own text sets it to the same value.
     Settings s;
     std::string error, text = dialValue(defaults, d[i]);
