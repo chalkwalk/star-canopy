@@ -147,13 +147,18 @@ struct Dial {
   // and then `floor` is its smallest value above zero worth stepping from.
   bool geometric = false;
   float floor = 0.0f;
+  // The macro this dial belongs to, or null. A dial that exists only to serve
+  // one macro is not a raw parameter: it is set through that macro, and not
+  // listed, overridden or set on its own, so the dials stay the model's.
+  const char* owner = nullptr;
 };
 
 // Every dial, in the order the labs' panel showed them.
 const Dial* dials(int& count);
 
 // Sets the dial called `name` from its text. False, with the reason, for an
-// unknown name, a malformed value or one outside the dial's range.
+// unknown name, a dial a macro owns, a malformed value or one outside the
+// dial's range.
 bool setDial(Settings& s, const std::string& name, const std::string& value, std::string& error);
 
 // The dial's current value as text, as setDial() reads it.

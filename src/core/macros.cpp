@@ -70,9 +70,9 @@ const Binding kCrisp[] = {
 // Light from within: brighter clusters, a glowing cavity in front, more fill
 // on the faces turned away.
 const Binding kLuminous[] = {
-  {"luminosity", O, 1.0f, -1.5f},
-  {"mass-cavity", A, 0.004f, 0.0f},
-  {"fill", O, 1.0f, -1.5f},
+  {"luminosity", O, 0.6f, -1.0f},
+  {"mass-cavity", A, 0.003f, 0.0f},
+  {"fill", O, 0.7f, -1.0f},
 };
 
 // The whole sky brighter, as a longer exposure would make it.
@@ -84,32 +84,28 @@ const Binding kBright[] = {
 
 // A glow over everything, and dust lit by the stars; clear is black between.
 const Binding kHazy[] = {
-  {"haze", O, 1.5f, -2.0f},
+  {"haze", O, 2.5f, -2.0f},
   {"reflection", O, 1.0f, -1.0f},
 };
 
-// Colour: the palettes more chromatic, the stars and galaxy following them.
-// Not by grade-strength, which gives the colour back to the lines' own, and
-// those are more colourful than most palettes, not less.
+// Colour: the palettes' chroma, from grey at -1 to twice their own at 1, and
+// the stars and the galaxy drawn further into the grade either way, so a muted
+// sky is muted all through. Not by grade-strength, which gives the colour back
+// to the lines' own, more colourful than most palettes, not less.
 const Binding kVivid[] = {
-  {"grade-chroma", O, 1.0f, -1.3f},
-  {"grade-stars", A, 0.2f, -0.3f},
-  {"grade-galaxy", A, 0.2f, -0.1f},
+  {"grade-chroma", A, 1.0f, -1.0f},
+  {"grade-stars", A, 0.2f, 0.3f},
+  {"grade-galaxy", A, 0.2f, 0.3f},
 };
 
-// More stars, brighter, and further ones still points.
+// More stars, and further ones still points; each dimmer, so that many are a
+// field and not a glare (blind, round 1: "too many stars, at the brightness").
 const Binding kStarry[] = {
   {"star-count", O, 2.0f, -2.0f},
-  {"star-brightness", O, 0.5f, -0.5f},
+  {"star-brightness", O, -0.5f, 0.0f},
   {"star-reach", O, 0.5f, -0.5f},
 };
 
-// The galaxy in the sky: nearer its bright centre and glowing more; remote is
-// toward its edge, the band faint.
-const Binding kGalactic[] = {
-  {"galaxy-radius", A, -0.7f, 1.5f},
-  {"galaxy-glow", O, 0.8f, -1.5f},
-};
 
 // Buckled, swirled and blown out; calm is smooth and whole.
 const Binding kViolent[] = {
@@ -119,12 +115,13 @@ const Binding kViolent[] = {
   {"fold-scale", O, 0.7f, -0.7f},
 };
 
-// Structure in few large forms; busy is many small ones.
+// Structure in few large forms; busy is many small ones. Not the mass's own
+// scale, whose largest effect is how much sky it leaves clear: with it, grand
+// was a second open.
 const Binding kGrand[] = {
-  {"mass-scale", O, -0.5f, 0.5f},
-  {"fold-scale", O, -0.6f, 0.6f},
-  {"hole-scale", O, -0.8f, 0.8f},
-  {"detail-scale", O, -0.5f, 0.5f},
+  {"fold-scale", O, -0.8f, 0.8f},
+  {"hole-scale", O, -1.0f, 1.0f},
+  {"detail-scale", O, -0.7f, 0.7f},
 };
 
 #define MACRO(name, opposite, help, b) Macro{name, opposite, help, b, static_cast<int>(std::size(b))}
@@ -143,7 +140,6 @@ const Macro kMacros[] = {
   MACRO("hazy", "clear", "a glow over the sky, the dark between not black", kHazy),
   MACRO("vivid", "muted", "how colourful", kVivid),
   MACRO("starry", "sparse", "how many stars, and how bright", kStarry),
-  MACRO("galactic", "remote", "the galaxy's band: near its bright centre, or far out", kGalactic),
 };
 
 #undef MACRO

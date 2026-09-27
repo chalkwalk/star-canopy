@@ -56,6 +56,9 @@ int listDials() {
   const Dial* d = dials(count);
   Settings defaults;
   for (int i = 0; i < count; i++) {
+    if (d[i].owner) {
+      continue;  // set through its macro: `starcanopy macros`
+    }
     std::string range;
     if (d[i].choices) {
       for (int k = 0; k < d[i].choiceCount; k++) {

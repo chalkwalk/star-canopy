@@ -41,6 +41,9 @@ const float kLineColor[3][3][3] = {
 #define GEO(n, h, m, lo, hi) Dial{n, h, &Settings::m, nullptr, nullptr, lo, hi, nullptr, 0, true, lo}
 #define GEO0(n, h, m, floor, hi) \
   Dial{n, h, &Settings::m, nullptr, nullptr, 0.0f, hi, nullptr, 0, true, floor}
+// Owned by a macro (see Dial::owner), stepped by amounts.
+#define OWNED(n, h, m, lo, hi, owner) \
+  Dial{n, h, &Settings::m, nullptr, nullptr, lo, hi, nullptr, 0, false, 0.0f, owner}
 #define CHOICE(n, h, m, names) \
   Dial{n, h, nullptr, &Settings::m, nullptr, 0.0f, 0.0f, names, static_cast<int>(std::size(names))}
 
@@ -141,8 +144,8 @@ const Dial kDials[] = {
          kGradeNames),
   REAL("grade-strength", "how far the colour goes toward the grade, 0..1", gradeStrength, 0.0f,
        1.0f),
-  GEO("grade-chroma", "how colourful the grade's palettes are, a factor on their chroma", gradeChroma,
-       0.1f, 4.0f),
+  OWNED("grade-chroma", "a factor on the grade's palettes' chroma: 0 grey", gradeChroma, 0.0f,
+        2.0f, "vivid"),
   GEO0("haze", "faint glow over all the sky: its darkest parts dim, not black", haze, 0.0005f, 0.2f),
   GEO0("shoulder", "ceiling the brightest gas eases toward, not clipped; 0 is off", shoulder, 0.1f,
        4.0f),
@@ -202,6 +205,7 @@ const Dial kDials[] = {
 #undef INT
 #undef GEO
 #undef GEO0
+#undef OWNED
 #undef CHOICE
 
 // A hash of the seed, -1..1: how much the cavity glows, to be spread either way
@@ -230,6 +234,10 @@ bool setDial(Settings& s, const std::string& name, const std::string& value, std
   for (const Dial& d : kDials) {
     if (name != d.name) {
       continue;
+    }
+    if (d.owner) {
+      error = name + " is set by the " + d.owner + " macro, not on its own";
+      return false;
     }
     if (d.choices) {
       for (int i = 0; i < d.choiceCount; i++) {

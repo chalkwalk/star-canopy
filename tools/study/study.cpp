@@ -211,7 +211,7 @@ std::vector<const Dial*> chosen(const std::vector<std::string>& names, bool with
   for (int i = 0; i < count; i++) {
     std::string name = all[i].name;
     // The seed, and the style, which is the study's own axis.
-    if (all[i].seed || name == "form" ||
+    if (all[i].seed || all[i].owner || name == "form" ||
         (!withQuality && (kQuality.count(name) || kDebug.count(name)))) {
       continue;
     }

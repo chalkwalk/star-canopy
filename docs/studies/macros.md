@@ -4,7 +4,7 @@
 `macros.py` makes the tables below; `tools/blind` makes the blind pairs. Data:
 `docs/studies/data/macros_mass.csv`.*
 
-The first macro set: fourteen controls, each from -1 to 1 between two words for
+The first macro set: thirteen controls (fourteen in its first round), each from -1 to 1 between two words for
 the sky, made of the look dials the parameter study found
 (`docs/studies/parameters.md`). What each binds, and how far, is in
 `src/core/macros.cpp` and printed by `starcanopy macros` -- the one definition
@@ -25,14 +25,13 @@ are scored the set is a proposal.
 | detailed | smooth | detailed | the detail octaves' gain and start, the mass's fine lumps and their grazing shadows |
 | billowing | wispy | billowing | billowed against ridged detail, and a little of the mass's scale |
 | crisp | soft | crisp | edge hardness, the clusters' size, the fill's shadows, the ionising opacity |
-| grand | busy | grand | the scale of the mass, its folds, holes and detail |
+| grand | busy | grand | the scale of the mass's folds, holes and detail |
 | violent | calm | violent | fold, swirl, and how far the far side is blown out |
 | luminous | brooding | luminous | the clusters' output, the cavity's glow, the fill |
 | bright | dim | bright | exposure, with the stars and the galaxy |
 | hazy | clear | hazy | the haze, and the dust's reflection |
-| vivid | muted | vivid | the palettes' chroma (`grade-chroma`, new), the stars' and galaxy's grade |
-| starry | sparse | starry | the stars' count, brightness and reach |
-| galactic | remote | galactic | nearer the galaxy's centre, and its glow |
+| vivid | muted | vivid | the palettes' chroma, from grey to twice their own; the stars and galaxy drawn into the grade |
+| starry | sparse | starry | more stars, each dimmer, and further ones still points |
 
 Rules the table keeps, held by `test_macros`:
 
@@ -43,16 +42,17 @@ Rules the table keeps, held by `test_macros`:
   effect, or those retiring with the shell. So the set is the mass's; the shell
   reads only the dials the two share.
 - **Composition is left to the seed** except where a macro needs it: `open` moves
-  the viewer, `galactic` the observer's place in the galaxy. Colour family and
-  hue type stay choices (`DESIGN.md` §5).
+  the viewer. Colour family and hue type stay choices (`DESIGN.md` §5).
 - **Two slopes.** Each binding says how far at 1 and how far at -1, since most
   dials have more room one way; the amounts were set so each end is still a sky
   someone might want -- a first guess, which the blind pairs will correct.
 
 One dial is new: `grade-chroma`, a factor on the palettes' chroma. Nothing could
 make a sky more colourful than its seed's palette before -- `grade-strength` is at
-its maximum by default -- and a vivid / muted macro needs both ways. At 1 it
-changes nothing.
+its maximum by default -- and a vivid / muted macro needs both ways. It is the
+vivid macro's own (`Dial::owner`): not a raw parameter, so not listed by
+`starcanopy dials` nor settable as an override, only through vivid. At vivid 0 it
+is 1 and changes nothing.
 
 ## Method
 
@@ -69,9 +69,9 @@ vivid is chroma. **Kept on** counts the seeds on which that descriptor rises (or
 falls) in order through -1, -1/2, 0, 1/2 and 1. Billowing, violent and starry
 promise nothing these descriptors see: they are for the eye.
 
-## First round, and what it changed
+## Tuned by measurement, before the blind pairs
 
-A first table on the first three seeds kept its promise on eight macros, and
+A first table on three seeds kept its promise on eight macros, and
 showed three faults, fixed before the round below:
 
 - **Vivid went the wrong way at its muted end.** It also lowered `grade-strength`,
@@ -86,6 +86,10 @@ showed three faults, fixed before the round below:
 
 ## What each macro does
 
+The set as it stands after round 1 (below): galactic withdrawn; vivid, starry,
+luminous, hazy and grand measured again with their new bindings, the others as in
+the tuning above.
+
 8 seeds. The seeds' own skies: clear 4%-29%, brightness 0.16-0.25.
 
 | macro | reach at -1 / 1 | sky changed at -1 / 1 | from -1 to 1 | promise | kept on |
@@ -96,14 +100,13 @@ showed three faults, fixed before the round below:
 | detailed | 8.4 / 7.3 | 70% / 67% | bright-(8/8) contr-(7/8) clear-(8/8) detail+(8/8) top10-(6/8) | detail+ | 8/8 in order |
 | billowing | 11.8 / 11.1 | 76% / 74% | bright-(5/8) contr-(7/8) clear+(4/8) opaque-(3/8) detail-(5/8) | -- | by eye |
 | crisp | 5.5 / 4.4 | 65% / 55% | contr+(8/8) detail+(8/8) top10+(8/8) | detail+ | 8/8 in order |
-| grand | 17.2 / 15.9 | 87% / 83% | bright-(5/8) clear+(5/8) detail-(7/8) | detail- | 3/8 in order |
 | violent | 5.0 / 13.6 | 55% / 77% | bright+(6/8) contr+(6/8) clear+(8/8) opaque-(8/8) detail+(7/8) | -- | by eye |
-| luminous | 10.0 / 24.1 | 67% / 82% | bright+(8/8) contr+(8/8) chroma+(8/8) detail+(8/8) | bright+ | 8/8 in order |
 | bright | 11.4 / 19.1 | 85% / 91% | bright+(8/8) contr+(8/8) chroma+(8/8) detail+(8/8) top10+(8/8) | bright+ | 8/8 in order |
-| hazy | 4.4 / 11.1 | 89% / 100% | bright+(8/8) contr-(8/8) chroma+(8/8) detail-(8/8) top10-(8/8) | contr- | 8/8 in order |
-| vivid | 3.9 / 5.3 | 67% / 82% | bright+(5/8) contr-(8/8) chroma+(8/8) detail-(8/8) | chroma+ | 8/8 in order |
-| starry | 0.9 / 4.3 | 9% / 28% | bright+(8/8) contr+(8/8) detail+(8/8) top10+(8/8) | -- | by eye |
-| galactic | 6.6 / 11.5 | 42% / 50% | bright+(8/8) contr+(8/8) detail-(8/8) | bright+ | 8/8 in order |
+| grand | 13.0 / 11.0 | 80% / 72% | bright-(8/8) opaque+(5/8) detail-(8/8) top10+(8/8) | detail- | 6/8 in order |
+| luminous | 7.8 / 13.2 | 65% / 75% | bright+(8/8) contr+(8/8) chroma+(8/8) detail+(8/8) | bright+ | 8/8 in order |
+| hazy | 4.4 / 24.6 | 89% / 100% | bright+(8/8) contr-(8/8) chroma+(8/8) detail-(8/8) top10-(8/8) | contr- | 8/8 in order |
+| vivid | 6.5 / 5.3 | 82% / 82% | bright+(5/8) contr-(8/8) chroma+(8/8) detail-(8/8) | chroma+ | 8/8 in order |
+| starry | 0.9 / 2.5 | 9% / 21% | bright+(8/8) contr+(8/8) detail+(8/8) top10+(8/8) | -- | by eye |
 
 The skies at the ends, over the seeds (min-median-max):
 
@@ -115,56 +118,53 @@ The skies at the ends, over the seeds (min-median-max):
 | detailed | 4%-18%-32% | 3%-14%-25% | 0.17-0.22-0.29 | 0.16-0.20-0.25 |
 | billowing | 5%-14%-23% | 6%-19%-46% | 0.16-0.21-0.25 | 0.17-0.20-0.24 |
 | crisp | 4%-17%-30% | 4%-16%-28% | 0.19-0.20-0.24 | 0.17-0.21-0.25 |
-| grand | 7%-12%-21% | 5%-18%-40% | 0.15-0.20-0.23 | 0.15-0.19-0.21 |
 | violent | 4%-16%-29% | 12%-26%-41% | 0.16-0.20-0.26 | 0.17-0.22-0.24 |
-| luminous | 4%-16%-29% | 4%-16%-28% | 0.11-0.15-0.19 | 0.26-0.32-0.37 |
 | bright | 4%-16%-29% | 4%-16%-29% | 0.11-0.14-0.19 | 0.24-0.29-0.34 |
-| hazy | 4%-16%-29% | 4%-16%-29% | 0.12-0.16-0.22 | 0.24-0.26-0.31 |
-| vivid | 4%-16%-29% | 4%-16%-29% | 0.16-0.20-0.24 | 0.16-0.20-0.29 |
-| starry | 4%-16%-29% | 4%-16%-29% | 0.16-0.20-0.25 | 0.18-0.22-0.27 |
-| galactic | 4%-16%-29% | 4%-16%-29% | 0.12-0.17-0.23 | 0.20-0.26-0.30 |
+| grand | 5%-15%-24% | 5%-15%-21% | 0.15-0.21-0.25 | 0.15-0.18-0.25 |
+| luminous | 4%-16%-29% | 4%-16%-28% | 0.13-0.16-0.21 | 0.22-0.27-0.32 |
+| hazy | 4%-16%-29% | 4%-16%-29% | 0.12-0.16-0.22 | 0.30-0.32-0.37 |
+| vivid | 4%-16%-29% | 4%-16%-29% | 0.16-0.20-0.23 | 0.16-0.20-0.29 |
+| starry | 4%-16%-29% | 4%-16%-29% | 0.16-0.20-0.25 | 0.17-0.21-0.26 |
 
 Macros that move the descriptors alike (cosine over the seven, from -1 to 1, over 0.8):
 
-- crisp and starry: +0.97
-- luminous and bright: +0.96
+- bright and luminous: +0.97
+- crisp and starry: +0.96
 - open and fragmented: +0.95
 - fragmented and violent: +0.95
-- billowing and grand: +0.94
 - detailed and starry: +0.94
-- detailed and grand: -0.93
-- grand and starry: -0.90
+- detailed and grand: -0.89
+- grand and starry: -0.89
 - open and violent: +0.89
 - billowing and starry: -0.87
 - billowing and crisp: -0.86
+- fragmented and grand: -0.85
 - detailed and crisp: +0.85
-- crisp and grand: -0.83
 - detailed and billowing: -0.83
 
 ## Reading it
 
-- **Eight macros keep their promise in order on every seed:** dense, detailed,
-  crisp, luminous, bright, hazy, vivid, galactic. Open and fragmented keep its
-  direction on every seed and its order on five and six of eight: where a sky is
-  already nearly closed, enveloping has little left to close (seed 11 sits so deep
-  in its mass that open takes it only from 4% clear to 9%), and fragmented
-  saturates at its top on two.
-- **Grand makes the sky less detailed on seven seeds of eight, but not in order.**
-  Detail here is a texel's difference from its neighbours at 128 a face, which
-  sees fine structure, not the size of forms; whether grand gives few large forms
-  is for the eye.
+- **Seven macros keep their promise in order on every seed:** dense, detailed,
+  crisp, bright, luminous, hazy, vivid. Open and fragmented keep its direction on
+  every seed and its order on five and six of eight: where a sky is already nearly
+  closed, enveloping has little left to close (seed 11 sits so deep in its mass
+  that open takes it only from 4% clear to 9%), and fragmented saturates at its top
+  on two.
+- **Grand is no longer a second open.** Without the mass's own scale the median
+  clear share is 15% at both ends; it makes the sky less detailed on every seed,
+  in order on six. Detail here is a texel's difference from its neighbours at 128
+  a face, which sees fine structure, not the size of forms; whether grand gives few
+  large forms is for the eye.
 - **The ends are skies, not voids.** Open reaches 9-58% clear at 1 and 2-14% at
   -1; no other macro moves the median clear share outside 9-26%; brightness stays
   within 0.11-0.37, where the seeds' own skies span 0.16-0.25.
-- **The ends are uneven.** Luminous, bright, hazy, violent, galactic and starry
-  still reach further at 1 than at -1, starry most (4.3 levels against 0.9: fewer
-  stars change a small share of the sky). Some of that is the display curve --
-  brightening shows more than dimming -- and some is room: calm starts near the
-  defaults. Whether the ends should be even is a question for the pairs, as seen.
+- **The ends are uneven.** Hazy reaches 25 levels at 1 and 4 at -1 -- there is
+  little haze to take away -- and bright, luminous, violent and starry reach
+  further at 1 than at -1 too. Some of that is the display curve, which shows
+  brightening more than dimming, and some is room.
 - **Macros alike to these descriptors are not the same macro.** Seven numbers
   cannot tell crisp from starry (both add contrast and detail), nor luminous from
-  bright (both brighten). Those pairs are the ones to watch in the blind scores: a
-  pair the scorer cannot tell apart by name is a pair to merge or redesign.
+  bright (both brighten). Round 1 told each of those apart by name on every seed.
 
 ## The blind pairs
 
@@ -177,4 +177,58 @@ repository, like every render.
 
 A name is confirmed when the scorer picks its side on every seed; a preference
 for one end on every seed says the macro's range, or the default, wants moving.
-Results go here when scored.
+With `--around`, each side is seen six times, smaller, every 60 degrees round the
+horizon: for what shows only as one looks around.
+
+## Round 1, blind
+
+Fourteen macros on seeds 3, 7 and 12, the two ends of each, 42 pairs, scored
+2026-09-27. *Named*: pairs where the scorer picked the side the name says.
+*Rather have*: + the macro's end, - its opposite, = neither, by seed.
+
+| macro | named | rather have (3, 7, 12) | the scorer's notes, in short |
+|---|---|---|---|
+| open | 3/3 | = = + | |
+| dense | 3/3 | = + = | |
+| fragmented | 3/3 | = - + | neither crop very fragmented |
+| detailed | 3/3 | + + + | "probably too detailed, but the less detailed version looks a bit strange" |
+| crisp | 3/3 | = + - | |
+| luminous | 3/3 | = - = | "extremely luminous, though the other is rather too dark" |
+| bright | 3/3 | - - - | |
+| hazy | 3/3 | = - = | "I was expecting a more overall haze" |
+| vivid | 3/3 | - = = | "reads like saturation (which is okay)" |
+| starry | 3/3 | + - - | too many stars at their brightness: "striking", "a little excessive" |
+| violent | 3/3 | - - = | "I don't really know what violent means"; "could look cool" |
+| grand | 1/3 | = - - | not obvious in a crop, "rather once you look around"; how does it differ from enveloping? |
+| billowing | 1/3 | - = + | the crops very similar; "hard to understand what billowing vs wispy does" |
+| galactic | 0/3 | - - - | how is it different from starry? |
+
+**Eleven names confirmed** on every seed. Of the three that were not:
+
+- **Galactic lost its name 0-3**, the remote end picked as the more galactic every
+  time, and preferred every time. Seen, the galactic end's glow of unresolved stars
+  lies over the sky as a brown haze and softens the stars; the remote end is black
+  sky and sharp stars, which is what reads as a galaxy. So nearer-and-brighter is
+  not galactic while the band is a glow. The macro is withdrawn until the band is
+  made of stars (`ROADMAP.md`, *The galaxy from any star*), where galactic can mean
+  the galaxy's structure seen.
+- **Grand and billowing at 1/3 are chance**, as the notes say: at 75 degrees two
+  crops of one sky rarely show the size of its forms or its billows against its
+  filaments. Both are re-tested looking around. Grand also still opened the sky --
+  the scorer asked how it differs from enveloping -- through the mass's own scale,
+  which it no longer binds.
+- **Violent was named 3/3 but not understood.** Its difference showed, its meaning
+  did not. Re-tested looking around, and a candidate for a better name.
+
+**The ends, from the notes:** starry's many stars were too bright together, so
+starry now dims each star as it adds them; luminous went too far both ways, and is
+shorter both ways; hazy's veil was too slight, and goes further. Vivid read as
+saturation, which it is, and runs now from grey at -1 to twice the palette's own
+chroma at 1, with the stars and galaxy drawn into the grade at both ends, so a
+muted sky is muted all through.
+
+**Preferences on every seed** -- dim over bright, detailed over smooth, remote over
+galactic -- say something of the defaults rather than of the macros: the sky may
+want a lower exposure, more detail, and less of the galaxy's glow. Each would be a
+look change, for a new look version and a blind test of its own (`ROADMAP.md`,
+*Macros*); nothing here changes a default.

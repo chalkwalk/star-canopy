@@ -33,6 +33,15 @@ int main() {
       CHECK(v == 0.0 || v >= d[i].floor);
       CHECK(d[i].lo == 0.0f || d[i].lo == d[i].floor);
     }
+    // A dial a macro owns is not set on its own; the rest of these checks are
+    // for the dials that are.
+    if (d[i].owner) {
+      Settings e;
+      std::string why;
+      CHECK(!setDial(e, d[i].name, dialValue(defaults, d[i]), why) &&
+            why.find(d[i].owner) != std::string::npos);
+      continue;
+    }
     // Its own range's ends, written as a person writes them, are in range.
     if (!d[i].choices && !d[i].seed) {
       char lo[32], hi[32];

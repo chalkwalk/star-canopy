@@ -151,12 +151,38 @@ int main() {
   // Two macros on one dial add: open and fragmented both take from keep.
   float keep = resolveMacros(base, {{"open", 1.0f}, {"fragmented", 1.0f}}).keep;
   CHECK(near(keep, 0.7 - 0.15 - 0.1));
-  // Octaves add too: bright and starry both scale the stars' brightness.
-  CHECK(near(resolveMacros(base, {{"bright", 1.0f}, {"starry", 1.0f}}).starBrightness, 0.55 * 2.0));
+  // Octaves add too: bright raises the stars' brightness, starry lowers it.
+  CHECK(near(resolveMacros(base, {{"bright", 1.0f}, {"starry", 0.5f}}).starBrightness,
+             0.55 * std::exp2(0.25)));
   // A dial off by default is moved by amounts: luminous lights the cavity.
   CHECK(base.massCavity == 0.0f);
-  CHECK(near(resolveMacros(base, {{"luminous", 1.0f}}).massCavity, 0.004));
+  CHECK(near(resolveMacros(base, {{"luminous", 1.0f}}).massCavity, 0.003));
   CHECK(resolveMacros(base, {{"luminous", -1.0f}}).massCavity == 0.0f);
+
+  // A dial a macro owns: vivid runs the palettes' chroma from grey to twice.
+  // No other macro binds it.
+  CHECK(resolveMacros(base, {{"vivid", -1.0f}}).gradeChroma == 0.0f);
+  CHECK(resolveMacros(base, {{"vivid", 1.0f}}).gradeChroma == 2.0f);
+  {
+    int dialCount = 0;
+    const Dial* d = dials(dialCount);
+    for (int j = 0; j < dialCount; j++) {
+      int boundBy = 0;
+      bool byOwner = false;
+      for (int i = 0; i < count; i++) {
+        for (int k = 0; k < m[i].bindingCount; k++) {
+          if (std::string(m[i].bindings[k].dial) == d[j].name) {
+            boundBy++;
+            byOwner = byOwner || (d[j].owner && std::string(d[j].owner) == m[i].name);
+          }
+        }
+      }
+      if (d[j].owner && !(boundBy == 1 && byOwner)) {
+        std::printf("%s belongs to %s, and should be bound by it alone\n", d[j].name, d[j].owner);
+        test::failures++;
+      }
+    }
+  }
 
   // Clamped to the dial's range, and whole dials rounded.
   over = base;

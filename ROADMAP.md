@@ -104,9 +104,14 @@ testable without a window and give the A/B tools in-context sheets at once.
       before keeping or removing them
 - [x] Macro table (`DESIGN.md` §5) and its resolution, with tests: `[macros]` in
       projects, `render --macro`, `starcanopy macros`
-- [ ] First macro set, iterated with blind scoring: fourteen made and measured
-      (`docs/studies/macros.md`); the first blind pairs (`tools/blind`) await
-      scores
+- [ ] First macro set, iterated with blind scoring (`docs/studies/macros.md`):
+      round 1 confirmed eleven names of fourteen on every seed; galactic waits
+      for the galaxy work (*The galaxy from any star*); grand and billowing
+      are re-tested looking around, with violent, whose intent was unclear;
+      vivid, starry, luminous and hazy re-tested with their ends moved
+- [ ] What the macros' preferences say about the defaults, each a look change
+      for a new look version and its own blind test: round 1 preferred dim to
+      bright, detailed to smooth, and remote to galactic on all three seeds
 - [ ] Styles: mass, shell, and the sparse compositions
 
 ## The look
@@ -192,6 +197,11 @@ from it goes in `SOURCES.md`.
       strictly, so most seeds sit in the band and few far out. Today the seed
       picks only the angle, and radius and height are raw dials. Raw material
       for a macro (*Macros*)
+- [ ] A galactic / remote macro, once the band is made of stars. The first one
+      -- nearer the centre, more glow -- lost its name 0-3 blind: the glow read
+      as a brown haze over the stars, and the remote end, black sky and sharp
+      stars, was picked as the more galactic every time (and preferred). A
+      galactic sky should be one where the galaxy's structure shows
 - [ ] Blind A/B at game field of view for each step that moves the look, across
       the atlas's vantages, not one; `test_look` moves only with a new look
       version

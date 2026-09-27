@@ -38,7 +38,6 @@ PROMISE = {
     "hazy": ("contrast", -1),
     "vivid": ("chroma", +1),
     "starry": None,
-    "galactic": ("brightness", +1),
 }
 
 

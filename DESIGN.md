@@ -166,10 +166,12 @@ one parameter can serve several macros.
 
 Macros bind only look parameters (`docs/studies/parameters.md`): never quality,
 debug, or those off by a decision or retiring with the shell; `test_macros` holds
-the table to that. The first set of fourteen was made from the parameter study and
-is measured in `docs/studies/macros.md`; which way each end should go, and how
-far, is iterated with blind scoring. Colour family and hue type stay choices of
-the seed, overridable.
+the table to that. A parameter that exists only to serve one macro -- the
+palettes' chroma, vivid's -- belongs to it (`Dial::owner`): it is not a raw
+parameter, and is set only through its macro. The first set, made from the
+parameter study, is measured and scored blind in `docs/studies/macros.md`; which
+way each end should go, and how far, is iterated with blind scoring. Colour family
+and hue type stay choices of the seed, overridable.
 
 **Discrete choices are not additive.** The form (mass or shell) and the sparse
 compositions are *styles*; macros steer within a style.
