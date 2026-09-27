@@ -53,8 +53,10 @@ parameters are command-line overrides. A new control must first fail to be a
 macro.
 
 **4. Reference imagery in the repository (`PRINCIPLES §10`, `fence #4`).**
-Reference skies are used as numbers only. No image of one is ever committed,
-including in docs, fixtures or history. Nor are they named: the game they come
+Reference skies are fitted as numbers only; they may be viewed from outside the
+tree as a guide to what a model lacks, never as a target. No image of one is
+ever committed or copied into the working tree, including in docs, fixtures or
+history. Nor are they named: the game they come
 from appears once, in `README.md`, and never in code, parameters, docs or commit
 messages; no palette or parameter says which reference sky it was fitted to.
 The labs' commit messages name it freely -- rewrite them in the lift.

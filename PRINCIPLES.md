@@ -64,7 +64,8 @@ answer is "no" or "well, except...", the proposal bends, not the principle.
    derived from that? (§8)
 8. **Preview** -- Does the preview run the same pipeline as the final render? (§9)
 9. **Provenance** -- Is everything it uses first-party or compatibly licensed, and
-   is any reference used only as numbers, with that recorded? (§10)
+   is any reference kept out of the tree -- fitted only as numbers, with that
+   recorded, and otherwise only looked at? (§10)
 10. **Open sky** -- Does it leave room for the stars? (§11)
 11. **Reader** -- Is every control it adds named, described, and reachable from
     the keyboard and the command line? (§12)
@@ -239,10 +240,13 @@ compatible licences where they exist, and writes its own where they do not.
 `docs/references/SOURCES.md` records where each model and each fitted constant
 came from.
 
-**Consequence.** Reference skies are used as **numbers only**: brightness
-distributions, hue and chroma by lightness. No reference imagery enters this
-repository, at any point in its history, and no preset imitates a named product
-(`fence #4`).
+**Consequence.** Reference skies are **measured as numbers and viewed outside
+the tree**. Numbers -- brightness distributions, hue and chroma by lightness --
+may be fitted and shipped, with their provenance recorded. Images may be looked
+at, from outside the repository, as a guide to what a model lacks; they are
+never a target to match, and what ships is still settled blind (§2). No
+reference imagery enters this repository, at any point in its history, and no
+preset imitates a named product (`fence #4`).
 
 ## 11. Open sky is part of the sky
 

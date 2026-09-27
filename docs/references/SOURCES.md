@@ -4,9 +4,10 @@ Where each model and each fitted constant in StarCanopy came from
 (`PRINCIPLES §10`). A number without a source here is a number nobody can
 defend or safely change.
 
-**Reference skies are used as numbers only.** Brightness distributions, and
-hue and chroma by lightness, are measured from them; the images themselves are
-never committed, at any point in the history, including in docs, fixtures and
+**Reference skies are fitted as numbers only.** Brightness distributions, and
+hue and chroma by lightness, are measured from them. They may also be viewed,
+from outside the repository, as a guide to what a model lacks, never as a
+target (`PRINCIPLES §10`). The images themselves are never committed, at any point in the history, including in docs, fixtures and
 test data (`fence #4`). Nothing in this file is a picture of one, and nothing
 should be.
 
