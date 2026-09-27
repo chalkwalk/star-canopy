@@ -155,7 +155,7 @@ int main() {
   CHECK(near(resolveMacros(base, {{"bright", 1.0f}, {"starry", 1.0f}}).starBrightness, 0.55 * 2.0));
   // A dial off by default is moved by amounts: luminous lights the cavity.
   CHECK(base.massCavity == 0.0f);
-  CHECK(near(resolveMacros(base, {{"luminous", 1.0f}}).massCavity, 0.006));
+  CHECK(near(resolveMacros(base, {{"luminous", 1.0f}}).massCavity, 0.004));
   CHECK(resolveMacros(base, {{"luminous", -1.0f}}).massCavity == 0.0f);
 
   // Clamped to the dial's range, and whole dials rounded.

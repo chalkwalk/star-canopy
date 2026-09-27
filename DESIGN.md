@@ -153,16 +153,23 @@ look version and a blind comparison (`ROADMAP.md`, *The look*).
 
 ## 5. Macros
 
-The surface is a set of macros (`PRINCIPLES §5`). A macro is a named control in
-[0, 1] (or bipolar) and a table of bindings; each binding is a raw parameter, an
-intensity and a curve. A parameter's value is its base plus the sum of every
-macro's contribution, clamped to its range -- the additive model Arps Euclidya's
-macros use, so one parameter can serve several macros.
+The surface is a set of macros (`PRINCIPLES §5`). A macro is a named control from
+-1 to 1 between two words for the sky -- `open` runs from enveloping to open -- and
+0 is the seed's own sky, exactly. Its table of bindings (`src/core/macros.cpp`, the
+one definition, `PRINCIPLES §13`) gives each raw parameter it moves two slopes: how
+far at 1 and how far at -1, linear between, since a parameter seldom has as much
+room one way as the other. A parameter stepped by factors is moved in octaves,
+any other by amounts. A parameter's value is its base -- the default, or the
+project's override -- plus every macro's amounts, times two to every macro's
+octaves, clamped to its range: the additive model Arps Euclidya's macros use, so
+one parameter can serve several macros.
 
-The macro set is **not yet designed**. It comes after a triage of the raw
-parameters and a sensitivity study (`ROADMAP.md`), and is iterated with blind
-scoring. Candidates from what is known: *open / enveloping*, *billowing / wispy*,
-*luminous / brooding*, *calm / violent*, and colour family.
+Macros bind only look parameters (`docs/studies/parameters.md`): never quality,
+debug, or those off by a decision or retiring with the shell; `test_macros` holds
+the table to that. The first set of fourteen was made from the parameter study and
+is measured in `docs/studies/macros.md`; which way each end should go, and how
+far, is iterated with blind scoring. Colour family and hue type stay choices of
+the seed, overridable.
 
 **Discrete choices are not additive.** The form (mass or shell) and the sparse
 compositions are *styles*; macros steer within a style.

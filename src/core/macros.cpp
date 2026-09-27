@@ -54,8 +54,8 @@ const Binding kDetailed[] = {
 
 // Billowed rather than ridged, in broad billows; wispy is filaments.
 const Binding kBillowing[] = {
-  {"filament", A, -0.4f, 0.4f},
-  {"mass-scale", O, -0.6f, 0.6f},
+  {"filament", A, -0.45f, 0.45f},
+  {"mass-scale", O, -0.3f, 0.3f},
 };
 
 // Hard edges and hard shadows: crisp detail, small clusters, a sharp fill,
@@ -70,8 +70,8 @@ const Binding kCrisp[] = {
 // Light from within: brighter clusters, a glowing cavity in front, more fill
 // on the faces turned away.
 const Binding kLuminous[] = {
-  {"luminosity", O, 1.5f, -1.5f},
-  {"mass-cavity", A, 0.006f, 0.0f},
+  {"luminosity", O, 1.0f, -1.5f},
+  {"mass-cavity", A, 0.004f, 0.0f},
   {"fill", O, 1.0f, -1.5f},
 };
 
@@ -84,14 +84,15 @@ const Binding kBright[] = {
 
 // A glow over everything, and dust lit by the stars; clear is black between.
 const Binding kHazy[] = {
-  {"haze", O, 2.0f, -2.0f},
+  {"haze", O, 1.5f, -2.0f},
   {"reflection", O, 1.0f, -1.0f},
 };
 
 // Colour: the palettes more chromatic, the stars and galaxy following them.
+// Not by grade-strength, which gives the colour back to the lines' own, and
+// those are more colourful than most palettes, not less.
 const Binding kVivid[] = {
-  {"grade-chroma", O, 1.0f, -1.0f},
-  {"grade-strength", A, 0.0f, -0.3f},
+  {"grade-chroma", O, 1.0f, -1.3f},
   {"grade-stars", A, 0.2f, -0.3f},
   {"grade-galaxy", A, 0.2f, -0.1f},
 };
@@ -106,21 +107,21 @@ const Binding kStarry[] = {
 // The galaxy in the sky: nearer its bright centre and glowing more; remote is
 // toward its edge, the band faint.
 const Binding kGalactic[] = {
-  {"galaxy-radius", A, -1.0f, 1.5f},
-  {"galaxy-glow", O, 1.2f, -1.5f},
+  {"galaxy-radius", A, -0.7f, 1.5f},
+  {"galaxy-glow", O, 0.8f, -1.5f},
 };
 
 // Buckled, swirled and blown out; calm is smooth and whole.
 const Binding kViolent[] = {
-  {"fold", A, 0.15f, -0.12f},
+  {"fold", A, 0.15f, -0.15f},
   {"mass-warp", A, 0.25f, -0.2f},
-  {"mass-blister", A, 0.25f, -0.2f},
+  {"mass-blister", A, 0.25f, -0.25f},
   {"fold-scale", O, 0.7f, -0.7f},
 };
 
 // Structure in few large forms; busy is many small ones.
 const Binding kGrand[] = {
-  {"mass-scale", O, -0.8f, 0.8f},
+  {"mass-scale", O, -0.5f, 0.5f},
   {"fold-scale", O, -0.6f, 0.6f},
   {"hole-scale", O, -0.8f, 0.8f},
   {"detail-scale", O, -0.5f, 0.5f},

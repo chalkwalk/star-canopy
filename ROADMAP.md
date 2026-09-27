@@ -104,7 +104,9 @@ testable without a window and give the A/B tools in-context sheets at once.
       before keeping or removing them
 - [x] Macro table (`DESIGN.md` §5) and its resolution, with tests: `[macros]` in
       projects, `render --macro`, `starcanopy macros`
-- [ ] First macro set, iterated with blind scoring
+- [ ] First macro set, iterated with blind scoring: fourteen made and measured
+      (`docs/studies/macros.md`); the first blind pairs (`tools/blind`) await
+      scores
 - [ ] Styles: mass, shell, and the sparse compositions
 
 ## The look
