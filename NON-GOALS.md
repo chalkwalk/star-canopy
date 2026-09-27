@@ -42,7 +42,8 @@ desire that fits.
 | 5 | **Animated or time-varying skies** | Nebulae that drift, stars that twinkle | North Star | A static sky, which is what a skybox is. Rotation over time, if a game wants it, is one line in the engine. |
 | 6 | **A CPU rendering path** | Portability to machines without a capable GPU | §9 | GPU rendering on OpenGL 3.3-class hardware on Linux, Windows and macOS. At these step counts a CPU takes minutes to hours per sky, which would break the preview ladder that the whole workflow rests on. |
 | 7 | **Every parameter as a control; an "advanced mode"** | The model has about a hundred parameters, and exposing them is easy | §5 | Macros with descriptive names, additive so they compose. Raw parameters as **command-line overrides**, for scripting, where nobody strays off the macros by accident. |
-| 8 | **Suns, planets, ships and foreground objects** | "A sky needs a sun" | North Star, §8 | An HDR sky a game can project its own sun into, and the key light's direction reported with the files so the scene's light can match (`PRINCIPLES §14`). |
+| 8 | **Suns, planets, ships and foreground objects in the texture** | "A sky needs a sun" | North Star, §8 | An HDR sky a game can project its own sun into, and the key light's direction reported with the files so the scene's light can match (`PRINCIPLES §14`). To see them together, the in-context view (`DESIGN.md` §11) puts a stand-in sun at the key light and probes the sky lights -- for looking, never baked. |
+| 9 | **A scene, look-dev or model viewer** -- mesh import, material editing, several objects, engine-matching knobs (bloom threshold, adaptation speed...) | Once a sky is shown lighting an object, the next asks are "my ship", "my materials", "my engine's settings" | North Star, §5 | A fixed set of probes (mirror, rough metal, grey diffuse, one simple hull) and a few presentation controls: exposure auto or manual, bloom on or off, a tonemap from a short list, the sun's size and intensity. Enough to judge how the sky lights a scene; the scene itself is the game's. |
 
 ## Notes on the close calls
 
@@ -56,6 +57,17 @@ for, the answer is a macro, or a change to one.
 **Physics is not a fence either way (#3, and §3).** Refusing learned models is not
 a claim that everything here is physical: some terms are not, and are kept because
 they won blind. The fence is about provenance and reproducibility, not realism.
+
+**Showing a sun is not baking one (#8).** The in-context view draws a stand-in
+sun and lights probes with the sky so a developer can judge the sky as their
+scene will present it. None of it reaches an exported file; the texture stays
+the dome alone.
+
+**Other skies in the viewer are for looking (#4, #9).** The viewer will load any
+HDR sky -- a game's current skybox, say, to compare against. Such a sky is shown
+and nothing more: no macros, no export, no reorientation beyond the camera. It is
+never committed, and never measured into the palette or tone targets without its
+provenance recorded in `docs/references/SOURCES.md`.
 
 **Bakes in someone else's pipeline are fine (#2).** A studio running the command
 line in its build to make a sky per level is using StarCanopy as intended. What is

@@ -34,7 +34,9 @@ the sky in words, looking around as you go. What you take away is the texture.
 
 The name is the design. A *canopy* is the dome overhead that a place is under.
 StarCanopy makes that dome, and only that dome: not the sun, the planets or the
-ships under it (`fence #8`).
+ships under it (`fence #8`). It will show you the dome in their company -- a
+stand-in sun where the key light is, a probe the sky lights -- but it bakes none
+of them.
 
 Where two principles are in tension, the North Star is the tie-breaker: the
 reading that gives a game developer a better-looking sky, sooner, with less to
@@ -221,6 +223,13 @@ they will not receive.
 band-limited to what a texel can hold, so a small preview is the same sky seen
 more coarsely, not a different one.
 
+**Consequence.** The in-context view -- the sky under an engine's auto exposure,
+bloom and tonemap, with a stand-in sun and probes -- shows the same bake,
+presented differently; it is never a different sky. Its presentation is stated
+on screen. Steering and blind comparisons default to the neutral display curve
+the 8-bit output is derived through, so scores stay comparable across rounds; a
+score made in context says so.
+
 ## 10. First-party or compatibly licensed, with provenance recorded
 
 StarCanopy is GPLv3. It uses well-maintained third-party components under
@@ -292,4 +301,5 @@ text there.
 | 5 | Animated or time-varying skies | North Star |
 | 6 | A CPU rendering path | §9 |
 | 7 | Every parameter as a control; an advanced mode | §5 |
-| 8 | Suns, planets, ships and foreground objects | North Star, §8 |
+| 8 | Suns, planets, ships and foreground objects in the texture | North Star, §8 |
+| 9 | A scene, look-dev or model viewer | North Star, §5 |
