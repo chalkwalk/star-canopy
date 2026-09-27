@@ -1,7 +1,3 @@
-// StarCanopy -- the command line.
-// Copyright (C) 2026 ChalkWalk
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 #include "cubemap.h"
 #include "empty_bake.h"
 #include "gl_context.h"

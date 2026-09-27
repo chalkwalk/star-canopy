@@ -1,7 +1,3 @@
-// StarCanopy -- a cubemap on the GPU that bakes draw into and read back from.
-// Copyright (C) 2026 ChalkWalk
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 #include "cubemap_target.h"
 
 #include <cstddef>

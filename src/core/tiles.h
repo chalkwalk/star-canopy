@@ -1,7 +1,3 @@
-// StarCanopy -- cutting cubemap faces into tiles, one draw each.
-// Copyright (C) 2026 ChalkWalk
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 #pragma once
 
 #include <vector>

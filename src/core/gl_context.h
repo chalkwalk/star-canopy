@@ -1,7 +1,3 @@
-// StarCanopy -- an OpenGL 3.3 core context with no visible window.
-// Copyright (C) 2026 ChalkWalk
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 #pragma once
 
 #include <memory>

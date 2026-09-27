@@ -104,6 +104,9 @@ hidden-window test skips when there is no display.
   `#pragma once`, namespace `starcanopy`. Comments say why, not what.
 - Cite principles and fences by number in source comments where a decision turns
   on one.
+- No licence header or SPDX line in our own files: `LICENSE` (GPLv3) and
+  `README.md` cover the tree, as in Antiphon and Arps Euclidya. Vendored and
+  lifted third-party files, `mtwist.c` among them, keep their own notices.
 
 ## Before claiming a change works
 

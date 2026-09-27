@@ -1,7 +1,3 @@
-// StarCanopy -- PFM files read back as written.
-// Copyright (C) 2026 ChalkWalk
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 #include "check.h"
 #include "pfm.h"
 

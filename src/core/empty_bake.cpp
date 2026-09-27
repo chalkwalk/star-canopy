@@ -1,7 +1,3 @@
-// StarCanopy -- the empty bake: a black cubemap, drawn the way the model will be.
-// Copyright (C) 2026 ChalkWalk
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 #include "empty_bake.h"
 
 namespace starcanopy {

@@ -1,7 +1,3 @@
-// StarCanopy -- tiles cover every texel of every face exactly once.
-// Copyright (C) 2026 ChalkWalk
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 #include "check.h"
 #include "tiles.h"
 

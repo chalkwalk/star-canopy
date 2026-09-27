@@ -1,7 +1,3 @@
-// StarCanopy -- the empty bake draws every texel, black, with no GL error.
-// Copyright (C) 2026 ChalkWalk
-// SPDX-License-Identifier: GPL-3.0-or-later
-
 #include "check.h"
 #include "cubemap.h"
 #include "empty_bake.h"
