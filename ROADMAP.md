@@ -22,7 +22,10 @@ Next is the parameter triage and sensitivity study the macros depend on. Order:
 2. ~~**The lift**~~ -- done; `docs/COMPLETED.md`.
 3. ~~**Headless core and command line**~~ -- done; `docs/COMPLETED.md`.
 4. **Parameter triage and sensitivity study**, which the macros depend on.
-5. **The preview ladder and the interface.**
+5. **In context** -- headless stills first, then a minimal window and
+   look-around to show them in, pulled ahead of the rest of the interface.
+6. **Macros.**
+7. **The preview ladder and the rest of the interface.**
 
 ---
 
@@ -59,6 +62,26 @@ Next is the parameter triage and sensitivity study the macros depend on. Order:
 - [ ] A/B and side-by-side views; collections of candidates (`PRINCIPLES §1`)
 - [ ] Approve at 1024; export dialog
 - [ ] Every control named, described, keyboard-reachable (`PRINCIPLES §12`)
+
+### In context
+
+The sky as an engine shows it -- auto exposure, bloom, a tonemap -- with a
+stand-in sun at the key light and probes it lights; for looking, never baked
+(`DESIGN.md` §11, `fence #8`, `fence #9`). Headless stills come first: they are
+testable without a window and give the A/B tools in-context sheets at once.
+
+- [ ] Viewer library (`src/view/`): sky sources (the bake, our exports read back,
+      any OpenEXR or `.hdr` sky), IBL precompute (GGX mips, BRDF table, SH9),
+      tonemaps, exposure, bloom; tiled against the watchdog
+- [ ] Probes (mirror, rough metal, grey diffuse, a simple hull) and the sun
+- [ ] `starcanopy view PROJECT|FILE`: headless stills, camera, probe, sun,
+      presentation
+- [ ] Tests: constant sky, mirror against lookup, BRDF table, export round trip
+- [ ] A minimal SDL3 window with the look-around; neutral and in-context views
+      as a toggle, the presentation stated on screen (`PRINCIPLES §9`)
+- [ ] A/B sheets in context from `tools/`
+- [ ] IBL output: KTX2 with the prefiltered mip chain, SH9 in `NAME.json`
+      (`DESIGN.md` §8); stb_image in `THIRDPARTY.md` when `.hdr` lands
 
 ### Macros
 

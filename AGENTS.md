@@ -74,6 +74,7 @@ extern/            # SUBMODULES: SDL3, Dear ImGui; glad vendored (generated)
 src/core/          # the model, the bake, the writers -- no window, no UI
 src/core/shaders/  # GLSL 1.50: field, light, bake, denoise, galaxy, stars
 src/cli/           # starcanopy: project file in, images out
+src/view/          # the in-context view: exposure, bloom, probes, sun (planned)
 src/app/           # SDL3 + Dear ImGui interface (planned)
 tools/             # A/B sheets, look-around capture, measurements (planned)
 test/              # unit tests for the pure parts; bake tests on a real context

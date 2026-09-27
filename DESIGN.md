@@ -12,7 +12,7 @@
 > Nerds In Space labs (`labs/features/nebula_sky` on its `nebula-sky` branch),
 > where it was developed and judged blind over many rounds; it renders their skies
 > to the texel. The application around it -- §2, §7 onward -- is the plan, not yet
-> built, but for the headless bake of §2.
+> built, but for the headless bake of §2. §11, the in-context view, is planned.
 
 ## 1. Vision
 
@@ -41,6 +41,10 @@ Three layers, so the command line and the interface cannot drift apart:
 - **The interface**: SDL3 for the window, input and context; Dear ImGui over it
   (`imgui_impl_sdl3` and `imgui_impl_opengl3`). The grid, the look-around, the
   macros and the A/B views are ImGui drawing the core's textures.
+- **The viewer** (`src/view/`, planned): the in-context view of §11 -- a sky
+  presented as an engine would, with a stand-in sun and probes. A library, so
+  the interface, the command line (`starcanopy view`) and `tools/` draw the same
+  frame (`PRINCIPLES §12`, §13). It reads cubemaps; it never changes one.
 
 **Why OpenGL 3.3 and not Vulkan, WebGPU or SDL's GPU API.** The model is written
 in GLSL 1.50 and runs everywhere that matters today, macOS included (4.1 core,
@@ -200,6 +204,12 @@ example. Unknown keys are errors, since a typo ignored is a different sky.
   and axes. The key light's direction -- the main nebula's brightest cluster, turned
   with the sky -- is written beside the images in `NAME.json`, as a lookup vector,
   as azimuth and elevation, and as the way its light travels.
+- **Image-based lighting** (planned, an output option): a KTX2 cubemap with a
+  GGX-prefiltered mip chain, each mip's roughness stated, and the sky's SH9
+  irradiance in `NAME.json` -- what an engine needs to light a scene from the
+  sky, made by the same code the viewer uses (§11). The KTX2 writer gains mip
+  levels. It is derived from the HDR, not a change to it, but its filter is
+  pinned and tested like the look, so it does not drift silently.
 - Game-specific layouts (Space Nerds In Space's face order and mirroring, for one)
   are converters, not core formats.
 
@@ -220,3 +230,79 @@ be measured, not assumed (`PRINCIPLES §9`).
   build side-balanced A/B sheets and look-arounds.
 - Every look version keeps a small set of reference renders' statistics, so an
   unintended change to the pixels is caught.
+- Image-based lighting (§8, §11): a constant sky gives constant irradiance and an
+  unchanged prefilter; the mirror probe matches a direct cubemap lookup; the
+  BRDF table matches reference values; an exported file read back into the
+  viewer matches the bake it came from.
+
+## 11. The in-context view
+
+A sky's HDR is judged through one stated display curve (§4.2, §8); a game shows
+it through its own exposure, bloom and tonemap, beside its own sun, lighting its
+own ships. The in-context view shows the sky that way, so a developer can judge
+it as their scene will present it (`PRINCIPLES §1`, §8) and line their sun up
+with the key light (`PRINCIPLES §14`). It is for looking: nothing it adds reaches
+an exported file (`fence #8`), and it stays a view, not a scene tool
+(`fence #9`).
+
+**The neutral view is the default.** Steering and blind comparisons use the
+display curve the 8-bit output is derived through; the in-context view is a
+toggle, its presentation stated on screen, and a score made in it says so
+(`PRINCIPLES §9`).
+
+### 11.1 Skies it shows
+
+- The live bake, at whatever rung of the preview ladder it is.
+- StarCanopy's own exports, read back -- OpenEXR faces or equirect, KTX2 -- which
+  checks an export end to end: faces, orientation and the key light in
+  `NAME.json`.
+- Any other HDR sky, OpenEXR or Radiance `.hdr`, cubemap or equirectangular: a
+  game's current skybox, say, to compare against. Shown and nothing more -- no
+  macros, no export, no turning but the camera's; never committed (`fence #4`).
+  `.hdr` needs stb_image (MIT).
+
+### 11.2 Lighting from the sky
+
+The standard split-sum image-based lighting: a GGX-prefiltered specular mip
+chain, a BRDF lookup table, and SH9 irradiance for the diffuse. The same code
+makes the IBL output (§8). The prefilter at export size is drawn in tiles, like
+the bake, so no draw trips a GPU watchdog.
+
+### 11.3 Probes and the sun
+
+- **Probes**, generated in code, one at a time: a mirror sphere, a rough metal
+  sphere, a grey diffuse sphere, and one simple hull shape. The chrome and grey
+  balls are look-dev's standard instruments: one shows what the sky reflects,
+  the other how much light it gives. No mesh import (`fence #9`).
+- **The sun**: a disc, off by default, that starts at the key light's direction,
+  with an angular size and an intensity. It lights the probe as a directional
+  light as well as showing in the sky. Its default intensity is set relative to
+  the sky's key light, so the sky stays visible; a physically bright sun makes
+  auto exposure black the nebula out -- true of many engines, worth seeing once,
+  a poor default.
+
+### 11.4 Presentation
+
+A few controls, fixed in kind (`PRINCIPLES §5`, `fence #9`):
+
+- **Exposure**: auto, or a manual EV. Auto meters a luminance histogram of the
+  frame and ignores the brightest few percent, so a sun or a nebula's core does
+  not set the exposure alone.
+- **Bloom**: on or off, a fixed downsample-upsample chain.
+- **Tonemap**: the display curve (the default, `look.h`), ACES, or AgX.
+
+A still is a function of its inputs: exposure is metered from the frame itself,
+with no adaptation over time. The interactive view may ease between meterings;
+a still never does.
+
+### 11.5 From the command line
+
+`starcanopy view PROJECT|FILE` renders a still -- camera yaw, pitch and field of
+view, probe, sun, presentation -- headless, as the render does. Anything the
+interactive view shows, a script can make (`PRINCIPLES §12`), and `tools/`
+builds A/B sheets in context from it.
+
+**Alternatives considered.** A sun baked into the texture: a game that adds its
+own gets two, and the sky is no longer the dome alone (`fence #8`). Embedding an
+engine (Filament, say) for the view: a large dependency and build for a sphere,
+a disc and three post passes.

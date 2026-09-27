@@ -47,6 +47,12 @@ light to your scene's sun by eye is fiddly. StarCanopy rotates the sky on export
 shows a compass and axes while you look around, and writes the key light's
 direction beside the images.
 
+**Seeing it in context (planned).** A second view shows the sky as an engine
+would -- auto exposure, bloom, your choice of tonemap -- with a stand-in sun at
+the key light and a chrome, metal or grey probe lit by the sky. It can load your
+exports, or any HDR sky, to compare. None of it is baked: the texture is the sky
+alone, and your game adds its own sun.
+
 ## Requirements (planned)
 
 An OpenGL 3.3-capable GPU. Linux first; Windows and macOS as soon as they build.
