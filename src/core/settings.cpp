@@ -141,6 +141,8 @@ const Dial kDials[] = {
          kGradeNames),
   REAL("grade-strength", "how far the colour goes toward the grade, 0..1", gradeStrength, 0.0f,
        1.0f),
+  GEO("grade-chroma", "how colourful the grade's palettes are, a factor on their chroma", gradeChroma,
+       0.1f, 4.0f),
   GEO0("haze", "faint glow over all the sky: its darkest parts dim, not black", haze, 0.0005f, 0.2f),
   GEO0("shoulder", "ceiling the brightest gas eases toward, not clipped; 0 is off", shoulder, 0.1f,
        4.0f),
@@ -397,6 +399,7 @@ Sky buildSky(const Settings& s) {
   choice.grade = s.grade == 1;
   choice.family = s.paletteFamily - 1;
   choice.strength = s.gradeStrength;
+  choice.chroma = s.gradeChroma;
   choice.dust = s.gradeDust;
   choice.hueType = s.hueType;
   buildGrade(s.seed, choice, l);

@@ -39,6 +39,7 @@ struct PaletteChoice {
   bool grade = true;      // false: the lines' own physical colours
   int family = -1;        // a PaletteFamily, or -1 to draw one by seed
   float strength = 1.0f;  // how far toward the grade, 0..1
+  float chroma = 1.0f;    // a factor on the palettes' chroma
   float dust = 1.0f;      // how far the dust takes its own colour, 0..1
   int hueType = 0;        // 0 by seed, 1 one palette, 2 a fan, 3 two regions
 };

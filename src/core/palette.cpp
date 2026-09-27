@@ -140,6 +140,7 @@ void buildSecond(uint32_t seed, const PaletteChoice& choice, const Palette& g, i
     }
   } else {
     drawFrom(pair[family][seedUniform(h) < 0.5f], h, g2);
+    g2.chroma *= choice.chroma;
   }
   paletteRamp(g2, l.ramp2);
   l.ramp2Share = type == 2 ? 0.15f + 0.15f * seedUniform(h) : 0.3f + 0.2f * seedUniform(h);
@@ -219,6 +220,7 @@ void buildGrade(uint32_t seed, const PaletteChoice& choice, Look& l) {
     l.grade = 0.0f;
   } else {
     family = drawPalette(seed, choice.family, g);
+    g.chroma *= choice.chroma;
     paletteRamp(g, l.ramp);
     paletteRamp(dustPalette(g), l.dustRamp);
     // A dust setting of 0 is the gas's ramp for the dust too.

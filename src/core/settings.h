@@ -83,6 +83,7 @@ struct Settings {
   int lineColors = 0;  // natural
   int grade = 1;  // auto
   float gradeStrength = 1.0f;
+  float gradeChroma = 1.0f;
   float haze = 0.004f;
   float shoulder = 0.8f;
   float gradeDust = 1.0f;
