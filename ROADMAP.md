@@ -125,6 +125,61 @@ it in HDR, before the stars, as the look was judged.
 - [ ] Blind A/B, then, if it holds up, look 2: HDR unshouldered, the shoulder in
       the 8-bit derivation (stars included)
 
+### The galaxy from any star
+
+The band should emerge from the galaxy's star density as seen from where the
+observer is, and look good from any star in it: anywhere in the galaxy's
+bounding volume, plus a thin margin for the rare outlier. It already emerges
+from a marched 3D density (`DESIGN.md` §3.5), but reads as a smooth glow with a
+seam down it. The dust is a thin layer (0.1 kpc, against the stars' 0.3) with
+nothing finer than about 250 pc, so near dust only dims broad areas and far dust
+draws a line; the glow bakes at 512 a face against an export of 2048; and the
+knee is tuned to one vantage. Stars and dust only for now: clusters, emission
+knots and satellite galaxies come later.
+
+What the model lacks was read off a photographic all-sky panorama of the Milky
+Way, kept outside the repository (`fence #4`): a band made of stars, grainy at
+full resolution; dust that breaks it into clouds with windows, black cores and
+amber edges, and fingers leaving the plane; stars over the lanes as well as
+through them; a band very uneven along its length. It is a guide to what is
+missing, not a target. Where look and physics disagree the look wins
+(`PRINCIPLES §3`), found by eye and settled blind (`§2`); any number fitted
+from it goes in `SOURCES.md`.
+
+- [ ] Vantage atlas in `tools/`: fixed places -- mid-disc, the rim, near the
+      centre, just past the edge, above the disc low and high, the outlier
+      margin -- over several seeds, whole sky and 45-degree views. First with
+      today's model, to see what emerges and where it breaks; then the bench
+      for every step below
+- [ ] Dust across scales: a contrasty fractal density from about 10 pc to 1 kpc,
+      mostly empty with dense clouds; a layer thick or varied enough that near
+      clouds leave the plane; the glow baked at export resolution, in strips
+      against the watchdog; the CPU twin in step (`test_galaxy`)
+- [ ] The band made of stars: stars near enough to meet the nebula stay points
+      in 3D; beyond them the march counts expected stars per solid angle in a
+      few apparent-brightness bins, each reddened by the dust at its depth, and
+      a pass at export resolution draws them from a hash fixed to the sky. Only
+      what is fainter than the last bin stays glow, and the sky between stays
+      dark (`PRINCIPLES §11`)
+- [ ] Its previews: stars defined in angle; at small sizes a texel sums the
+      bright bins' stars and takes the expected light of the faint ones -- the
+      same sky seen more coarsely (`PRINCIPLES §9`)
+- [ ] Exposure that follows the vantage, in place of the fixed knee
+      (`GAL_KNEE`), so the centre does not burn out and the outer sky is not
+      empty
+- [ ] Arms that break into fragments, with dust along their inner edges -- if
+      the atlas shows the views from above need it
+- [ ] The observer's place, cylindrical and normalised: an angle round the disc;
+      a radius from 0 at the centre to 1 at the edge; a height from 0 at the
+      midplane to +-1 at the disc's top and bottom; a little beyond 1 for
+      outliers. The seed picks it, weighted toward the star density but not
+      strictly, so most seeds sit in the band and few far out. Today the seed
+      picks only the angle, and radius and height are raw dials. Raw material
+      for a macro (*Macros*)
+- [ ] Blind A/B at game field of view for each step that moves the look, across
+      the atlas's vantages, not one; `test_look` moves only with a new look
+      version
+
 ### Carried over from the labs
 
 - [ ] Faint shadow streaks on some seeds
