@@ -36,4 +36,10 @@ Descriptors describe(const Baked& sky);
 // |a - b| over texels and channels, in 8-bit display levels.
 double change(const Cubemap& a, const Cubemap& b);
 
+// The share of the sky, by solid angle, where the two differ visibly: by more
+// than two 8-bit levels in some channel. change() averages over the whole
+// sphere and so hardly sees a change to points -- the stars -- or to fine
+// structure; this sees how much of the sky changed at all.
+double changedShare(const Cubemap& a, const Cubemap& b);
+
 }  // namespace starcanopy

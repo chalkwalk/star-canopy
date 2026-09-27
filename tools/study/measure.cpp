@@ -130,4 +130,25 @@ double change(const Cubemap& a, const Cubemap& b) {
   return 255.0 * sum / w;
 }
 
+double changedShare(const Cubemap& a, const Cubemap& b) {
+  int n = a.size;
+  double changed = 0, w = 0;
+  for (int f = 0; f < 6; f++) {
+    for (int j = 0; j < n; j++) {
+      for (int i = 0; i < n; i++) {
+        size_t at = (static_cast<size_t>(j) * n + i) * 3;
+        float wt = weight(n, i, j);
+        bool visible = false;
+        for (int k = 0; k < 3; k++) {
+          visible = visible || 255.0f * std::fabs(displayed(a.faces[f][at + k]) -
+                                                  displayed(b.faces[f][at + k])) > 2.0f;
+        }
+        changed += visible ? wt : 0.0;
+        w += wt;
+      }
+    }
+  }
+  return changed / w;
+}
+
 }  // namespace starcanopy
