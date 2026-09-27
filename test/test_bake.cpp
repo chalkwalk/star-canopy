@@ -74,5 +74,21 @@ int main(int argc, char** argv) {
       CHECK(cubemap.faces == first.faces);
     }
   }
+
+  // A baker used again gives what a fresh one gives. Bake one sky, then
+  // another, on the same baker, with a galaxy larger than the march, and the
+  // second must be the fresh baker's texel for texel: the march's targets,
+  // left attached, once cut the next galaxy pass down to their size.
+  {
+    Baker baker;
+    Settings a = settings, b = settings;
+    a.galaxyRes = b.galaxyRes = 256;  // larger than the 144 texel march
+    b.seed = 3;
+    CubemapTarget first(size), again(size), fresh(size);
+    bakeSky(baker, a, first);
+    bakeSky(baker, b, again);
+    CHECK(bakeSky(b, fresh, error));
+    CHECK(again.read().faces == fresh.read().faces);
+  }
   return test::finish();
 }

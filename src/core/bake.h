@@ -61,6 +61,7 @@ public:
 private:
   void uploadField(const Program& p, const Scene& s, const Look& look);
   void uploadBake();
+  void bindAlone();
   void attachMarch();
   void denoiseFace(int face);
   void drawStars(int face);

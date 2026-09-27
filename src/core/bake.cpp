@@ -329,7 +329,7 @@ void Baker::bakeLight(const Scene& s, const Look& look) {
     lightRes_ = res;
     lightSlabs_ = s.bubbleCount;
   }
-  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
+  bindAlone();
   glUseProgram(light_.id());
   uploadField(light_, s, look);
   glUniform1f(light_.uniform("u_Res"), static_cast<float>(res));
@@ -384,7 +384,7 @@ void Baker::bakeGalaxy(const Galaxy& g, const float reddening[3], int res) {
   glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
   const Program& p = galaxy_;
-  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
+  bindAlone();
   glUseProgram(p.id());
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_3D, noise_);
@@ -511,6 +511,19 @@ void Baker::uploadBake() {
   glUniform1f(p.uniform("u_FillShadow"), look.fillShadow);
   glUniform1f(p.uniform("u_Graze"), look.graze);
   glUniform3fv(p.uniform("u_Haze"), 1, look.haze);
+}
+
+// The framebuffer, with only colour attachment 0 left to be attached. GL
+// clips drawing to the smallest of a framebuffer's attachments whether it is
+// drawn to or not, so the march's depth and grade targets, left attached from
+// the last bake, cut every pass into anything larger down to their size: a
+// galaxy of 512 a face, baked after a march at 256, filled a quarter of each
+// face and left the rest undefined.
+void Baker::bindAlone() {
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
+  for (int i = 1; i < 4; i++) {
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, 0, 0);
+  }
 }
 
 void Baker::attachMarch() {
