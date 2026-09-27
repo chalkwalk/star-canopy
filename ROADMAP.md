@@ -14,12 +14,12 @@
 
 *(2026-09-26)*
 
-The build exists, with an empty bake that proves the GL context, the tiling and
-the readback headless; CI waits for a remote to run on. The model is proven in the
-Space Nerds In Space labs and moves here next. Order:
+The model is here: lifted from the Space Nerds In Space labs, it renders their
+skies to the texel from the command line (`docs/COMPLETED.md`, *The lift*). CI
+waits for a remote to run on. Next is the headless core's real outputs. Order:
 
 1. **Kick-start** -- the build, the licence, the third-party list.
-2. **The lift** -- the model out of the labs, as a readable history.
+2. ~~**The lift**~~ -- done; `docs/COMPLETED.md`.
 3. **Headless core and command line.**
 4. **Parameter triage and sensitivity study**, which the macros depend on.
 5. **The preview ladder and the interface.**
@@ -42,26 +42,6 @@ Space Nerds In Space labs and moves here next. Order:
       something to build
 - [ ] `SOURCES.md`'s open item: where the measurement scripts live
 
-### The lift
-
-The model moves from `labs/features/nebula_sky` (Space Nerds In Space, branch
-`nebula-sky`) into `src/core/`, as a curated linear history of 10-20 commits, each
-building and working, whose messages carry what was learned -- including the dead
-ends. The kick-start commit says plainly that this history is a reconstruction.
-
-- [ ] Seeded noise and the deterministic generator (keep seed compatibility with
-      the labs' `mtwist`, or record the break)
-- [ ] Scene model: bubbles, clusters
-- [ ] The shell, marched; emission by ionisation parameter
-- [ ] The light volume
-- [ ] The march's rules (step-back, optical-depth cap, jitter)
-- [ ] Galaxy and stars
-- [ ] Palette space, haze, shoulder
-- [ ] Denoise and supersampling
-- [ ] The mass, soft shadows, fine lumps, grazing shadows, raking fill
-- [ ] Correct copyright: the labs files' headers carry a copied template naming
-      another author; the code is ChalkWalk's, written with Claude
-
 ## The application
 
 ### Headless core and command line
@@ -69,6 +49,7 @@ ends. The kick-start commit says plainly that this history is a reconstruction.
 - [ ] Project file (TOML): look version, seed, style, macros, overrides,
       orientation, outputs
 - [ ] `starcanopy render project.toml`, with `--set name=value` overrides
+      (`starcanopy bake --set` exists, writing PFM, until then)
 - [ ] HDR output: OpenEXR faces and equirectangular; KTX2 cubemap
 - [ ] 8-bit PNG derived from HDR: faces, cross, equirectangular
 - [ ] Orientation: rotation by reprojection at export; key-light direction sidecar
@@ -93,6 +74,7 @@ ends. The kick-start commit says plainly that this history is a reconstruction.
 ### Macros
 
 - [ ] Triage the ~100 lab parameters: look, quality, debug, vestigial
+      (`starcanopy dials` lists them, from the one table in `settings.cpp`)
 - [ ] Sensitivity study: sweep each look parameter over seeds; which matter, which
       only matter together, which are dead
 - [ ] Macro table (`DESIGN.md` §5) and its resolution, with tests

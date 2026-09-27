@@ -26,9 +26,9 @@ cannot be expressed within the principles, it is not ready for the roadmap.
 ## Status
 
 `ROADMAP.md` is the live source; update that file, not this one, when focus
-changes. As of 2026-09-26 the repository holds the documents, the build, and an
-empty bake (`starcanopy bake-empty`: a black cubemap through the real context,
-tiling and readback); no model yet.
+changes. As of 2026-09-26 the model is lifted (`docs/COMPLETED.md`): `starcanopy
+bake` renders the labs' skies to the texel, as PFM faces; project files, real
+output formats, macros and the interface are not built yet.
 The model lives in Space Nerds In Space, `labs/features/nebula_sky` on the
 `nebula-sky` branch (`/home/programming/space-nerds-in-space`), and its open work
 is in `labs/features/nebula_sky/NEXT.md` there.
@@ -72,8 +72,7 @@ CMakeLists.txt
 cmake/             # build helpers: shaders embedded into the binary
 extern/            # SUBMODULES: SDL3, Dear ImGui; glad vendored (generated)
 src/core/          # the model, the bake, the writers -- no window, no UI
-src/core/shaders/  # GLSL 1.50; the model's field, light, bake, denoise,
-                   #   galaxy and stars shaders (planned)
+src/core/shaders/  # GLSL 1.50: field, light, bake, denoise, galaxy, stars
 src/cli/           # starcanopy: project file in, images out
 src/app/           # SDL3 + Dear ImGui interface (planned)
 tools/             # A/B sheets, look-around capture, measurements (planned)
@@ -88,13 +87,18 @@ git submodule update --init --recursive
 cmake -B build
 cmake --build build -j $(nproc)
 ctest --test-dir build --output-on-failure
-./build/starcanopy bake-empty --size 256 --out /tmp/sky   # until render exists
+./build/starcanopy bake --size 512 --set seed=7 --out DIR # until render exists
+./build/starcanopy dials                                 # the raw parameters
 ./build/starcanopy render sky.toml                         # planned
 ```
 
 The bake tests need an OpenGL 3.3 context: EGL headless on Linux, which Mesa's
-software renderer can provide, so they run without a display or GPU access. The
-hidden-window test skips when there is no display.
+software renderer can provide, so they run without a display or GPU access
+(slowly). The hidden-window test skips when there is no display.
+
+The model's shaders are the labs' GLSL, lightly edited; keep them ASCII, and keep
+the GPU and CPU twins (`galaxy.glsl` / `galaxy.cpp`) in step -- `test_galaxy`
+checks.
 
 ## Working conventions
 

@@ -239,6 +239,8 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
   glUniform1f(p.uniform("u_MassWarp"), look.massWarp);
   glUniform1f(p.uniform("u_ClusterSize"), look.clusterSize);
   glUniform1f(p.uniform("u_MassFine"), look.massFine);
+  glUniform1f(p.uniform("u_MassEdge"), look.massEdge);
+  glUniform1f(p.uniform("u_MassEdgePatch"), look.massEdgePatch);
   glUniform1f(p.uniform("u_DetailScale"), look.detailScale);
   glUniform1f(p.uniform("u_DetailGain"), look.detailGain);
   glUniform1f(p.uniform("u_Erosion"), look.erosion);

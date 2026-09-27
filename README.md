@@ -11,11 +11,11 @@ field of view, and steer it with a handful of controls that describe the sky --
 more open or more enveloping, brighter or more brooding. When it looks right you
 export it at full size, turned to face the way your scene needs.
 
-> **Status: the build and an empty bake.** The code so far builds, makes a GL
-> context headless, and bakes a black cubemap -- the plumbing, proven before the
-> model arrives. The model exists, and was developed and judged blind over many
-> rounds in the Space Nerds In Space labs; it moves here next. See `ROADMAP.md`.
-> Nothing below marked *planned* works yet.
+> **Status: the model bakes from the command line.** The sky model -- developed
+> and judged blind over many rounds in the Space Nerds In Space labs -- is here and
+> renders their skies exactly: `starcanopy bake` writes a cubemap as six linear
+> float faces. The project files, the real output formats, the macros and the
+> interface are next; see `ROADMAP.md`. Nothing below marked *planned* works yet.
 
 ## What it makes (planned)
 
@@ -62,11 +62,12 @@ git clone --recursive <this repository>
 cmake -B build
 cmake --build build -j $(nproc)
 ctest --test-dir build --output-on-failure
-./build/starcanopy bake-empty --size 256 --out /tmp/sky
+mkdir -p /tmp/sky && ./build/starcanopy bake --size 1024 --set seed=7 --out /tmp/sky
 ```
 
-`bake-empty` checks your machine's OpenGL: it bakes a black sky through the
-same path the real renderer will use and writes its six faces as PFM files.
+`bake` writes the six faces as PFM, linear float, until the OpenEXR and KTX2
+writers exist. `starcanopy dials` lists the raw parameters `--set` reaches; they
+are for scripting, and the controls will be macros made of them.
 
 ## Documentation
 

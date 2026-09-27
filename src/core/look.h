@@ -22,6 +22,8 @@ struct Look {
   int form;
   float massInner, massLobes, massScale, massDensity, massWarp;
   float massFine, graze;
+  // How hard a mass's surface is, 0..1, and how much of it, 0 all, 1 patches.
+  float massEdge, massEdgePatch;
   float fill, fillShadow;
   // A cluster's radius in bubble radii, which softens its shadows; 0 a point.
   float clusterSize;

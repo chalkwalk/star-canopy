@@ -64,6 +64,8 @@ uniform float u_MassScale;	/* its billows, cycles per bubble radius */
 uniform float u_MassDensity;	/* its density, relative to the shell's */
 uniform float u_MassWarp;	/* how far the fold warp bends it, 0..1 */
 uniform float u_MassFine;	/* fine lumps on its surface, 0 none */
+uniform float u_MassEdge;	/* how hard its surface is, 0..1 */
+uniform float u_MassEdgePatch;	/* 0 hard all over, 1 only in patches */
 /* Each bubble's squeeze along its own axes (1 or more) and outer edge hardness relative to
  * u_OuterSharpness.  See struct Bubble. */
 uniform vec4 u_BubbleForm[NSKY_MAX_BUBBLES];
@@ -289,7 +291,7 @@ nsky_gas nsky_coarse(int b, vec3 p)
 		 * centre shows as streaks and sawteeth.  Of the point, a lobe is a rounded mass. */
 		vec3 lq = g.q * 1.6 + o * 0.23, bq = g.q * u_MassScale + o * 0.41;
 		float lobe = nsky_noise(lq).x + 0.5 * nsky_noise(lq * 2.1 + 3.7).y;
-		float billow = 0.0, amp = 1.0, dens;
+		float billow = 0.0, amp = 1.0, dens, h = u_MassEdge;
 		int k;
 
 		/* Smooth lumps, two octaves: the absolute value of a noise, which is round lumps
@@ -315,9 +317,26 @@ nsky_gas nsky_coarse(int b, vec3 p)
 			billow += u_MassFine * 0.35 * fine;
 		}
 		rin = clamp(u_MassInner - u_MassLobes * max(lobe + 0.15, 0.0), 0.1, 0.95);
-		dens = smoothstep(-0.02, 0.1, r - rin + 0.12 * billow) *
+		/* How hard the surface is.  Soft, the gas thins over a good part of a lump's width
+		 * and every edge is a fade -- seen whole, the sky reads well, but at a game's field
+		 * of view, a few tens of degrees, the form is vague.  Hard, the same two ramps close
+		 * to a narrow band about the same place, and the lumps end in crisp silhouettes and
+		 * lit rims.  In patches, by a noise a few lumps across, some of the mass is crisp and
+		 * the rest soft beside it, as in the references. */
+		if (h > 0.0 && u_MassEdgePatch > 0.0)
+			h *= mix(1.0, smoothstep(-0.12, 0.12, nsky_noise(g.q * 0.9 + o * 0.53).z),
+				u_MassEdgePatch);
+		dens = smoothstep(mix(-0.02, 0.03, h), mix(0.1, 0.05, h), r - rin + 0.12 * billow) *
 			(1.0 - smoothstep(0.92, 1.05, r - 0.06 * billow));
-		dens *= smoothstep(-0.2, 0.4, billow + 0.2);
+		dens *= smoothstep(mix(-0.2, 0.06, h), mix(0.4, 0.14, h), billow + 0.2);
+		/* A hard surface is thinner than the march's stride, and whether a texel's step
+		 * lands on it or over it is its jitter's say -- grain along every crisp edge.  So
+		 * near it the strides shorten, as they do near a pillar. */
+		if (h > 0.0) {
+			g.near_pillar = h * max(1.0 - smoothstep(0.15, 0.35, abs(billow + 0.1)),
+					1.0 - smoothstep(0.05, 0.1, abs(r - rin + 0.12 * billow - 0.04)));
+			g.near_width = 0.04;
+		}
 		dens *= smoothstep(0.1, 0.3, length(p - view));
 		/* And about each cluster, whose winds have blown their surroundings clear: a star
 		 * buried in the mass lights nothing we can see. */

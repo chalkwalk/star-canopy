@@ -97,6 +97,11 @@ const Dial kDials[] = {
   REAL("mass-cavity", "a mass's cavity glow: gas in front of all of it, lifting its darks; 0 none",
        massCavity, 0.0f, 0.5f),
   REAL("mass-fine", "fine lumps carved into a mass's surface; 0 none", massFine, 0.0f, 3.0f),
+  REAL("mass-edge", "how hard a mass's surface is: 0 soft fades, 1 crisp edges", massEdge, 0.0f,
+       1.0f),
+  REAL("mass-edge-patch",
+       "where a mass's surface is hard: 0 all over, 1 only in patches, soft between",
+       massEdgePatch, 0.0f, 1.0f),
   REAL("graze", "a mass's fine lumps shadowing each other toward the light; 0 none", graze, 0.0f,
        5.0f),
   REAL("mass-blister", "how far a mass's far side is blown out, 0..1", massBlister, 0.0f, 1.0f),
@@ -330,6 +335,8 @@ Sky buildSky(const Settings& s) {
   l.massDensity = s.massDensity;
   l.massWarp = s.massWarp;
   l.massFine = s.massFine;
+  l.massEdge = s.massEdge;
+  l.massEdgePatch = s.massEdgePatch;
   l.graze = s.graze;
   // The raking fill is the mass's: a shell's thin sheet has no unlit bulk.
   l.fill = s.form == 1 ? s.fill : 0.0f;
