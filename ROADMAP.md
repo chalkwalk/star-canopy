@@ -52,8 +52,14 @@ Next is the parameter triage and sensitivity study the macros depend on. Order:
 ### Preview ladder
 
 - [ ] 128 / 256 / 1024 / export over one pipeline (`PRINCIPLES §9`)
-- [ ] Measure the light volume's cost at small sizes; a lighter one only if it
-      gives the same sky
+- [x] Measure the light volume's cost at small sizes: at 128 a face it is 3.7 s
+      of a mass's 5.1 s bake (`docs/studies/parameters.md`, *Quality*)
+- [ ] A light volume that is resolution-stable -- filtered to its voxel, as the
+      field's octaves are to the texel -- before any lighter one for previews:
+      today 76, 136 or 256 voxels each move the sky from 96's as much as each
+      other (a look change: a new look version)
+- [ ] A galaxy baked small for small skies: at 128 a face, 64 texels a face of
+      glow is indistinguishable from 512; to be measured at export sizes
 - [ ] Progressive refinement: a rough frame at once, refined while you wait
 
 ### Interface
@@ -87,10 +93,15 @@ testable without a window and give the A/B tools in-context sheets at once.
 
 ### Macros
 
-- [ ] Triage the ~100 lab parameters: look, quality, debug, vestigial
-      (`starcanopy dials` lists them, from the one table in `settings.cpp`)
-- [ ] Sensitivity study: sweep each look parameter over seeds; which matter, which
-      only matter together, which are dead
+- [x] Triage the ~100 lab parameters: 56 look, 25 retiring with the shell, 5 off by
+      a decision, 3 debug, 7 quality, 3 with no visible effect
+      (`docs/studies/parameters.md`)
+- [x] Sensitivity study: each dial alone over four seeds, the fine ones again at
+      512 a face, and Morris's effects for what matters only together and what
+      adds up (`docs/studies/parameters.md`; `tools/study`)
+- [ ] Look by eye at the three dials the study saw change nothing -- the
+      clusters' own stars (`young`, `cluster-stars`) and `external-galaxies` --
+      before keeping or removing them
 - [ ] Macro table (`DESIGN.md` §5) and its resolution, with tests
 - [ ] First macro set, iterated with blind scoring
 - [ ] Styles: mass, shell, and the sparse compositions
@@ -195,9 +206,10 @@ something new, earning its place blind like anything else.
 - [ ] Blind A/B: the shell's veil (the labs' *Sparse and lighter skies*) against
       a translucent mass (`mass-density` near 0.8). If the mass holds its own,
       nothing is lost that 9-1 did not already give up
-- [ ] Retire the shell style: `form`, the shell-only dials (the parameter study's
-      *style under review*), the capsule pillars and clouds, lane dust; a new
-      look version if any default sky's pixels move
+- [ ] Retire the shell style: `form`, the 25 shell-only dials (the parameter
+      study's *shell style (retiring)*), the capsule pillars and clouds, lane dust;
+      the march's stride, which `thickness` sets for the mass too, given a dial
+      of its own; a new look version if any default sky's pixels move
 - [ ] Distant nebulae as masses: the form chosen per bubble, not only for the
       main one, so a distant nebula is a lumpy glowing cloud seen from outside.
       Blind against today's distant shells
