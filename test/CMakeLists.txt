@@ -1,4 +1,4 @@
-set(tests tiles half sample writers noise scene settings palette galaxy bake)
+set(tests tiles half sample writers project noise scene settings palette galaxy bake)
 foreach(name ${tests})
   add_executable(test_${name} test_${name}.cpp)
   target_link_libraries(test_${name} PRIVATE starcanopy_core starcanopy_warnings)
@@ -11,6 +11,7 @@ add_test(NAME tiles COMMAND test_tiles)
 add_test(NAME half COMMAND test_half)
 add_test(NAME sample COMMAND test_sample)
 add_test(NAME writers COMMAND test_writers ${scratch})
+add_test(NAME project COMMAND test_project ${scratch})
 add_test(NAME noise COMMAND test_noise)
 add_test(NAME scene COMMAND test_scene)
 add_test(NAME settings COMMAND test_settings)
@@ -26,6 +27,7 @@ endif()
 add_test(NAME bake_window COMMAND test_bake window)
 set_tests_properties(bake_window PROPERTIES SKIP_RETURN_CODE 77)
 
-add_test(NAME cli_bake
-  COMMAND starcanopy bake --size 32 --set seed=3 --context auto --out ${scratch}
-          --formats exr-faces,exr-equirect,ktx2,png-faces,png-cross,png-equirect)
+# The command line end to end: a new project, rendered small in every format.
+add_test(NAME cli
+  COMMAND ${CMAKE_COMMAND} -DSTARCANOPY=$<TARGET_FILE:starcanopy> -DSCRATCH=${scratch}
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/cli.cmake)

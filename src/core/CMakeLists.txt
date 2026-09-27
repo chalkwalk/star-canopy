@@ -35,7 +35,9 @@ add_library(starcanopy_core STATIC
   noise.cpp
   outputs.cpp
   palette.cpp
+  project.cpp
   random.cpp
+  render.cpp
   sample.cpp
   scene.cpp
   settings.cpp
@@ -48,7 +50,7 @@ add_library(starcanopy_core STATIC
 target_include_directories(starcanopy_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(starcanopy_core
   PUBLIC glad mtwist
-  PRIVATE SDL3::SDL3-static tinyexr stb_image_write starcanopy_warnings)
+  PRIVATE SDL3::SDL3-static tinyexr stb_image_write tomlplusplus starcanopy_warnings)
 
 # Headless contexts come from EGL where there is one (Linux); elsewhere, and
 # as the fallback, from a hidden SDL window (DESIGN.md §2).

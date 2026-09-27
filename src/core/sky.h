@@ -12,4 +12,10 @@ namespace starcanopy {
 // shaders would not build.
 bool bakeSky(const Settings& settings, CubemapTarget& target, std::string& error);
 
+// The direction of the sky's key light, a unit cubemap lookup vector: the
+// brightest cluster of the main nebula, the light the sky's form is lit by. A
+// scene's directional light matches the sky when it shines from here
+// (PRINCIPLES §14).
+void keyLight(const Settings& settings, float dir[3]);
+
 }  // namespace starcanopy
