@@ -1,0 +1,247 @@
+// Blind pairs for the macros (PRINCIPLES §1, §2): does each macro move the sky
+// the way its name says, judged by eye at a game's field of view, not by a
+// number or a whole-sky map.
+//
+//   blind --out DIR [--size N] [--seeds 3,7,12] [--macros a,b] [--value V]
+//         [--context K]
+//
+// For each macro and seed, the sky at -V and at +V (default 1), each seen
+// twice at 75 degrees across, 16:9: toward the key light, and turned 150
+// degrees from it. One sheet a pair, the two skies side by side, which side is
+// which drawn at random; the pairs shuffled. The key goes to DIR/key.csv, to be
+// opened only when the scores are in; DIR/scores.md is the sheet to score on.
+//
+// Output belongs outside the repository: sheets are pictures of skies, and
+// judging them is the human's (AGENTS.md).
+
+#include "bake.h"
+#include "cubemap_target.h"
+#include "gl_context.h"
+#include "macros.h"
+#include "sample.h"
+#include "settings.h"
+#include "sky.h"
+#include "writers.h"
+
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <filesystem>
+#include <memory>
+#include <random>
+#include <string>
+#include <vector>
+
+using namespace starcanopy;
+
+namespace {
+
+constexpr int kViewWidth = 800, kViewHeight = 450, kGap = 16;
+constexpr float kFovDegrees = 75.0f;
+
+std::vector<std::string> split(const std::string& list) {
+  std::vector<std::string> out;
+  size_t start = 0;
+  while (start <= list.size()) {
+    size_t comma = list.find(',', start);
+    if (comma == std::string::npos) {
+      comma = list.size();
+    }
+    if (comma > start) {
+      out.push_back(list.substr(start, comma - start));
+    }
+    start = comma + 1;
+  }
+  return out;
+}
+
+void normalise(float v[3]) {
+  float n = std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+  for (int i = 0; i < 3; i++) {
+    v[i] /= n;
+  }
+}
+
+void crossProduct(const float a[3], const float b[3], float out[3]) {
+  out[0] = a[1] * b[2] - a[2] * b[1];
+  out[1] = a[2] * b[0] - a[0] * b[2];
+  out[2] = a[0] * b[1] - a[1] * b[0];
+}
+
+// A pinhole view of the sky along `forward`, level with the sky's +y, drawn
+// into `sheet` at (x0, y0).
+void view(const Cubemap& sky, const float forwardIn[3], Image& sheet, int x0, int y0) {
+  float forward[3] = {forwardIn[0], forwardIn[1], forwardIn[2]}, up[3] = {0, 1, 0}, right[3];
+  normalise(forward);
+  if (std::fabs(forward[1]) > 0.95f) {
+    up[1] = 0.0f;
+    up[2] = 1.0f;
+  }
+  crossProduct(forward, up, right);
+  normalise(right);
+  crossProduct(right, forward, up);
+  float half = std::tan(kFovDegrees * 0.5f * 3.14159265f / 180.0f);
+  for (int y = 0; y < kViewHeight; y++) {
+    for (int x = 0; x < kViewWidth; x++) {
+      float sx = ((x + 0.5f) / kViewWidth * 2.0f - 1.0f) * half;
+      float sy = (1.0f - (y + 0.5f) / kViewHeight * 2.0f) * half * kViewHeight / kViewWidth;
+      float d[3], c[3];
+      for (int i = 0; i < 3; i++) {
+        d[i] = forward[i] + sx * right[i] + sy * up[i];
+      }
+      sampleCube(sky, d, c);
+      float* p = &sheet.rgb[3 * ((y0 + y) * sheet.width + x0 + x)];
+      p[0] = c[0];
+      p[1] = c[1];
+      p[2] = c[2];
+    }
+  }
+}
+
+// The two views of one sky, one above the other, at column x0.
+void views(const Cubemap& sky, const Settings& s, Image& sheet, int x0) {
+  float light[3], away[3];
+  keyLight(s, light);
+  // Turned 150 degrees about +y from the key light, level.
+  float a = 150.0f * 3.14159265f / 180.0f;
+  away[0] = std::cos(a) * light[0] + std::sin(a) * light[2];
+  away[1] = 0.0f;
+  away[2] = -std::sin(a) * light[0] + std::cos(a) * light[2];
+  if (std::fabs(away[0]) + std::fabs(away[2]) < 1e-3f) {
+    away[2] = 1.0f;
+  }
+  view(sky, light, sheet, x0, 0);
+  view(sky, away, sheet, x0, kViewHeight + kGap);
+}
+
+}  // namespace
+
+int main(int argc, char** argv) {
+  std::string outDir, error;
+  int size = 1024;
+  float value = 1.0f;
+  std::vector<uint32_t> seeds = {3, 7, 12};
+  std::vector<std::string> names;
+  ContextKind kind = ContextKind::Auto;
+  for (int i = 1; i + 1 < argc; i += 2) {
+    std::string arg = argv[i], v = argv[i + 1];
+    if (arg == "--out") {
+      outDir = v;
+    } else if (arg == "--size") {
+      size = std::atoi(v.c_str());
+    } else if (arg == "--value") {
+      value = static_cast<float>(std::atof(v.c_str()));
+    } else if (arg == "--seeds") {
+      seeds.clear();
+      for (const std::string& s : split(v)) {
+        seeds.push_back(static_cast<uint32_t>(std::strtoul(s.c_str(), nullptr, 10)));
+      }
+    } else if (arg == "--macros") {
+      names = split(v);
+    } else if (arg == "--context") {
+      if (!parseContextKind(v, kind)) {
+        std::fprintf(stderr, "blind: unknown context %s\n", v.c_str());
+        return 2;
+      }
+    } else {
+      std::fprintf(stderr, "blind: unknown option %s\n", arg.c_str());
+      return 2;
+    }
+  }
+  if (outDir.empty() || size < 16 || !(value > 0.0f && value <= 1.0f)) {
+    std::fprintf(stderr,
+                 "usage: blind --out DIR [--size N] [--seeds 3,7,12] [--macros a,b] [--value V]\n");
+    return 2;
+  }
+  int count = 0;
+  const Macro* all = macros(count);
+  std::vector<const Macro*> list;
+  for (int i = 0; i < count; i++) {
+    if (names.empty() || std::find(names.begin(), names.end(), all[i].name) != names.end()) {
+      list.push_back(&all[i]);
+    }
+  }
+  if (list.empty()) {
+    std::fprintf(stderr, "blind: no such macros\n");
+    return 2;
+  }
+
+  auto context = GlContext::create(kind, error);
+  if (!context) {
+    std::fprintf(stderr, "blind: no context: %s\n", error.c_str());
+    return 1;
+  }
+  Baker baker;
+  if (!baker.ok(error)) {
+    std::fprintf(stderr, "blind: %s\n", error.c_str());
+    return 1;
+  }
+  std::filesystem::create_directories(outDir);
+
+  struct Pair {
+    const Macro* macro;
+    uint32_t seed;
+  };
+  std::vector<Pair> pairs;
+  for (const Macro* m : list) {
+    for (uint32_t seed : seeds) {
+      pairs.push_back({m, seed});
+    }
+  }
+  // Not reproducible on purpose: a scorer who could rerun the draw could know
+  // the key.
+  std::mt19937 rng(std::random_device{}());
+  std::shuffle(pairs.begin(), pairs.end(), rng);
+
+  std::unique_ptr<FILE, int (*)(FILE*)> key(std::fopen((outDir + "/key.csv").c_str(), "w"), std::fclose);
+  std::unique_ptr<FILE, int (*)(FILE*)> scores(std::fopen((outDir + "/scores.md").c_str(), "w"),
+                                               std::fclose);
+  if (!key || !scores) {
+    std::fprintf(stderr, "blind: cannot write in %s\n", outDir.c_str());
+    return 1;
+  }
+  std::fprintf(key.get(), "pair,macro,seed,left,right\n");
+  std::fprintf(scores.get(),
+               "# Blind pairs: the macros\n\n"
+               "Each sheet is one seed's sky at the two ends of one macro, left and right, each\n"
+               "seen toward its key light (top) and turned away from it (bottom), at 75 degrees\n"
+               "across. Which side is which is drawn at random. Do not open key.csv until every\n"
+               "line below is filled in.\n\n"
+               "For each pair: which side is more as the question says (L or R), and which you\n"
+               "would rather have as a sky (L, R or = for no preference). A note if either end\n"
+               "is a sky nobody would want.\n\n"
+               "| pair | question | more so | rather have | note |\n"
+               "|---|---|---|---|---|\n");
+  for (size_t i = 0; i < pairs.size(); i++) {
+    const Pair& p = pairs[i];
+    bool plusLeft = std::uniform_int_distribution<int>(0, 1)(rng) == 1;
+    Image sheet;
+    sheet.width = 2 * kViewWidth + kGap;
+    sheet.height = 2 * kViewHeight + kGap;
+    // The gaps a mid grey, so neither side's dark bleeds into the other's.
+    sheet.rgb.assign(static_cast<size_t>(sheet.width) * sheet.height * 3, 0.02f);
+    for (int side = 0; side < 2; side++) {
+      float v = (side == 0) == plusLeft ? value : -value;
+      Settings base;
+      base.seed = p.seed;
+      Settings s = resolveMacros(base, {{p.macro->name, v}});
+      CubemapTarget target(size);
+      bakeSky(baker, s, target);
+      views(target.read(), s, sheet, side * (kViewWidth + kGap));
+    }
+    char name[32];
+    std::snprintf(name, sizeof(name), "pair%02zu.png", i + 1);
+    if (!writePng(outDir + "/" + name, sheet, error)) {
+      std::fprintf(stderr, "blind: %s\n", error.c_str());
+      return 1;
+    }
+    std::fprintf(key.get(), "%zu,%s,%u,%g,%g\n", i + 1, p.macro->name, p.seed,
+                 static_cast<double>(plusLeft ? value : -value),
+                 static_cast<double>(plusLeft ? -value : value));
+    std::fprintf(scores.get(), "| %zu | which is more %s? | | | |\n", i + 1, p.macro->name);
+    std::fprintf(stderr, "\rblind %zu/%zu", i + 1, pairs.size());
+  }
+  std::fprintf(stderr, "\nblind: %zu pairs in %s\n", pairs.size(), outDir.c_str());
+  return 0;
+}

@@ -15,6 +15,11 @@
 //     whether that depends on the other dials -- large spread and small effect
 //     at the defaults is a dial that matters only together with others.
 //
+//   study macros --style mass|shell [--size N] [--seeds 1,3,5,7] [--dials a,b] --out FILE
+//     Each macro (--dials names macros here) at -1, -1/2, 1/2 and 1 on each
+//     seed, each compared with that seed's own sky: whether it moves the sky
+//     the way its name says, on every seed, and how far (docs/studies/macros.md).
+//
 // Change is measured as the displayed sky's mean absolute difference, in 8-bit
 // levels, solid-angle weighted (measure.h); a measure of how much, never of
 // better (PRINCIPLES §2).
@@ -22,6 +27,7 @@
 #include "bake.h"
 #include "cubemap_target.h"
 #include "gl_context.h"
+#include "macros.h"
 #include "measure.h"
 #include "settings.h"
 #include "sky.h"
@@ -299,11 +305,42 @@ void morris(Study& st, const Settings& defaults, int trajectories,
   std::fprintf(stderr, "\n");
 }
 
+void macroSweep(Study& st, const Settings& defaults, const std::vector<uint32_t>& seeds,
+                const std::vector<std::string>& names) {
+  st.header("seed");
+  int count = 0;
+  const Macro* m = macros(count);
+  std::vector<const Macro*> list;
+  for (int i = 0; i < count; i++) {
+    if (names.empty() || std::find(names.begin(), names.end(), m[i].name) != names.end()) {
+      list.push_back(&m[i]);
+    }
+  }
+  const float values[] = {-1.0f, -0.5f, 0.5f, 1.0f};
+  size_t total = seeds.size() * list.size() * std::size(values), done = 0;
+  for (uint32_t seed : seeds) {
+    Settings base = defaults;
+    base.seed = seed;
+    double seconds;
+    Baked ref = st.bake(base, seconds);
+    st.row(std::to_string(seed), "(default)", "", "", 0.0, 0.0, describe(ref), seconds);
+    for (const Macro* macro : list) {
+      for (float v : values) {
+        Baked b = st.bake(resolveMacros(base, {{macro->name, v}}), seconds);
+        st.row(std::to_string(seed), macro->name, "0", text(v, false), change(ref.radiance, b.radiance),
+               changedShare(ref.radiance, b.radiance), describe(b), seconds);
+        std::fprintf(stderr, "\rmacros %zu/%zu", ++done, total);
+      }
+    }
+  }
+  std::fprintf(stderr, "\n");
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
   if (argc < 2) {
-    std::fprintf(stderr, "usage: study oat|morris --style mass|shell [options] --out FILE\n");
+    std::fprintf(stderr, "usage: study oat|morris|macros --style mass|shell [options] --out FILE\n");
     return 2;
   }
   std::string mode = argv[1], style = "mass", outPath, error;
@@ -357,6 +394,8 @@ int main(int argc, char** argv) {
                st.context->description().c_str());
   if (mode == "oat") {
     oat(st, defaults, seeds, chosen(names, true));
+  } else if (mode == "macros") {
+    macroSweep(st, defaults, seeds, names);
   } else if (mode == "morris") {
     morris(st, defaults, trajectories, chosen(names, false));
   } else {

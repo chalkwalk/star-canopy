@@ -78,7 +78,7 @@ src/core/shaders/  # GLSL 1.50: field, light, bake, denoise, galaxy, stars
 src/cli/           # starcanopy: project file in, images out
 src/view/          # the in-context view: exposure, bloom, probes, sun (planned)
 src/app/           # SDL3 + Dear ImGui interface (planned)
-tools/             # A/B sheets, look-around capture, measurements (planned)
+tools/             # study: dials and macros measured; blind: blind pairs to score
 test/              # unit tests for the pure parts; bake tests on a real context
 docs/references/   # SOURCES.md: provenance of models and fitted numbers
 ```

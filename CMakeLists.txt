@@ -76,6 +76,7 @@ add_subdirectory(src/core)
 add_subdirectory(src/cli)
 if(STARCANOPY_BUILD_TOOLS)
   add_subdirectory(tools/study)
+  add_subdirectory(tools/blind)
 endif()
 
 if(STARCANOPY_BUILD_TESTS)
