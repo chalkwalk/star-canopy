@@ -73,6 +73,10 @@ private:
   GLuint noise_ = 0, framebuffer_ = 0, emptyVertexArray_ = 0;
   GLuint lightTexture_ = 0;
   int lightRes_ = 0, lightSlabs_ = 0;
+  // What the light volume was last baked from, so an unchanged one is not
+  // baked again: most dials never reach it, and at small sizes it is most of
+  // a bake. See bakeLight().
+  std::vector<unsigned char> lightKey_;
   GLuint galaxyTexture_ = 0;
   GLuint tau_[2] = {0, 0};
   GLuint starBuffer_ = 0, starVertexArray_ = 0;

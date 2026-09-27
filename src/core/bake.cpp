@@ -264,6 +264,51 @@ void Baker::bakeLight(const Scene& s, const Look& look) {
   if (!light_.id() || s.bubbleCount == 0) {
     return;
   }
+  // Everything the light pass reads: the scene, and every look value the
+  // field's uniforms or the pass's own come from. The look is copied whole
+  // with the values the light never reads set to zero; the bytes are compared,
+  // so a difference only a padding byte shows costs a needless bake, never a
+  // stale one.
+  Look lit{};
+  lit.foldScale = look.foldScale;
+  lit.outerSharpness = look.outerSharpness;
+  lit.holeScale = look.holeScale;
+  lit.cavityDensity = look.cavityDensity;
+  lit.form = look.form;
+  lit.massInner = look.massInner;
+  lit.massLobes = look.massLobes;
+  lit.massScale = look.massScale;
+  lit.massDensity = look.massDensity;
+  lit.massWarp = look.massWarp;
+  lit.massFine = look.massFine;
+  lit.massEdge = look.massEdge;
+  lit.massEdgePatch = look.massEdgePatch;
+  lit.clusterSize = look.clusterSize;
+  lit.blister = look.blister;
+  lit.detailScale = look.detailScale;
+  lit.detailGain = look.detailGain;
+  lit.erosion = look.erosion;
+  lit.filament = look.filament;
+  lit.hardness = look.hardness;
+  lit.contrast = look.contrast;
+  lit.pillarDensity = look.pillarDensity;
+  lit.cloudDensity = look.cloudDensity;
+  lit.dustAmount = look.dustAmount;
+  lit.dustScale = look.dustScale;
+  lit.dustStyle = look.dustStyle;
+  lit.dustOpacity = look.dustOpacity;
+  lit.density = look.density;
+  lit.sigma = look.sigma;
+  lit.ionOpacity = look.ionOpacity;
+  lit.lightRes = look.lightRes;
+  lit.lightSteps = look.lightSteps;
+  std::vector<unsigned char> key(sizeof(Scene) + sizeof(Look));
+  std::memcpy(key.data(), &s, sizeof(Scene));
+  std::memcpy(key.data() + sizeof(Scene), &lit, sizeof(Look));
+  if (key == lightKey_) {
+    return;
+  }
+  lightKey_ = std::move(key);
   if (!lightTexture_ || lightRes_ != res || lightSlabs_ != s.bubbleCount) {
     if (!lightTexture_) {
       glGenTextures(1, &lightTexture_);

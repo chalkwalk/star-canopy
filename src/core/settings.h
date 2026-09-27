@@ -141,6 +141,11 @@ struct Dial {
   // A choice among names, stored as an index in `integer`.
   const char* const* choices = nullptr;
   int choiceCount = 0;
+  // Stepped by factors rather than by amounts: a density, a size, a scale,
+  // whose natural steps are ratios. Such a dial may still allow 0, as off,
+  // and then `floor` is its smallest value above zero worth stepping from.
+  bool geometric = false;
+  float floor = 0.0f;
 };
 
 // Every dial, in the order the labs' panel showed them.

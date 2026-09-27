@@ -11,6 +11,11 @@ bool bakeSky(const Settings& settings, CubemapTarget& target, std::string& error
   if (!baker.ok(error)) {
     return false;
   }
+  bakeSky(baker, settings, target);
+  return true;
+}
+
+void bakeSky(Baker& baker, const Settings& settings, CubemapTarget& target) {
   Sky sky = buildSky(settings);
   Scene scene = generateScene(sky.scene);
   Galaxy galaxy = generateGalaxy(sky.scene.seed, sky.galaxy);
@@ -25,7 +30,6 @@ bool bakeSky(const Settings& settings, CubemapTarget& target, std::string& error
   baker.begin(target, scene, stars, sky.look);
   while (baker.step()) {
   }
-  return true;
 }
 
 void keyLight(const Settings& settings, float dir[3]) {

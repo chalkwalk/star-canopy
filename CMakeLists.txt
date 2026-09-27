@@ -11,6 +11,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 option(STARCANOPY_BUILD_TESTS "Build the unit and bake tests" ON)
+option(STARCANOPY_BUILD_TOOLS "Build the measurement tools in tools/" ON)
 
 foreach(sub SDL imgui)
   if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/${sub}/CMakeLists.txt"
@@ -73,6 +74,9 @@ endif()
 
 add_subdirectory(src/core)
 add_subdirectory(src/cli)
+if(STARCANOPY_BUILD_TOOLS)
+  add_subdirectory(tools/study)
+endif()
 
 if(STARCANOPY_BUILD_TESTS)
   enable_testing()

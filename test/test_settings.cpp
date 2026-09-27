@@ -25,6 +25,14 @@ int main() {
       }
       CHECK(v >= d[i].lo && v <= d[i].hi);
     }
+    // A dial stepped by factors has somewhere above zero to step from, and its
+    // default is off or on that scale.
+    if (d[i].geometric) {
+      double v = d[i].real ? defaults.*d[i].real : defaults.*d[i].integer;
+      CHECK(d[i].floor > 0.0f && d[i].floor <= d[i].hi);
+      CHECK(v == 0.0 || v >= d[i].floor);
+      CHECK(d[i].lo == 0.0f || d[i].lo == d[i].floor);
+    }
     // Round trip: its own text sets it to the same value.
     Settings s;
     std::string error, text = dialValue(defaults, d[i]);

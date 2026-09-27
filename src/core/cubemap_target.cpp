@@ -53,4 +53,20 @@ Cubemap CubemapTarget::read() const {
   return cubemap;
 }
 
+std::array<std::vector<float>, 6> CubemapTarget::readTransmittance() const {
+  std::array<std::vector<float>, 6> out;
+  glBindTexture(GL_TEXTURE_CUBE_MAP, texture_);
+  glPixelStorei(GL_PACK_ALIGNMENT, 4);
+  // RGBA, since a core profile does not read alpha alone.
+  std::vector<float> rgba(static_cast<size_t>(size_) * size_ * 4);
+  for (int face = 0; face < 6; face++) {
+    glGetTexImage(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 0, GL_RGBA, GL_FLOAT, rgba.data());
+    out[face].resize(static_cast<size_t>(size_) * size_);
+    for (size_t i = 0; i < out[face].size(); i++) {
+      out[face][i] = rgba[i * 4 + 3];
+    }
+  }
+  return out;
+}
+
 }  // namespace starcanopy

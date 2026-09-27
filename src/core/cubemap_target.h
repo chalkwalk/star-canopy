@@ -28,6 +28,11 @@ public:
 
   Cubemap read() const;
 
+  // Alpha: the transmittance of the gas along each texel's line of sight, 0
+  // where it hides everything behind it, 1 where it hides nothing. Six faces,
+  // one float a texel.
+  std::array<std::vector<float>, 6> readTransmittance() const;
+
 private:
   int size_;
   GLuint texture_ = 0;
