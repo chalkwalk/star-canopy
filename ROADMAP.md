@@ -12,7 +12,7 @@
 
 ## Active focus
 
-*(2026-09-26)*
+*(2026-09-27)*
 
 The model is here and renders from project files to OpenEXR, KTX2 and PNG,
 oriented as a scene needs (`docs/COMPLETED.md`). CI waits for a remote to run on.
@@ -22,10 +22,12 @@ Next is the parameter triage and sensitivity study the macros depend on. Order:
 2. ~~**The lift**~~ -- done; `docs/COMPLETED.md`.
 3. ~~**Headless core and command line**~~ -- done; `docs/COMPLETED.md`.
 4. **Parameter triage and sensitivity study**, which the macros depend on.
-5. **In context** -- headless stills first, then a minimal window and
+5. **The galaxy from any star** -- the vantage atlas first, then dust and a
+   band made of stars; its observer position feeds the macros.
+6. **In context** -- headless stills first, then a minimal window and
    look-around to show them in, pulled ahead of the rest of the interface.
-6. **Macros.**
-7. **The preview ladder and the rest of the interface.**
+7. **Macros.**
+8. **The preview ladder and the rest of the interface.**
 
 ---
 
