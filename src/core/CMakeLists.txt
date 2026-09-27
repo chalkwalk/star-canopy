@@ -31,21 +31,24 @@ add_library(starcanopy_core STATIC
   cubemap_target.cpp
   galaxy.cpp
   gl_context.cpp
+  half.cpp
   noise.cpp
+  outputs.cpp
   palette.cpp
-  pfm.cpp
   random.cpp
+  sample.cpp
   scene.cpp
   settings.cpp
   shader.cpp
   sky.cpp
   stars.cpp
   tiles.cpp
+  writers.cpp
   ${embedded})
 target_include_directories(starcanopy_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(starcanopy_core
   PUBLIC glad mtwist
-  PRIVATE SDL3::SDL3-static starcanopy_warnings)
+  PRIVATE SDL3::SDL3-static tinyexr stb_image_write starcanopy_warnings)
 
 # Headless contexts come from EGL where there is one (Linux); elsewhere, and
 # as the fallback, from a hidden SDL window (DESIGN.md §2).
