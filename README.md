@@ -11,13 +11,13 @@ field of view, and steer it with a handful of controls that describe the sky --
 more open or more enveloping, brighter or more brooding. When it looks right you
 export it at full size, turned to face the way your scene needs.
 
-> **Status: the model bakes from the command line.** The sky model -- developed
-> and judged blind over many rounds in the Space Nerds In Space labs -- is here and
-> renders their skies exactly: `starcanopy bake` writes a cubemap as six linear
-> float faces. The project files, the real output formats, the macros and the
-> interface are next; see `ROADMAP.md`. Nothing below marked *planned* works yet.
+> **Status: skies render from the command line.** The sky model -- developed and
+> judged blind over many rounds in the Space Nerds In Space labs -- is here, and
+> `starcanopy render` turns a project file into OpenEXR, KTX2 and PNG. The macros
+> and the interface are next; see `ROADMAP.md`. Nothing below marked *planned*
+> works yet.
 
-## What it makes (planned)
+## What it makes
 
 - **Nebulae with form.** A thick mass of cloud lit by one cluster of young stars,
   so most of it turns from the light and its shape shows; bright ionisation rims;
@@ -29,7 +29,7 @@ export it at full size, turned to face the way your scene needs.
 - **Colour from a palette space** fitted to measurements of admired skies: every
   sky is of their kind without copying one.
 
-## How you use it (planned)
+## How you will use it (planned)
 
 | Stage | Size per face | |
 |---|---|---|
@@ -62,12 +62,50 @@ git clone --recursive <this repository>
 cmake -B build
 cmake --build build -j $(nproc)
 ctest --test-dir build --output-on-failure
-mkdir -p /tmp/sky && ./build/starcanopy bake --size 1024 --set seed=7 --out /tmp/sky
 ```
 
-`bake` writes the six faces as PFM, linear float, until the OpenEXR and KTX2
-writers exist. `starcanopy dials` lists the raw parameters `--set` reaches; they
-are for scripting, and the controls will be macros made of them.
+## Rendering a sky from the command line
+
+```bash
+./build/starcanopy new night.toml --seed 7     # a project, to edit
+./build/starcanopy render night.toml           # writes night/ beside it
+```
+
+A **project** is how a sky is made again: a small TOML file with the look version
+it was made with, a seed, a style (`mass` or `shell`), orientation and outputs.
+`starcanopy new` writes one with every key commented. The same project renders
+the same sky; a project from a newer StarCanopy is refused, not rendered
+differently.
+
+**Outputs**, listed in the project's `formats`:
+
+| Format | Files | |
+|---|---|---|
+| `exr-faces` | `NAME_px.exr` .. `NAME_nz.exr` | linear HDR, half float, the faces |
+| `exr-equirect` | `NAME_equirect.exr` | linear HDR, equirectangular |
+| `ktx2` | `NAME.ktx2` | linear HDR cubemap, RGBA16F, loads into GL or Vulkan as it is |
+| `png-faces` | `NAME_px.png` .. `NAME_nz.png` | 8-bit, display-referred |
+| `png-cross` | `NAME_cross.png` | 8-bit, a horizontal cross |
+| `png-equirect` | `NAME_equirect.png` | 8-bit, equirectangular |
+
+The HDR is the sky itself, unclipped; take it if your engine tonemaps. The PNGs
+are derived from it through the display curve the look was designed on.
+
+**Directions.** Faces follow the GL cube map convention every engine's cubemap
+loader uses (`px nx py ny pz nz`, first row at the top). The cross is laid out
+`-x +z +x -z` across, `+y` above `+z`, `-y` below. The equirectangular map is
+centred on `+z`, with `+x` a quarter turn to the right and `+y` up.
+
+**Orientation.** `yaw`, `pitch` and `roll` in the project turn the sky on export:
+positive yaw carries `+z` toward `+x`, positive pitch `+z` toward `+y`, positive
+roll `+x` toward `+y`. Beside the images, `NAME.json` gives the **key light** --
+the light the sky's form is lit by -- as a direction, as azimuth and elevation,
+and as `light_travels`: point your scene's directional light that way and it
+agrees with the sky.
+
+**Overrides.** `starcanopy dials` lists the raw parameters; the project's
+`[overrides]` and `render --set NAME=VALUE` set them. They are for scripting; the
+controls will be macros made of them.
 
 ## Documentation
 

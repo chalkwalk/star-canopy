@@ -4,6 +4,33 @@ The archive. Work areas move here from `ROADMAP.md` once every checkbox in them 
 ticked, compressed to the intent, what actually shipped, and any load-bearing
 decision made along the way. Withdrawn work is archived too, with the reason.
 
+## Headless core and command line (2026-09-26)
+
+A project file in, a sky out, headless: `starcanopy new` and `starcanopy render`.
+
+- [x] Project file (TOML): look version, seed, style, macros (none yet),
+      overrides, orientation, outputs -- unknown keys are errors
+- [x] `starcanopy render project.toml`, with `--set name=value` overrides
+- [x] HDR output: OpenEXR faces and equirectangular; KTX2 cubemap
+- [x] 8-bit PNG derived from HDR: faces, cross, equirectangular
+- [x] Orientation: rotation by resampling at export; key-light sidecar
+- [x] Look versioning: look 1, a newer look refused, `test_look` pinning it
+
+Load-bearing decisions:
+
+- **KTX2 is our own writer**, not libktx: one uncompressed RGBA16F cubemap is a
+  few hundred lines of a documented format. KTX-Software's `ktx validate` accepts
+  it, and OpenEXR's own library reads our EXRs back bit-identical to the KTX2.
+- **Directions are stated as formulas** (`src/core/sample.h`, README): GL cube
+  map faces, an equirect centred on +z with +x to the right, the handedness of
+  the faces themselves, and a cross that joins at every seam, tested.
+- **The 8-bit tonemap is the display curve the look was judged through**, per
+  channel, dithered by position. The shoulder stays in HDR for look 1, against
+  `DESIGN.md` §4.2's intent; moving it is a new look version (`ROADMAP.md`).
+- **The look is pinned by statistics, not bits**: tolerances measured between the
+  Radeon and llvmpipe (0.2% means, 1.8% at the far tail), tight enough that a 2%
+  change in brightness fails.
+
 ## The lift (2026-09-26)
 
 The model moved from the Space Nerds In Space labs (`labs/features/nebula_sky`,

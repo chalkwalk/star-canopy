@@ -140,7 +140,10 @@ sky. Fitted from measurements only (`fence #4`).
 
 A faint haze in the palette's darkest colour is added *over* the gas, so no cloud
 is darker than empty space; a shoulder eases the brightest channel rather than
-clipping it. In HDR output (§8) the shoulder belongs to the 8-bit derivation only.
+clipping it. The shoulder is meant for the 8-bit derivation only, leaving HDR
+output unshouldered; look 1 still applies it in HDR, before the stars, as the
+look was judged in the labs. Moving it changes the look, so it waits for a new
+look version and a blind comparison (`ROADMAP.md`, *The look*).
 
 ## 5. Macros
 
@@ -172,18 +175,31 @@ raw overrides, orientation and outputs. It is small and human-readable.
 The **look version** is recorded in every project. A change that alters any sky's
 pixels is a new look version; the renderer keeps the old ones renderable, or
 refuses with a clear message, rather than silently re-rendering an old project
-differently.
+differently. `test_look` holds each look version to reference statistics of a
+few small renders, with tolerances measured across GPUs (the promise between
+GPUs is the same sky, not the same bits).
+
+The schema is in `src/core/project.h`; `starcanopy new` writes a commented
+example. Unknown keys are errors, since a typo ignored is a different sky.
 
 ## 8. Output
 
 - **HDR first** (`PRINCIPLES §8`): linear radiance as OpenEXR (six faces or an
-  equirectangular map) and KTX2 cubemaps.
-- **8-bit** sRGB PNG derived from the HDR through a stated tonemap: six faces with
-  the common engine naming (`px nx py ny pz nz`), a horizontal cross, an
-  equirectangular map.
-- **Orientation** (`PRINCIPLES §14`): a rotation applied at export by reprojection;
-  the look-around shows a compass and axes. The key light's direction is written
-  beside the images (a small JSON sidecar) so a scene's light can be matched.
+  equirectangular map; half float, ZIP) and a KTX2 cubemap (RGBA16F, linear, one
+  level). Half is what the bake stores, so nothing is lost. KTX2 is written by our
+  own code, checked with KTX-Software's `ktx validate`.
+- **8-bit** PNG derived from the HDR through a stated tonemap -- the display curve
+  the look was judged through (`look.h`), per channel, with a positional dither:
+  six faces with the common engine naming (`px nx py ny pz nz`), a horizontal
+  cross, an equirectangular map. Display-referred; engines that tonemap take HDR.
+- **Directions** are stated, not assumed: faces follow the GL cube map convention
+  every engine's loader follows, first row at the top; the equirect's mapping is a
+  formula (`src/core/sample.h`): centred on +z, +x to the right, +y up.
+- **Orientation** (`PRINCIPLES §14`): yaw, pitch and roll applied at export by
+  resampling (the identity is an exact copy); the look-around will show a compass
+  and axes. The key light's direction -- the main nebula's brightest cluster, turned
+  with the sky -- is written beside the images in `NAME.json`, as a lookup vector,
+  as azimuth and elevation, and as the way its light travels.
 - Game-specific layouts (Space Nerds In Space's face order and mirroring, for one)
   are converters, not core formats.
 

@@ -14,13 +14,13 @@
 
 *(2026-09-26)*
 
-The model is here: lifted from the Space Nerds In Space labs, it renders their
-skies to the texel from the command line (`docs/COMPLETED.md`, *The lift*). CI
-waits for a remote to run on. Next is the headless core's real outputs. Order:
+The model is here and renders from project files to OpenEXR, KTX2 and PNG,
+oriented as a scene needs (`docs/COMPLETED.md`). CI waits for a remote to run on.
+Next is the parameter triage and sensitivity study the macros depend on. Order:
 
 1. **Kick-start** -- the build, the licence, the third-party list.
 2. ~~**The lift**~~ -- done; `docs/COMPLETED.md`.
-3. **Headless core and command line.**
+3. ~~**Headless core and command line**~~ -- done; `docs/COMPLETED.md`.
 4. **Parameter triage and sensitivity study**, which the macros depend on.
 5. **The preview ladder and the interface.**
 
@@ -43,17 +43,6 @@ waits for a remote to run on. Next is the headless core's real outputs. Order:
 - [ ] `SOURCES.md`'s open item: where the measurement scripts live
 
 ## The application
-
-### Headless core and command line
-
-- [ ] Project file (TOML): look version, seed, style, macros, overrides,
-      orientation, outputs
-- [ ] `starcanopy render project.toml`, with `--set name=value` overrides
-      (`starcanopy bake --set` exists, writing PFM, until then)
-- [ ] HDR output: OpenEXR faces and equirectangular; KTX2 cubemap
-- [ ] 8-bit PNG derived from HDR: faces, cross, equirectangular
-- [ ] Orientation: rotation by reprojection at export; key-light direction sidecar
-- [ ] Look versioning (`DESIGN.md` §7)
 
 ### Preview ladder
 
@@ -104,6 +93,14 @@ settings in the labs' `NEXT.md`.
 - [ ] Pick which become styles; make each reliable across seeds (the band only
       works on some)
 - [ ] A seed-chosen composition archetype, so sparse skies arrive by browsing too
+
+### The shoulder in HDR
+
+`DESIGN.md` §4.2 means the shoulder for the 8-bit derivation only; look 1 applies
+it in HDR, before the stars, as the look was judged.
+
+- [ ] Blind A/B, then, if it holds up, look 2: HDR unshouldered, the shoulder in
+      the 8-bit derivation (stars included)
 
 ### Carried over from the labs
 
