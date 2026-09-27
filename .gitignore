@@ -1,0 +1,105 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Linker files
+*.ilk
+
+# Debugger Files
+*.pdb
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+*.so.*
+
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Build directories
+build/
+Build/
+build-*/
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+install_manifest.txt
+compile_commands.json
+
+# Temporary files
+*.tmp
+*.log
+*.bak
+*.swp
+
+# vcpkg
+vcpkg_installed/
+
+# debug information files
+*.dwo
+
+# test output & cache
+Testing/
+.cache/
+# AI assistant working directories. The instructions themselves are tracked --
+# AGENTS.md, plus CLAUDE.md and GEMINI.md as symlinks to it -- because how this
+# project is developed is part of its documentation. What is ignored here is the
+# per-machine state a tool writes beside them: local settings, session history,
+# caches.
+.claude/
+.gemini/
+
+# Operating-system detritus.
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Editor and Python detritus
+*~
+__pycache__/
+*.pyc
+
+# Build trees.
+/build*/
+
+# Skies. A rendered sky is regenerable from its project file, and at full
+# resolution it is tens of megabytes; the project file is what is kept. Images the
+# documentation shows are the exception.
+*.png
+*.exr
+*.ktx2
+*.hdr
+!docs/**/*.png
