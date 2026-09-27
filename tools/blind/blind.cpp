@@ -3,11 +3,13 @@
 // number or a whole-sky map.
 //
 //   blind --out DIR [--size N] [--seeds 3,7,12] [--macros a,b] [--value V]
-//         [--context K]
+//         [--around] [--context K]
 //
 // For each macro and seed, the sky at -V and at +V (default 1), each seen
 // twice at 75 degrees across, 16:9: toward the key light, and turned 150
-// degrees from it. One sheet a pair, the two skies side by side, which side is
+// degrees from it. With --around, six times, smaller, every 60 degrees round
+// the horizon from the key light: for what shows only as one looks around,
+// such as the size of the forms. One sheet a pair, the two skies side by side, which side is
 // which drawn at random; the pairs shuffled. The key goes to DIR/key.csv, to be
 // opened only when the scores are in; DIR/scores.md is the sheet to score on.
 //
@@ -37,7 +39,8 @@ using namespace starcanopy;
 
 namespace {
 
-constexpr int kViewWidth = 800, kViewHeight = 450, kGap = 16;
+int kViewWidth = 800, kViewHeight = 450;
+constexpr int kGap = 16;
 constexpr float kFovDegrees = 75.0f;
 
 std::vector<std::string> split(const std::string& list) {
@@ -99,20 +102,33 @@ void view(const Cubemap& sky, const float forwardIn[3], Image& sheet, int x0, in
   }
 }
 
-// The two views of one sky, one above the other, at column x0.
-void views(const Cubemap& sky, const Settings& s, Image& sheet, int x0) {
-  float light[3], away[3];
-  keyLight(s, light);
-  // Turned 150 degrees about +y from the key light, level.
-  float a = 150.0f * 3.14159265f / 180.0f;
-  away[0] = std::cos(a) * light[0] + std::sin(a) * light[2];
-  away[1] = 0.0f;
-  away[2] = -std::sin(a) * light[0] + std::cos(a) * light[2];
-  if (std::fabs(away[0]) + std::fabs(away[2]) < 1e-3f) {
-    away[2] = 1.0f;
+// The key light turned `degrees` about +y, level; +z if it is overhead.
+void turned(const float light[3], float degrees, float out[3]) {
+  float a = degrees * 3.14159265f / 180.0f;
+  out[0] = std::cos(a) * light[0] + std::sin(a) * light[2];
+  out[1] = 0.0f;
+  out[2] = -std::sin(a) * light[0] + std::cos(a) * light[2];
+  if (std::fabs(out[0]) + std::fabs(out[2]) < 1e-3f) {
+    out[2] = 1.0f;
   }
-  view(sky, light, sheet, x0, 0);
-  view(sky, away, sheet, x0, kViewHeight + kGap);
+}
+
+// The views of one sky at column x0: toward the key light above, and turned
+// 150 degrees from it below; or, around, two columns of three every 60 degrees
+// from the key light, level.
+void views(const Cubemap& sky, const Settings& s, bool around, Image& sheet, int x0) {
+  float light[3], d[3];
+  keyLight(s, light);
+  if (!around) {
+    turned(light, 150.0f, d);
+    view(sky, light, sheet, x0, 0);
+    view(sky, d, sheet, x0, kViewHeight + kGap);
+    return;
+  }
+  for (int k = 0; k < 6; k++) {
+    turned(light, 60.0f * k, d);
+    view(sky, d, sheet, x0 + (k % 2) * (kViewWidth + kGap / 2), (k / 2) * (kViewHeight + kGap / 2));
+  }
 }
 
 }  // namespace
@@ -121,11 +137,22 @@ int main(int argc, char** argv) {
   std::string outDir, error;
   int size = 1024;
   float value = 1.0f;
+  bool around = false;
   std::vector<uint32_t> seeds = {3, 7, 12};
   std::vector<std::string> names;
   ContextKind kind = ContextKind::Auto;
-  for (int i = 1; i + 1 < argc; i += 2) {
-    std::string arg = argv[i], v = argv[i + 1];
+  for (int i = 1; i < argc; i += 2) {
+    std::string arg = argv[i];
+    if (arg == "--around") {
+      around = true;
+      i--;
+      continue;
+    }
+    if (i + 1 >= argc) {
+      std::fprintf(stderr, "blind: %s wants a value\n", arg.c_str());
+      return 2;
+    }
+    std::string v = argv[i + 1];
     if (arg == "--out") {
       outDir = v;
     } else if (arg == "--size") {
@@ -151,9 +178,17 @@ int main(int argc, char** argv) {
   }
   if (outDir.empty() || size < 16 || !(value > 0.0f && value <= 1.0f)) {
     std::fprintf(stderr,
-                 "usage: blind --out DIR [--size N] [--seeds 3,7,12] [--macros a,b] [--value V]\n");
+                 "usage: blind --out DIR [--size N] [--seeds 3,7,12] [--macros a,b] [--value V]\n"
+                 "             [--around]\n");
     return 2;
   }
+  if (around) {
+    kViewWidth = 480;
+    kViewHeight = 270;
+  }
+  // One side's width and height: one column of two views, or two of three.
+  int sideWidth = around ? 2 * kViewWidth + kGap / 2 : kViewWidth;
+  int sideHeight = around ? 3 * kViewHeight + kGap : 2 * kViewHeight + kGap;
   int count = 0;
   const Macro* all = macros(count);
   std::vector<const Macro*> list;
@@ -204,21 +239,23 @@ int main(int argc, char** argv) {
   std::fprintf(key.get(), "pair,macro,seed,left,right\n");
   std::fprintf(scores.get(),
                "# Blind pairs: the macros\n\n"
-               "Each sheet is one seed's sky at the two ends of one macro, left and right, each\n"
-               "seen toward its key light (top) and turned away from it (bottom), at 75 degrees\n"
-               "across. Which side is which is drawn at random. Do not open key.csv until every\n"
-               "line below is filled in.\n\n"
+               "Each sheet is one seed's sky at the two ends of one macro, left and right, %s,\n"
+               "at 75 degrees across. Which side is which is drawn at random. Do not open key.csv\n"
+               "until every line below is filled in.\n\n"
                "For each pair: which side is more as the question says (L or R), and which you\n"
                "would rather have as a sky (L, R or = for no preference). A note if either end\n"
                "is a sky nobody would want.\n\n"
                "| pair | question | more so | rather have | note |\n"
-               "|---|---|---|---|---|\n");
+               "|---|---|---|---|---|\n",
+               around ? "each seen six times round the horizon from its key light (reading across,\n"
+                        "then down)"
+                      : "each seen toward its key light (top) and turned away from it (bottom)");
   for (size_t i = 0; i < pairs.size(); i++) {
     const Pair& p = pairs[i];
     bool plusLeft = std::uniform_int_distribution<int>(0, 1)(rng) == 1;
     Image sheet;
-    sheet.width = 2 * kViewWidth + kGap;
-    sheet.height = 2 * kViewHeight + kGap;
+    sheet.width = 2 * sideWidth + 2 * kGap;
+    sheet.height = sideHeight;
     // The gaps a mid grey, so neither side's dark bleeds into the other's.
     sheet.rgb.assign(static_cast<size_t>(sheet.width) * sheet.height * 3, 0.02f);
     for (int side = 0; side < 2; side++) {
@@ -228,7 +265,7 @@ int main(int argc, char** argv) {
       Settings s = resolveMacros(base, {{p.macro->name, v}});
       CubemapTarget target(size);
       bakeSky(baker, s, target);
-      views(target.read(), s, sheet, side * (kViewWidth + kGap));
+      views(target.read(), s, around, sheet, side * (sideWidth + 2 * kGap));
     }
     char name[32];
     std::snprintf(name, sizeof(name), "pair%02zu.png", i + 1);
