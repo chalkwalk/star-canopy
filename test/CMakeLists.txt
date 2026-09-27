@@ -1,4 +1,4 @@
-set(tests tiles half sample writers project noise scene settings palette galaxy bake)
+set(tests tiles half sample writers project noise scene settings palette galaxy bake look)
 foreach(name ${tests})
   add_executable(test_${name} test_${name}.cpp)
   target_link_libraries(test_${name} PRIVATE starcanopy_core starcanopy_warnings)
@@ -17,6 +17,7 @@ add_test(NAME scene COMMAND test_scene)
 add_test(NAME settings COMMAND test_settings)
 add_test(NAME palette COMMAND test_palette)
 add_test(NAME galaxy COMMAND test_galaxy)
+add_test(NAME look COMMAND test_look)
 
 # The headless path must work wherever the tests run; the hidden window skips
 # when there is no display to open one on.

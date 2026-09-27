@@ -32,10 +32,16 @@ int main(int argc, char** argv) {
   std::printf("context: %s\n", context->description().c_str());
   CHECK(kind == ContextKind::Auto || context->kind() == kind);
 
-  // Not a multiple of the tile size, so ragged edge tiles are exercised.
-  const int size = 136;
+  // Supersampled, 144 texels a side: a whole tile and a ragged one, so edge
+  // tiles are exercised. Small, because CI bakes on a CPU renderer.
+  const int size = 72;
   Settings settings;
   settings.seed = 7;
+  // The plumbing, not the look, is under test here (test_look has the look),
+  // and on a CPU renderer the light volume and the galaxy are most of a small
+  // bake's time.
+  settings.lightRes = 32;
+  settings.galaxyRes = 64;
   Cubemap first;
   for (int run = 0; run < 2; run++) {
     CubemapTarget target(size);
