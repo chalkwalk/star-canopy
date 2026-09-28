@@ -108,7 +108,9 @@ testable without a window and give the A/B tools in-context sheets at once.
       twelve now. Rounds 1 and 2 confirmed eleven names on every seed; violent
       became turbulent; galactic waits for the galaxy work (*The galaxy from any
       star*); grand was withdrawn, unreadable twice. Billowing, remade with the
-      depth of the lumps as its own dial, awaits round 3
+      depth of the lumps as its own dial and as large smooth forms, was ranked
+      in order on every seed three ways in round 5. Every name now confirmed;
+      next, whether the ends' ranges are the ones people want
 - [ ] What the macros' preferences say about the defaults, each a look change
       for a new look version and its own blind test: preferred on every seed
       were dim to bright, detailed to smooth, remote to galactic (round 1) and

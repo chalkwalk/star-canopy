@@ -84,7 +84,7 @@ showed three faults, fixed before the round below:
 
 ## What each macro does
 
-The set as it stands after round 4 (below): galactic and grand withdrawn, violent
+The set as it stands after round 5 (below): galactic and grand withdrawn, violent
 renamed turbulent, billowing remade; vivid, starry, luminous, hazy and billowing
 measured with their current bindings, the others as in the tuning above.
 
@@ -289,4 +289,13 @@ and softens their edges (less detail gain, fewer fine lumps, fewer grazing
 shadows); wispy breaks flatter lumps into fine, ridged, eroded filaments and loses
 the swirl that read as billowing; and wispy's step is shorter than before, as it
 was the far one twice. Round 5 tests it three ways, on seeds 43, 47 and 53.
+
+## Round 5, blind, three ways
+
+Billowing remade as large smooth forms, at -1, 0 and 1, looking around, seeds 43,
+47 and 53. **Ranked in order on every seed**, -1, 0, 1 from least to most
+billowing; rather have: 0, 0, -1 (by seed 53, 43, 47). No sheet was noted as
+having one sky far from the other two. Billowing is confirmed: the twelfth name
+of the set, which now holds every one of its names on every seed it was scored
+on.
 
