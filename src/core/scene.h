@@ -61,6 +61,9 @@ struct SceneParams {
   // The more distant nebulae: apparent radius drawn between the two angles,
   // distance whatever follows from that and a size like the main one's.
   int distantCount = 3;
+  // Whether the distant nebulae are masses, lit from beside them rather than
+  // from within (scene.cpp).
+  bool distantMass = false;
   float distantMinDegrees = 3.0f, distantMaxDegrees = 14.0f;
 };
 

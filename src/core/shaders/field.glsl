@@ -278,6 +278,14 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	g.near_width = 1.0;
 	g.core = 0.0;
 	r = length(g.q * u_BubbleForm[b].xyz);
+	/* A distant mass's outline pushed in and out by a low noise of direction, well over a
+	 * third either way: a lobed cloud, not a disc.  Of direction, since it is only seen from
+	 * outside, where the prisms that makes are never seen along. */
+	if (b > 0 && nsky_mass(b)) {
+		vec3 lo = normalize(g.q) * 1.4 + o * 0.61;
+
+		r /= 1.0 + 0.6 * (nsky_noise(lo).x + 0.5 * nsky_noise(lo * 2.3).y);
+	}
 
 	n = nsky_noise(g.q * u_HoleScale + o * 0.37);
 	thick = shape.x * (0.6 + 0.8 * clamp(n.y + 0.5, 0.0, 1.0));
@@ -319,7 +327,8 @@ nsky_gas nsky_coarse(int b, vec3 p)
 		 * larger ones made -- carved into the form, not sprinkled through the gas -- so a big
 		 * smooth bulge still has a skin of small ones for a grazing light to pick out.  As
 		 * many octaves as the sample can hold; see nsky_octave(). */
-		if (u_MassFine > 0.0) {
+		/* Not on a distant one: at a few degrees across they are specks. */
+		if (u_MassFine > 0.0 && b == 0) {
 			float fine = 0.0, fa = 1.0, feature = 1.0 / (u_MassScale * 4.28);
 
 			for (k = 0; k < 4; k++) {
@@ -455,12 +464,8 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	 * gas behind it.  Inside, the glow is gathered into filaments and knots, the ridges of
 	 * two noises -- its detail is in its light, not in shadows across it. */
 	if (b > 0 && nsky_mass(b)) {
-		/* Its outline pushed in and out by a low noise of direction, well over a third either
-		 * way, and the bubble squeezed (u_BubbleForm): a lobed, stretched cloud, not a disc.
-		 * Of direction, since it is only seen from outside, where the prisms that makes are
-		 * never seen along. */
-		vec3 lo = normalize(g.q) * 1.4 + o * 0.61, fq = g.q * 3.2 + o * 0.29;
-		float x = r / (rin * (1.0 + 0.6 * (nsky_noise(lo).x + 0.5 * nsky_noise(lo * 2.3).y)));
+		vec3 fq = g.q * 3.2 + o * 0.29;
+		float x = r / rin;
 		float f1 = 1.0 - abs(nsky_noise(fq).y), f2 = 1.0 - abs(nsky_noise(fq * 2.4 + 5.3).z);
 
 		g.cavity = u_DistantCavity * smoothstep(0.05, 0.5, x) * (1.0 - smoothstep(0.97, 1.0, x)) *

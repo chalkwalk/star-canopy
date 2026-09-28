@@ -345,6 +345,7 @@ Sky buildSky(const Settings& s) {
   p.cloudWidth = s.cloudWidth;
   p.cloudDistance = s.cloudDistance;
   p.distantCount = s.distantCount;
+  p.distantMass = s.distantForm == 1;
   p.distantMinDegrees = s.distantMinDegrees;
   p.distantMaxDegrees = std::fmax(s.distantMaxDegrees, s.distantMinDegrees);
 

@@ -448,6 +448,42 @@ Scene generateScene(const SceneParams& p) {
     float offset = rng.range(0.1f, 0.5f) / fmaxf(b.squeeze[0], fmaxf(b.squeeze[1], b.squeeze[2]));
     int count = 1 + rng.below(2);
     lightBubble(rng, b, count, offset, brightness);
+    // A distant mass is lit from beside it: seen from outside, one lit from
+    // within glows evenly all through, and nothing says which way the light
+    // falls, so it has no form (distant, blind, round 3). So its clusters go
+    // outside it, and round toward the side as we see it -- lit from behind
+    // it would be a black silhouette, from in front a flat disc. After the
+    // draws, which stay as they were.
+    if (p.distantMass) {
+      static const float origin[3] = {0.0f, 0.0f, 0.0f};
+      float view[3];
+      skyToBubble(b, origin, view);
+      float vl = sqrtf(dot3(view, view));
+      for (int k = 0; k < 3; k++) {
+        view[k] /= vl;
+      }
+      for (int c = 0; c < count; c++) {
+        float* pos = b.cluster[c].pos;
+        // As bright at the nebula's heart as from where it was: light falls
+        // with the square of distance.
+        float was = fmaxf(sqrtf(dot3(pos, pos)), 0.2f);
+        b.cluster[c].luminosity *= (1.4f * 1.4f) / (was * was);
+        float along = dot3(pos, view);
+        for (int k = 0; k < 3; k++) {
+          pos[k] -= 0.8f * along * view[k];
+        }
+        float len = fmaxf(sqrtf(dot3(pos, pos)), 1e-4f);
+        for (int k = 0; k < 3; k++) {
+          pos[k] *= 1.4f / len;
+        }
+      }
+      // Their stars again where the clusters now are, from a stream of their
+      // own so the scene's stays as it was.
+      Random stars(p.seed * 2246822519u + 97u * static_cast<uint32_t>(s.bubbleCount));
+      for (int c = 0; c < count; c++) {
+        placeStars(stars, b, b.cluster[c]);
+      }
+    }
     // No pillars: at a few degrees a pillar's dark core is a black blot.
     raisePillars(p.seed, s.bubbleCount, s, b, 0, p);
     s.bubbleCount++;
