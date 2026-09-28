@@ -188,16 +188,16 @@ struct Study {
 
   void header(const char* first) {
     std::fprintf(out,
-                 "%s,dial,from,to,change,changed_share,brightness,contrast,clear,opaque,chroma,hue,"
+                 "%s,dial,from,to,change,changed_share,peak,brightness,contrast,clear,opaque,chroma,hue,"
                  "hue_spread,detail,bright_share,seconds\n",
                  first);
   }
 
   void row(const std::string& lead, const std::string& dial, const std::string& from,
-           const std::string& to, double change, double share, const Descriptors& d,
-           double seconds) {
-    std::fprintf(out, "%s,%s,%s,%s,%.5g,%.5g,%.5g,%.5g,%.5g,%.5g,%.5g,%.5g,%.5g,%.5g,%.5g,%.3f\n",
-                 lead.c_str(), dial.c_str(), from.c_str(), to.c_str(), change, share, d.brightness,
+           const std::string& to, double change, double share, double peak,
+           const Descriptors& d, double seconds) {
+    std::fprintf(out, "%s,%s,%s,%s,%.5g,%.5g,%.5g,%.5g,%.5g,%.5g,%.5g,%.5g,%.5g,%.5g,%.5g,%.5g,%.3f\n",
+                 lead.c_str(), dial.c_str(), from.c_str(), to.c_str(), change, share, peak, d.brightness,
                  d.contrast, d.clear, d.opaque, d.chroma, d.hue, d.hueSpread, d.detail,
                  d.brightShare, seconds);
     std::fflush(out);
@@ -235,7 +235,7 @@ void oat(Study& st, const Settings& defaults, const std::vector<uint32_t>& seeds
     base.seed = seed;
     double seconds;
     Baked ref = st.bake(base, seconds);
-    st.row(std::to_string(seed), "(default)", "", "", 0.0, 0.0, describe(ref), seconds);
+    st.row(std::to_string(seed), "(default)", "", "", 0.0, 0.0, 0.0, describe(ref), seconds);
     for (const Dial* d : list) {
       std::string from = dialValue(base, *d);
       for (const std::string& value : sweep(*d, defaults)) {
@@ -246,7 +246,8 @@ void oat(Study& st, const Settings& defaults, const std::vector<uint32_t>& seeds
         }
         Baked b = st.bake(s, seconds);
         st.row(std::to_string(seed), d->name, from, value, change(ref.radiance, b.radiance),
-               changedShare(ref.radiance, b.radiance), describe(b), seconds);
+               changedShare(ref.radiance, b.radiance), peakChange(ref.radiance, b.radiance),
+               describe(b), seconds);
         std::fprintf(stderr, "\roat %zu/%zu", ++done, total);
       }
     }
@@ -287,7 +288,7 @@ void morris(Study& st, const Settings& defaults, int trajectories,
     double seconds;
     Baked prev = st.bake(s, seconds);
     std::string lead = std::to_string(t) + ",0," + std::to_string(s.seed);
-    st.row(lead, "(start)", "", "", 0.0, 0.0, describe(prev), seconds);
+    st.row(lead, "(start)", "", "", 0.0, 0.0, 0.0, describe(prev), seconds);
     std::fprintf(stderr, "\rmorris %zu/%zu", ++done, total);
     int step = 1;
     for (size_t i : order) {
@@ -297,7 +298,8 @@ void morris(Study& st, const Settings& defaults, int trajectories,
       Baked next = st.bake(s, seconds);
       lead = std::to_string(t) + "," + std::to_string(step++) + "," + std::to_string(s.seed);
       st.row(lead, list[i]->name, from, dialValue(s, *list[i]), change(prev.radiance, next.radiance),
-             changedShare(prev.radiance, next.radiance), describe(next), seconds);
+             changedShare(prev.radiance, next.radiance), peakChange(prev.radiance, next.radiance),
+             describe(next), seconds);
       prev = std::move(next);
       std::fprintf(stderr, "\rmorris %zu/%zu", ++done, total);
     }
@@ -323,12 +325,13 @@ void macroSweep(Study& st, const Settings& defaults, const std::vector<uint32_t>
     base.seed = seed;
     double seconds;
     Baked ref = st.bake(base, seconds);
-    st.row(std::to_string(seed), "(default)", "", "", 0.0, 0.0, describe(ref), seconds);
+    st.row(std::to_string(seed), "(default)", "", "", 0.0, 0.0, 0.0, describe(ref), seconds);
     for (const Macro* macro : list) {
       for (float v : values) {
         Baked b = st.bake(resolveMacros(base, {{macro->name, v}}), seconds);
-        st.row(std::to_string(seed), macro->name, "0", text(v, false), change(ref.radiance, b.radiance),
-               changedShare(ref.radiance, b.radiance), describe(b), seconds);
+        st.row(std::to_string(seed), macro->name, "0", text(v, false),
+               change(ref.radiance, b.radiance), changedShare(ref.radiance, b.radiance), peakChange(ref.radiance, b.radiance),
+               describe(b), seconds);
         std::fprintf(stderr, "\rmacros %zu/%zu", ++done, total);
       }
     }

@@ -151,4 +151,28 @@ double changedShare(const Cubemap& a, const Cubemap& b) {
   return changed / w;
 }
 
+double peakChange(const Cubemap& a, const Cubemap& b) {
+  int n = a.size, cells = 16, side = std::max(1, n / cells);
+  double peak = 0;
+  for (int f = 0; f < 6; f++) {
+    for (int cj = 0; cj * side < n; cj++) {
+      for (int ci = 0; ci * side < n; ci++) {
+        double sum = 0;
+        int count = 0;
+        for (int j = cj * side; j < std::min(n, (cj + 1) * side); j++) {
+          for (int i = ci * side; i < std::min(n, (ci + 1) * side); i++) {
+            size_t at = (static_cast<size_t>(j) * n + i) * 3;
+            for (int k = 0; k < 3; k++) {
+              sum += std::fabs(displayed(a.faces[f][at + k]) - displayed(b.faces[f][at + k]));
+            }
+            count += 3;
+          }
+        }
+        peak = std::max(peak, 255.0 * sum / count);
+      }
+    }
+  }
+  return peak;
+}
+
 }  // namespace starcanopy

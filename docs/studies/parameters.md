@@ -13,14 +13,20 @@ measures how dials **change** the sky, never whether a change is **better**
 
 ## Summary
 
-- Of 99 dials (the seed aside), **56 are look dials**: they visibly move a sky of
-  one style or the other. Thirteen of them are the mass's own.
+- Of 99 dials (the seed aside), **58 are look dials**: they visibly move a sky of
+  one style or the other. Thirteen of them are the mass's own. Two of them, the
+  lighting cluster's own stars and the young stars about it, were first filed as
+  doing nothing: see *Points*.
+- Since the study, two dials have been added, each belonging to one macro and
+  set only through it (`Dial::owner`): the palettes' chroma, vivid's, and the
+  depth of the mass's lumps, billowing's (`docs/studies/macros.md`). Neither is a
+  raw parameter, and neither is in the tables here.
 - **25 retire with the shell** (`ROADMAP.md`, *The shell's retirement, and
   bubbles*): read only by the shell, the mass having twins or skipping them.
 - **5 are off by a decision** (blind results, or a blind test pending), **3 are
-  debug views**, **7 trade time for fidelity**, and **3 change nothing visible**
-  at any size studied: the clusters' own stars, and the external galaxies. Those
-  three want a look by eye before anything is removed.
+  debug views**, **7 trade time for fidelity**, and **1 changes almost nothing**:
+  the external galaxies, faint smudges a star across, for the galaxy work to make
+  into something or drop.
 - The dials that move the sky most, by far, say **where things are**: where the
   observer sits in the galaxy, where the light is, where the viewer stands in the
   nebula -- composition, not texture.
@@ -226,6 +232,32 @@ curves tuned by looking at many skies, not assumed to add. `viewer-offset` and
 `galaxy-height` have the largest mu\* of all (34 and 23 on the mass) and
 sigma to match: what they do depends on everything, as where one stands does.
 
+## Points
+
+The first triage filed three dials as changing nothing visible: the lighting
+cluster's own stars (`cluster-stars`), the young stars about it (`young`) and the
+external galaxies. All three are implemented and reach the sky; looked at by eye,
+round the cluster, its stars are a few bright points in the cavity's gap at the
+default, bloom into haloes at a hundred times it, and five hundred young stars
+are a dense sprinkle beside them. The measures were blind to them: every one of
+them is of the whole sky, and a few stars in one place are no share of that.
+
+So the study has a third measure of change, **peak**: the mean change over each
+patch a sixteenth of a face across -- about six degrees, whatever the size -- and
+the largest of those. Measured again with it (`points_mass.csv` at 128 a face on
+four seeds, `points512_mass.csv` at 512 on two):
+
+| dial | whole sky, largest | peak, largest (128 / 512) |
+|---|---|---|
+| cluster-stars | 0.01 levels, 0.05% of the sky | 19 / 7.5 levels |
+| young | 0.02 levels, 0.15% | 16 / 8.5 levels |
+| external-galaxies | 0.00 levels, 0.01% | 1.8 / 2.2 levels |
+
+The two star dials are look dials of points, as local as the cluster they belong
+to. The external galaxies are real but hardly there -- the brightest changes its
+patch by two levels -- and belong to *The galaxy from any star*, which will make
+them something worth seeing or drop them.
+
 ## Triage
 
 Every dial, its class, and the numbers it was decided from. The class is a
@@ -242,7 +274,8 @@ both); mu\* is from *Interactions*, where the dial took part.
 - **off by a decision**: off by default because of a blind result, or waiting
   for one.
 - **no visible effect**: changes under half a percent of the sky at any value, in
-  either style, at either size. To be looked at by eye before removal.
+  either style, at either size, and nowhere by more than a couple of levels (see
+  *Points*).
 - **debug**: a view for judging the physics.
 - **quality**: trades time for fidelity; not for macros.
 
@@ -304,6 +337,8 @@ both); mu\* is from *Interactions*, where the dial took part.
 | grade-stars | 0.6 | look | 0.14, 3% | 0.32, 7% | 0.08 / 0.09 |  |
 | nebula-scale | 0.08 | look | 0.21, 1% | 0.08, 1% | 0.00 / 0.00 |  |
 | star-halo-deg | 0.4 | look | 0.09, 1% | 0.19, 2% | 0.09 / 0.10 |  |
+| young | 40 | look | 0.02, 0% | 0.04, 0% | 0.00 / 0.01 | the clusters' young stars: up to 16 levels round the cluster, nothing elsewhere |
+| cluster-stars | 1 | look | 0.01, 0% | 0.02, 0% | 0.00 / 0.00 | the lighting cluster's own stars: up to 19 levels round it, nothing elsewhere |
 | thickness | 0.06 | shell style (retiring) | 2.27, 34% | 19.29, 67% | 0.83 / 7.20 | the shell's; in the mass it only sets the march's stride, a quality effect that will need a dial of its own |
 | blister | 0.8 | shell style (retiring) | 0.00, 0% | 17.54, 80% | 0.00 / 4.50 | the mass's twin is mass-blister |
 | cavity-density | 0.006 | shell style (retiring) | 0.00, 0% | 11.84, 50% | 0.00 / 2.65 | the mass's twin is mass-cavity |
@@ -334,9 +369,7 @@ both); mu\* is from *Interactions*, where the dial took part.
 | spike | 0 | off by a decision | 0.02, 0% | 0.02, 0% | 0.00 / 0.00 | diffraction spikes, off: baked into a sky they read as a telescope's artefact |
 | spike-flux | 5000 | off by a decision | 0.00, 0% | 0.00, 0% | 0.00 / 0.00 | which stars get spikes; nothing while spike is off |
 | mass-edge-patch | 0 | off by a decision | 0.00, 0% | 0.00, 0% | 0.18 / 0.00 | where the edges are hard; nothing while mass-edge is off |
-| young | 40 | no visible effect | 0.02, 0% | 0.04, 0% | 0.00 / 0.01 | the clusters' young stars |
-| cluster-stars | 1 | no visible effect | 0.01, 0% | 0.02, 0% | 0.00 / 0.00 | the clusters' lighting stars |
-| external-galaxies | 4 | no visible effect | 0.00, 0% | 0.00, 0% | 0.00 / 0.00 | other galaxies, far off |
+| external-galaxies | 4 | no visible effect | 0.00, 0% | 0.00, 0% | 0.00 / 0.00 | other galaxies, far off: smudges a star across, at most 2 levels in any patch (points_mass.csv); for the galaxy work to make or drop |
 | nebula | on | debug | 17.25, 81% | 18.50, 58% | -- | the gas off, to judge the stars and galaxy alone |
 | grade | auto | debug | 12.51, 89% | 11.55, 93% | -- | physical: the lines' own colours, ungraded, to judge the physics |
 | line-colors | natural | debug | 8.94, 65% | 5.79, 45% | -- | the lines' colour mappings; under the grade they only reweight brightness |
@@ -348,4 +381,4 @@ both); mu\* is from *Interactions*, where the dial took part.
 | supersample | 2 | quality | 0.54, 8% | 0.78, 13% | -- | trades time for fidelity; studied for cost |
 | galaxy-res | 512 | quality | 0.05, 1% | 0.10, 1% | -- | trades time for fidelity; studied for cost |
 
-look: 56, shell style (retiring): 25, off by a decision: 5, no visible effect: 3, debug: 3, quality: 7
+look: 58, shell style (retiring): 25, off by a decision: 5, no visible effect: 1, debug: 3, quality: 7

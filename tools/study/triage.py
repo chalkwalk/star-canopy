@@ -42,8 +42,14 @@ SHELL_NOTE = {
 for d in ("pillars", "pillar-length", "pillar-width", "pillar-density", "clouds", "cloud-length",
           "cloud-width", "cloud-distance", "cloud-density"):
     SHELL_NOTE[d] = "capsule pillars and clouds, which the mass skips"
-INVISIBLE = {"young": "the clusters' young stars", "cluster-stars": "the clusters' lighting stars",
-             "external-galaxies": "other galaxies, far off"}
+INVISIBLE = {"external-galaxies": "other galaxies, far off: smudges a star across, at most 2 levels "
+                                  "in any patch (points_mass.csv); for the galaxy work to make or drop"}
+# Look dials whose whole effect is in one small place, which the whole-sky
+# reach cannot see: filed as doing nothing until the peak measure
+# (points_mass.csv, points512_mass.csv) showed them.
+POINTS = {"young": "the clusters' young stars: up to 16 levels round the cluster, nothing elsewhere",
+          "cluster-stars": "the lighting cluster's own stars: up to 19 levels round it, nothing "
+                           "elsewhere"}
 VISIBLE = 0.005   # a class of "no visible effect" must stay under half a percent of the sky
 
 
@@ -85,13 +91,15 @@ def main():
             cls, note = "no visible effect", INVISIBLE[d]
         elif d in SHELL:
             cls, note = "shell style (retiring)", SHELL_NOTE[d]
+        elif d in POINTS:
+            cls, note = "look", POINTS[d]
         else:
             cls, note = "look", ""
         # Checks that the numbers bear the class out.
         share = max(mass[d][1], shell[d][1], fine_mass.get(d, (0, 0))[1], fine_shell.get(d, (0, 0))[1])
         if cls == "no visible effect" and share > VISIBLE:
             note += f" -- CHECK: {100 * share:.1f}% of the sky changed"
-        if cls == "look" and max(mass[d][0], shell[d][0]) < 0.05:
+        if cls == "look" and d not in POINTS and max(mass[d][0], shell[d][0]) < 0.05:
             note += " -- CHECK: no reach in either style"
         rows.append((d, cls, note))
     order = ["look", "shell style (retiring)", "off by a decision", "no visible effect", "debug", "quality"]

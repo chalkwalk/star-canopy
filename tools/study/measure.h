@@ -42,4 +42,12 @@ double change(const Cubemap& a, const Cubemap& b);
 // structure; this sees how much of the sky changed at all.
 double changedShare(const Cubemap& a, const Cubemap& b);
 
+// The largest change anywhere: the mean |a - b| in 8-bit display levels over
+// each patch a sixteenth of a face across -- about six degrees, whatever the
+// face size -- and the largest of those. change() and changedShare() are of the
+// whole sky, and missed what a dial does in one place: the lighting cluster's
+// own stars change a few degrees round the cluster and nothing else, and were
+// filed as doing nothing.
+double peakChange(const Cubemap& a, const Cubemap& b);
+
 }  // namespace starcanopy
