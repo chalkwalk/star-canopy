@@ -141,6 +141,10 @@ const Dial kDials[] = {
   GEO0("star-brightness", "all the stars together", starBrightness, 0.001f, 1000.0f),
   Dial{"star-count", "field stars, drawn from the galaxy about the observer", nullptr,
        &Settings::starCount, nullptr, 100.0f, 400000.0f, nullptr, 0, true, 100.0f},
+  Dial{"band-stars", "the galaxy's band as stars, beyond the field stars; 0 all glow", nullptr,
+       &Settings::bandStars, nullptr, 0.0f, 400000.0f, nullptr, 0, true, 1000.0f},
+  REAL("galaxy-haze", "the galaxy's glow kept where its stars are drawn: the stars too many and "
+       "faint to draw, 0..1", galaxyHaze, 0.0f, 1.0f),
   GEO("star-reach", "kpc; nearer stars are points, further ones glow", starReach, 0.1f, 10.0f),
   GEO("nebula-scale", "kpc per sky unit: the main bubble's radius", nebulaScale, 0.005f, 1.0f),
   GEO0("cluster-stars", "the lighting clusters' own stars", clusterStars, 0.01f, 100.0f),
@@ -366,9 +370,11 @@ Sky buildSky(const Settings& s) {
   g.waves = s.galaxyWaves;
   g.externalGalaxies = s.externalGalaxies;
   sky.galaxyRes = s.galaxyRes;
+  sky.galaxyHaze = s.galaxyHaze;
 
   StarParams& st = sky.stars;
   st.count = s.starCount;
+  st.bandCount = s.bandStars;
   st.reach = s.starReach;
   st.kpcPerSkyUnit = s.nebulaScale;
   std::memcpy(st.reddening, l.reddening, sizeof(st.reddening));

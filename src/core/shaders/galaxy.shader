@@ -37,6 +37,10 @@ void main()
 uniform int u_Face;
 uniform float u_FaceSize;
 uniform vec3 u_Reddening;
+/* The stars drawn as points (stars.cpp): the flux below which they are left to this glow,
+ * the typical distance squared their luminosities are measured at, and the share of the
+ * light kept as glow wherever they are drawn; 0 flux, none drawn. */
+uniform vec3 u_Band;
 
 uniform int u_ExternalCount;
 uniform vec4 u_ExternalDir[GAL_MAX_EXTERNAL];	/* direction, angular radius */
@@ -44,6 +48,15 @@ uniform vec4 u_ExternalMajor[GAL_MAX_EXTERNAL];	/* long axis, minor over major *
 uniform float u_ExternalBrightness[GAL_MAX_EXTERNAL];
 
 out vec4 f_FragColor;
+
+/* The share of the light of stars fainter than luminosity x: the luminosity function the
+ * stars are drawn from, a power law of index 1.2 from 1 to 2000, weighed by luminosity. */
+float fainter_light(float x)
+{
+	float top = pow(2000.0, -0.2);
+
+	return clamp((1.0 - pow(max(x, 1.0), -0.2)) / (1.0 - top), 0.0, 1.0);
+}
 
 vec3 face_direction(int face, vec2 st)
 {
@@ -90,7 +103,21 @@ void main()
 			 * half a step: finer than a step, a step lands in a cloud or misses it by
 			 * chance, and the texels beside it by different chances -- grain. */
 			gal_sample s = gal_density(o + d * t, max(t * pixel_angle, 0.5 * dt));
-			vec3 light = s.old * vec3(1.0, 0.86, 0.7) + s.young * vec3(0.7, 0.8, 1.0);
+			float old_share = 1.0, young_share = 1.0;
+
+			/* Only the stars too faint to be drawn as points glow: at this distance and
+			 * behind this much dust, those fainter than the limit.  The young are four
+			 * times as luminous, as the drawn ones are. */
+			if (u_Band.x > 0.0) {
+				float x = u_Band.x * t * t / (u_Band.y * max(transmit.g, 1e-6));
+
+				/* But never all of it: the stars drawn are a budget, and a real sky has
+				 * countless more too faint for any budget, which are its haze. */
+				old_share = max(fainter_light(x), u_Band.z);
+				young_share = max(fainter_light(0.25 * x), u_Band.z);
+			}
+			vec3 light = s.old * old_share * vec3(1.0, 0.86, 0.7) +
+					s.young * young_share * vec3(0.7, 0.8, 1.0);
 
 			glow += transmit * light * dt;
 			bare += light * dt;

@@ -105,7 +105,10 @@ gal_sample gal_density(vec3 p, float footprint)
 
 		s.old += u_GalBar.z * 0.5 * exp(-2.5 * rb2);
 	}
-	s.old += u_GalBar.w * 0.6 * exp(-r / 1.0);
+	/* The bulge: flattened, half as deep as it is wide, as the Milky Way's boxy one is --
+	 * round, it stood above and below the band as a ball of light, which no photograph
+	 * of the Milky Way shows. */
+	s.old += u_GalBar.w * 0.45 * exp(-length(vec3(p.xy, p.z * 2.0)) / 1.0);
 	s.old += 0.0008 / pow(1.0 + r * r / 4.0, 1.5);
 
 	/* The dust layer, thin, but not flat: its thickness varies by a low noise, a factor

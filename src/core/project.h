@@ -20,13 +20,16 @@ namespace starcanopy {
 //   3  the galaxy's dust at every scale, by seed more or less clumped, its glow
 //      baked at the sky's own size; the observer on the midplane
 //      (docs/studies/atlas.md)
+//   4  the galaxy's band made of stars, its glow only what is too faint to
+//      draw with a haze kept; the bulge flattened; stars scaled from the
+//      midplane, so an observer out of the disc sees fewer about them
 //
-// This StarCanopy renders look 3 only, and refuses older looks with a reason.
-constexpr int kLookVersion = 3;
+// This StarCanopy renders look 4 only, and refuses older looks with a reason.
+constexpr int kLookVersion = 4;
 
 // A project: how a sky is made again. Small, human-readable TOML:
 //
-//   look = 3                 # the look version it was made with
+//   look = 4                 # the look version it was made with
 //   seed = 7
 //   style = "mass"           # mass; the sparse compositions are to come
 //

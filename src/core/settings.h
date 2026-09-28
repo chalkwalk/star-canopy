@@ -81,6 +81,8 @@ struct Settings {
   // The stars and the galaxy.
   float starBrightness = 0.55f;
   int starCount = 30000;
+  int bandStars = 150000;
+  float galaxyHaze = 0.3f;
   float starReach = 1.5f;
   float nebulaScale = 0.08f;
   float clusterStars = 1.0f;
@@ -153,6 +155,7 @@ struct Sky {
   GalaxyParams galaxy;
   StarParams stars;
   int galaxyRes;
+  float galaxyHaze;  // the galaxy's glow kept where its stars are drawn
   bool nebula;
 };
 

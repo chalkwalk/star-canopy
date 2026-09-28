@@ -341,7 +341,7 @@ void Baker::bakeLight(const Scene& s, const Look& look) {
   glFinish();
 }
 
-void Baker::bakeGalaxy(const Galaxy& g, const float reddening[3], int res) {
+void Baker::bakeGalaxy(const Galaxy& g, const float reddening[3], int res, const float band[3]) {
   if (!galaxy_.id()) {
     return;
   }
@@ -369,6 +369,7 @@ void Baker::bakeGalaxy(const Galaxy& g, const float reddening[3], int res) {
   uploadGalaxy(p, g);
   glUniform3fv(p.uniform("u_Reddening"), 1, reddening);
   glUniform1f(p.uniform("u_FaceSize"), static_cast<float>(res));
+  glUniform3fv(p.uniform("u_Band"), 1, band);
 
   glDrawBuffer(GL_COLOR_ATTACHMENT0);
   glViewport(0, 0, res, res);

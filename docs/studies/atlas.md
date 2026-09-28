@@ -93,3 +93,35 @@ the midplane. Places above and below come back with the seed's choice of place
 (*The observer's place*). The atlas and its pairs show the whole sky in the
 Equal Earth projection, at the scorer's preference.
 
+## The band made of stars (look 4)
+
+The band was a smooth glow behind stars as dense off it as on it. Now, beyond the
+field stars' 1.5 kpc, the sky is counted in patches, 48 a side on each cube
+face: along each, out through the galaxy's density and dust, the stars bright
+enough to draw -- the same luminosity law as the field stars, their number per
+unit of light carried on from them -- and about 150,000 drawn (`band-stars`),
+each dimmed by the dust along its own line, so the lanes are short of stars. The
+glow keeps only the light of the stars too faint to draw. They are stars like
+the field stars, drawn at every size alike, so a preview has the export's stars.
+88% of them lie within 10 degrees of the plane.
+
+**Round 1, blind:** 6-3 for the band. The scorer found the bulge odd in both --
+a round ball of glow above and below the band, which no photograph of the Milky
+Way shows -- found the old glow's haze compelling, and saw diagonal sawteeth along
+the band's edge. The saw was the patches: each held a count, spread evenly in it,
+so the count stepped where the density changes fast; a tent two patches wide now
+blends them. The bulge is flattened, half as deep as wide, and weaker. And a
+share of the glow is kept wherever stars are drawn, 0.3 (`galaxy-haze`): the
+stars drawn are a budget, and a real sky has countless fainter ones.
+
+**Round 2:** preferred 9-0, unscored sheet by sheet. From above the disc the
+band's stars then blazed white: their number per unit of light was taken from the
+field stars' ball about the observer, nearly empty 3 kpc up. Both are now scaled
+from the midplane under the observer, and fewer field stars lie about an
+observer out of the disc, as few do (`test_stars`).
+
+**Still wanting:** the galaxy has no form but a disc and its noise -- no arms from
+any vantage, as the atlas found at the start. The far side, seen from above, is
+there but pressed toward the horizon by perspective: from 0.5 kpc up, the disc
+15 kpc away lies 2 degrees below it.
+

@@ -211,7 +211,9 @@ GalaxySample galaxyDensity(const Galaxy& g, const float p[3], float footprint) {
                 (p[2] * p[2]) / (0.0625f * g.barLength * g.barLength);
     s.old += g.barStrength * 0.5f * expf(-2.5f * rb2);
   }
-  s.old += g.bulgeStrength * 0.6f * expf(-r / 1.0f);
+  // The bulge, flattened; see gal_density().
+  s.old += g.bulgeStrength * 0.45f *
+           expf(-sqrtf(p[0] * p[0] + p[1] * p[1] + 4.0f * p[2] * p[2]) / 1.0f);
   s.old += 0.0008f / powf(1.0f + r * r / 4.0f, 1.5f);
 
   // The dust layer, thin but not flat: its thickness and its middle vary by

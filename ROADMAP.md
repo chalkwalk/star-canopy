@@ -187,15 +187,14 @@ from it goes in `SOURCES.md`.
       (`docs/studies/atlas.md`). The observer's default height is the midplane
 - [ ] Softer still than the sky it was read off: windows, black cores and amber
       edges are few. A later pass, judged on the atlas
-- [ ] The band made of stars: stars near enough to meet the nebula stay points
-      in 3D; beyond them the march counts expected stars per solid angle in a
-      few apparent-brightness bins, each reddened by the dust at its depth, and
-      a pass at export resolution draws them from a hash fixed to the sky. Only
-      what is fainter than the last bin stays glow, and the sky between stays
-      dark (`PRINCIPLES §11`)
-- [ ] Its previews: stars defined in angle; at small sizes a texel sums the
-      bright bins' stars and takes the expected light of the faint ones -- the
-      same sky seen more coarsely (`PRINCIPLES §9`)
+- [x] The band made of stars (look 4): beyond the field stars, stars where the
+      density and luminosity law put them, counted in patches with a tent's
+      blend, each dimmed by its own line's dust; the glow only what is too faint,
+      with a haze kept (`galaxy-haze`); the bulge flattened; stars scaled from
+      the midplane. Preferred 9-0 blind, after a first round's 6-3
+      (`docs/studies/atlas.md`)
+- [x] Its previews: the band's stars are stars, drawn at every size alike, so a
+      small sky has the export's stars, seen more coarsely (`PRINCIPLES §9`)
 - [ ] Exposure that follows the vantage, in place of the fixed knee
       (`GAL_KNEE`), so the centre does not burn out and the outer sky is not
       empty

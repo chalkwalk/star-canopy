@@ -34,6 +34,7 @@ namespace starcanopy {
 
 struct StarParams {
   int count = 30000;              // field stars
+  int bandCount = 150000;         // the band's stars, beyond the field stars' reach
   float reach = 1.5f;             // kpc: how far out stars are drawn as points
   float kpcPerSkyUnit = 0.08f;    // the nebula's scale: its main bubble's radius
   float reddening[3] = {0.8f, 1.0f, 1.3f};  // the galaxy's dust law
@@ -47,8 +48,10 @@ struct Star {
   float flux[3];   // linear rgb, after the galaxy's dust
 };
 
-// Deterministic in the scene's seed and the params.
-std::vector<Star> generateStars(const Scene& s, const Galaxy& g, const StarParams& p);
+// Deterministic in the scene's seed and the params. bandFlux, if given, is set
+// to the flux below which the band's stars are left to the galaxy's glow.
+std::vector<Star> generateStars(const Scene& s, const Galaxy& g, const StarParams& p,
+                                float* bandFlux = nullptr);
 
 // A black body's colour, as linear rgb normalised to unit luminance, then a
 // quarter of the way back to white.

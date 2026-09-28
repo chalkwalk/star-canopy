@@ -42,7 +42,7 @@ public:
 
   // The galaxy's glow as seen from its observer, res texels a face. Every bake
   // after samples it; it need only be redone when the galaxy changes.
-  void bakeGalaxy(const Galaxy& g, const float reddening[3], int res);
+  void bakeGalaxy(const Galaxy& g, const float reddening[3], int res, const float band[3]);
 
   // The light volume for this scene and look. Before any begin() whose scene or
   // look differs from the last one lit.

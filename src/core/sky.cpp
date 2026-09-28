@@ -45,12 +45,16 @@ void bakeSky(Baker& baker, const Settings& settings, CubemapTarget& target) {
   Scene scene = generateScene(sky.scene);
   Galaxy galaxy = generateGalaxy(sky.scene.seed, sky.galaxy);
   veilDistant(scene, galaxy, sky);
+  // The stars come from the whole scene, clusters and all, even with the nebula
+  // off: they are the same sky, seen without its gas. First, since the glow is
+  // only the stars too faint to be drawn.
+  float band[3] = {0.0f, 0.0f, sky.galaxyHaze};
+  std::vector<Star> stars = generateStars(scene, galaxy, sky.stars, &band[0]);
+  band[1] = 0.49f * sky.stars.reach * sky.stars.reach;  // the typical distance, squared
   // The glow at the sky's own size unless told otherwise: its dust has detail
   // down to the texel.
-  baker.bakeGalaxy(galaxy, sky.look.reddening, sky.galaxyRes > 0 ? sky.galaxyRes : target.size());
-  // The stars come from the whole scene, clusters and all, even with the nebula
-  // off: they are the same sky, seen without its gas.
-  std::vector<Star> stars = generateStars(scene, galaxy, sky.stars);
+  baker.bakeGalaxy(galaxy, sky.look.reddening, sky.galaxyRes > 0 ? sky.galaxyRes : target.size(),
+                   band);
   if (!sky.nebula) {
     scene.bubbleCount = 0;
   }

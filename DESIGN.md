@@ -142,9 +142,15 @@ finer ones ridged into filaments, more or less clumped by seed; octaves finer
 than a sample fade out with the mean kept, so a small sky is the same sky
 coarser. Its layer varies in thickness and height, so near clouds stand out of
 the plane. The glow is baked at the sky's own size (`docs/studies/atlas.md`).
-About 30,000 field stars sampled from the same model at real distances, each
-dimmed and reddened by exactly the gas in front of it, so stars lie in front of,
-inside and behind the nebula. Diffraction spikes are off: baked into a sky they
+
+The band is made of stars. About 30,000 field stars within 1.5 kpc are sampled
+from the same model at real distances; beyond them, about 150,000 more are drawn
+where the galaxy's density and luminosity law put stars bright enough to draw,
+each dimmed and reddened by exactly the dust and gas in front of it, so stars lie
+in front of, inside and behind the nebula, and the band's dark lanes are short of
+stars. The glow is only the light of stars too faint to draw, and a haze kept for
+the countless fainter ones no budget draws. Star numbers are scaled from the
+midplane, so an observer above the disc sees few stars about them. Diffraction spikes are off: baked into a sky they
 read as a telescope's artefact.
 
 ## 4. The look
@@ -207,7 +213,8 @@ raw overrides, orientation and outputs. It is small and human-readable.
 
 The **look version** is recorded in every project. Look 1 was the lift from the
 labs; look 2 retired the shell and remade the distant nebulae, a mass sky's main
-nebula unchanged; look 3 remade the galaxy's dust (`src/core/project.h`). This
+nebula unchanged; look 3 remade the galaxy's dust; look 4 made its band of stars
+(`src/core/project.h`). This
 StarCanopy renders the latest look, and refuses older ones saying how to render
 them with it. A change that alters any sky's
 pixels is a new look version; the renderer keeps the old ones renderable, or
