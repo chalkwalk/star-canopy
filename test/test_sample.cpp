@@ -158,6 +158,28 @@ int main() {
   }
   std::printf("worst rotation error %.4f\n", moved);
   CHECK(moved < 2.0f * texel);
+  // Equal Earth: its middle looks along +z, a quarter of the way across along
+  // +x, the top of its middle column along +y; its corners are outside it.
+  {
+    Image e = equalEarth(sky, 200);
+    CHECK(e.width == 200 && std::abs(e.height - 97) <= 1);
+    auto at = [&](int x, int y, float d[3]) {
+      for (int k = 0; k < 3; k++) {
+        d[k] = e.rgb[3 * (static_cast<size_t>(y) * e.width + x) + k] - 2.0f;
+      }
+    };
+    float d[3];
+    const float z[3] = {0, 0, 1}, x[3] = {1, 0, 0}, up[3] = {0, 1, 0};
+    at(100, e.height / 2, d);
+    CHECK(distance(d, z) < 0.05f);
+    at(150, e.height / 2, d);
+    CHECK(distance(d, x) < 0.05f);
+    // Half a pixel from the pole, where the projection packs latitude close.
+    at(100, 0, d);
+    CHECK(d[1] > 0.95f && distance(d, up) < 0.35f);
+    CHECK(e.rgb[0] == 0.0f && e.rgb[1] == 0.0f && e.rgb[2] == 0.0f);
+  }
+
   // A pinhole view: its centre looks along forward, its left and right edges
   // half its field of view either side, and up is up.
   {

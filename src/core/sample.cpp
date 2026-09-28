@@ -126,6 +126,48 @@ Image cross(const Cubemap& c) {
   return image;
 }
 
+Image equalEarth(const Cubemap& c, int width) {
+  // The projection's polynomial, y = A1 t + A2 t^3 + A3 t^7 + A4 t^9, where t is
+  // the parametric latitude, sin t = sqrt(3) / 2 sin(latitude).
+  const double a1 = 1.340264, a2 = -0.081106, a3 = 0.000893, a4 = 0.003796;
+  const double pi = 3.14159265358979323846, root3 = std::sqrt(3.0);
+  auto y = [&](double t) {
+    double t2 = t * t, t6 = t2 * t2 * t2;
+    return t * (a1 + a2 * t2 + t6 * (a3 + a4 * t2));
+  };
+  auto dy = [&](double t) {
+    double t2 = t * t, t6 = t2 * t2 * t2;
+    return a1 + 3.0 * a2 * t2 + t6 * (7.0 * a3 + 9.0 * a4 * t2);
+  };
+  const double xMax = 2.0 * root3 * pi / (3.0 * a1), yMax = y(pi / 3.0);
+  Image out;
+  out.width = width;
+  out.height = static_cast<int>(std::lround(width * yMax / xMax));
+  out.rgb.assign(static_cast<size_t>(out.width) * out.height * 3, 0.0f);
+  for (int j = 0; j < out.height; j++) {
+    double py = (1.0 - (j + 0.5) / out.height * 2.0) * yMax;
+    // The parametric latitude, by Newton's method from the latitude's guess.
+    double t = py / a1;
+    for (int k = 0; k < 8; k++) {
+      t -= (y(t) - py) / dy(t);
+    }
+    t = std::fmax(-pi / 3.0, std::fmin(pi / 3.0, t));
+    double lat = std::asin(std::fmax(-1.0, std::fmin(1.0, 2.0 * std::sin(t) / root3)));
+    for (int i = 0; i < out.width; i++) {
+      double px = ((i + 0.5) / out.width * 2.0 - 1.0) * xMax;
+      double lon = 3.0 * px * dy(t) / (2.0 * root3 * std::cos(t));
+      if (std::fabs(lon) > pi) {
+        continue;
+      }
+      float d[3] = {static_cast<float>(std::cos(lat) * std::sin(lon)),
+                    static_cast<float>(std::sin(lat)),
+                    static_cast<float>(std::cos(lat) * std::cos(lon))};
+      sampleCube(c, d, &out.rgb[3 * (static_cast<size_t>(j) * out.width + i)]);
+    }
+  }
+  return out;
+}
+
 Image perspective(const Cubemap& c, const float forwardIn[3], const float upIn[3], float fovDegrees,
                   int width, int height) {
   auto normalise = [](float v[3]) {

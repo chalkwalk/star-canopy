@@ -35,6 +35,13 @@ void sampleCube(const Cubemap& c, const float d[3], float out[3]);
 // has +x to its right. Engines differ in theirs; the formula is the contract.
 Image equirect(const Cubemap& c, int width);
 
+// The whole sky in the Equal Earth projection (Šavrič, Patterson and Jenny,
+// 2018): equal area, so no part of the sky is swollen as the equirectangular
+// map's poles are, and its meridians curve, so it reads as a sphere. width by
+// about width / 2.05; the same directions as equirect() -- the middle looks
+// along +z, +x to its right, +y up -- and outside the map's outline, black.
+Image equalEarth(const Cubemap& c, int width);
+
 // The six faces as a horizontal cross, 4n by 3n, the layout engines import:
 //        +y
 //   -x   +z   +x   -z

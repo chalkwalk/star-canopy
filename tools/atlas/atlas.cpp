@@ -6,7 +6,7 @@
 //   atlas --out DIR [--size N] [--seeds 1,7,12] [--vantages a,b] [--context K]
 //
 // One sheet a vantage and seed, DIR/VANTAGE-seedN.png: the whole sky above, in
-// galactic coordinates -- the galaxy's centre in the middle, its plane across,
+// the Equal Earth projection and galactic coordinates -- the galaxy's centre in the middle, its plane across,
 // its north up, so every sheet reads the same way -- and below it four views
 // 45 degrees across, north up: toward the centre, away from it, along the
 // plane, and toward the pole on the disc's side -- down onto it from above. Output belongs outside the repository, as every
@@ -183,11 +183,12 @@ int main(int argc, char** argv) {
       galactic(g, r);
       Cubemap turned = rotate(target.read(), r);
 
+      Image whole = equalEarth(turned, wide);
       Image sheet;
       sheet.width = wide;
-      sheet.height = wide / 2 + gap + viewSize;
+      sheet.height = whole.height + gap + viewSize;
       sheet.rgb.assign(static_cast<size_t>(sheet.width) * sheet.height * 3, 0.02f);
-      paste(sheet, equirect(turned, wide), 0, 0);
+      paste(sheet, whole, 0, 0);
       // In galactic coordinates: the centre +z, north +y, the plane's other
       // way +x.
       float toDisc = v->height > 0.0f ? -1.0f : 1.0f;
@@ -195,7 +196,7 @@ int main(int argc, char** argv) {
       const float north[3] = {0, 1, 0}, plane[3] = {0, 0, 1};
       for (int k = 0; k < 4; k++) {
         paste(sheet, perspective(turned, views[k], k == 3 ? plane : north, 45.0f, viewSize, viewSize),
-              k * viewSize, wide / 2 + gap);
+              k * viewSize, whole.height + gap);
       }
       char name[128];
       std::snprintf(name, sizeof(name), "%s/%s-seed%u.png", outDir.c_str(), v->name, seed);

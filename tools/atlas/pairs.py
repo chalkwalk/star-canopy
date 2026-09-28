@@ -5,8 +5,9 @@ atlas as it was against the atlas as it is (PRINCIPLES §1, §2).
   pairs.py BEFORE_DIR AFTER_DIR OUT_DIR
 
 For each sheet in both, one pair: the two skies side by side, which side is
-which drawn at random, each shown as its whole sky (in galactic coordinates)
-above the atlas's views toward the galaxy's centre and along its plane. The
+which drawn at random, each shown as its whole sky (Equal Earth, in galactic
+coordinates) above the atlas's views toward the galaxy's centre and along its
+plane. The
 pairs are shuffled; the key goes to OUT_DIR/key.csv, to be opened only when the
 scores are in; OUT_DIR/scores.md is the sheet to score on.
 
@@ -23,17 +24,18 @@ GAP = 16
 
 def side(path):
     sheet = Image.open(path)
-    w = sheet.width
-    sky = sheet.crop((0, 0, w, w // 2)).resize((1024, 512))
-    top = w // 2 + GAP
+    w, h = sheet.width, sheet.height
+    top = h - 512
+    sky = sheet.crop((0, 0, w, top - GAP))
+    sky = sky.resize((1024, round(sky.height * 1024 / w)))
     # The atlas's views are 512 across: toward the centre, then away, then along
     # the plane.
     centre = sheet.crop((0, top, 512, top + 512))
     along = sheet.crop((1024, top, 1536, top + 512))
-    out = Image.new("RGB", (1024, 512 + GAP + 512), (5, 5, 5))
+    out = Image.new("RGB", (1024, sky.height + GAP + 512), (5, 5, 5))
     out.paste(sky, (0, 0))
-    out.paste(centre, (0, 512 + GAP))
-    out.paste(along, (512, 512 + GAP))
+    out.paste(centre, (0, sky.height + GAP))
+    out.paste(along, (512, sky.height + GAP))
     return out
 
 
