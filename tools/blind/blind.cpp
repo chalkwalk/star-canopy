@@ -147,10 +147,11 @@ std::vector<Direction> directions(const Settings& s, bool around) {
   return out;
 }
 
-// The two distant nebulae the main one hides least: the main nebula baked
-// alone, small, and its transmittance read toward each distant one's centre.
-// Fewer than two, and the rest of the views go 150 degrees round from the
-// first.
+// The two distant nebulae the main one hides least, of those at least half
+// clear of it -- one mostly hidden is not what a distant nebula looks like,
+// but what the main one does: the main nebula baked alone, small, and its
+// transmittance read toward each distant one's centre. Fewer than two, and the
+// rest of the views are the usual ones.
 std::vector<Direction> towardDistant(Baker& baker, const Settings& s) {
   Settings alone = s;
   alone.distantCount = 0;
@@ -178,16 +179,12 @@ std::vector<Direction> towardDistant(Baker& baker, const Settings& s) {
                  100.0 * e.first);
   }
   std::vector<Direction> out;
-  for (size_t i = 0; i < seen.size() && i < 2; i++) {
+  for (size_t i = 0; i < seen.size() && i < 2 && seen[i].first >= 0.5f; i++) {
     out.push_back(seen[i].second);
   }
-  if (out.empty()) {
-    return directions(s, false);
-  }
-  if (out.size() < 2) {
-    Direction d;
-    turned(out[0].data(), 150.0f, d.data());
-    out.push_back(d);
+  std::vector<Direction> usual = directions(s, false);
+  for (size_t i = 0; out.size() < 2; i++) {
+    out.push_back(usual[i]);
   }
   return out;
 }

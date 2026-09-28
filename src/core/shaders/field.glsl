@@ -278,10 +278,6 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	g.near_width = 1.0;
 	g.core = 0.0;
 	r = length(g.q * u_BubbleForm[b].xyz);
-	/* A mass is not squeezed: its lobes and billows make it irregular, and squeezed it is a
-	 * saucer. */
-	if (nsky_mass(b))
-		r = length(g.q);
 
 	n = nsky_noise(g.q * u_HoleScale + o * 0.37);
 	thick = shape.x * (0.6 + 0.8 * clamp(n.y + 0.5, 0.0, 1.0));
@@ -451,20 +447,25 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	if (nsky_mass(b))
 		g.cavity = u_CavityDensity * smoothstep(0.1, 0.6, r / rin) *
 				(1.0 - smoothstep(0.9, 1.05, r / rin));
-	/* A distant mass is seen by its ionised heart: the glowing gas filling it to the mass's
-	 * lumpy inner surface, where the glow ends -- an edge, not a fade, or it reads as a piece
-	 * cut from a larger nebula -- and a layer brighter just inside it, the ionisation front,
-	 * which seen edge on rims the whole.  The thin mass round it lies across the glow in
-	 * lanes. */
+	/* A distant nebula is seen by its glow alone: the ionised gas filling it to the mass's
+	 * inner surface, and no dark gas -- at a few degrees across a mass's lumps are specks
+	 * that read as dust, and its soft skin fades the whole into the sky like a piece cut
+	 * from something larger (distant, blind, rounds 1-2).  So its glow ends in an edge, and a
+	 * layer bright just inside it, the ionisation front, rims it hard enough to hold against
+	 * gas behind it.  Inside, the glow is gathered into filaments and knots, the ridges of
+	 * two noises -- its detail is in its light, not in shadows across it. */
 	if (b > 0 && nsky_mass(b)) {
-		/* And lobed: its outline pushed in and out by a low noise of direction, a third
-		 * either way, so it is an irregular cloud and not a moon.  Of direction, since it is
-		 * only ever seen from outside, where the prisms that makes are never seen along. */
-		vec3 lo = normalize(g.q) * 1.4 + o * 0.61;
-		float x = r / (rin * (1.0 + 0.35 * (nsky_noise(lo).x + 0.5 * nsky_noise(lo * 2.3).y)));
+		/* Its outline pushed in and out by a low noise of direction, well over a third either
+		 * way, and the bubble squeezed (u_BubbleForm): a lobed, stretched cloud, not a disc.
+		 * Of direction, since it is only seen from outside, where the prisms that makes are
+		 * never seen along. */
+		vec3 lo = normalize(g.q) * 1.4 + o * 0.61, fq = g.q * 3.2 + o * 0.29;
+		float x = r / (rin * (1.0 + 0.6 * (nsky_noise(lo).x + 0.5 * nsky_noise(lo * 2.3).y)));
+		float f1 = 1.0 - abs(nsky_noise(fq).y), f2 = 1.0 - abs(nsky_noise(fq * 2.4 + 5.3).z);
 
-		g.cavity = u_DistantCavity * smoothstep(0.05, 0.5, x) * (1.0 - smoothstep(0.96, 1.0, x)) *
-				(1.0 + 3.0 * exp(-(x - 0.93) * (x - 0.93) / 0.0016));
+		g.cavity = u_DistantCavity * smoothstep(0.05, 0.5, x) * (1.0 - smoothstep(0.97, 1.0, x)) *
+				(0.3 + 2.0 * pow(f1, 6.0) + 1.0 * pow(f2, 6.0) +
+				 5.0 * exp(-(x - 0.95) * (x - 0.95) / 0.0006));
 	}
 	/* Clumped the same way as the shell, from a noise of its own: the ionised gas glows in
 	 * patches, so it does not lay a veil over every gap in the shell. */

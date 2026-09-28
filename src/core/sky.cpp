@@ -13,6 +13,10 @@ namespace {
 // as behind the main nebula rather than laid over it -- dimmer and warmer the
 // further through the disc it lies.
 void veilDistant(Scene& scene, const Galaxy& galaxy, const Sky& sky) {
+  // Not the distant shells: look 1 is as it was until the shell retires.
+  if (sky.look.distantForm == 0) {
+    return;
+  }
   for (int i = 1; i < scene.bubbleCount; i++) {
     Bubble& b = scene.bubble[i];
     float d = std::sqrt(b.center[0] * b.center[0] + b.center[1] * b.center[1] +
