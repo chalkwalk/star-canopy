@@ -15,19 +15,21 @@
 *(2026-09-27)*
 
 The model is here and renders from project files to OpenEXR, KTX2 and PNG,
-oriented as a scene needs (`docs/COMPLETED.md`). CI waits for a remote to run on.
-Next is the parameter triage and sensitivity study the macros depend on. Order:
+oriented as a scene needs (`docs/COMPLETED.md`); the parameters are triaged and
+studied, and twelve macros steer it, every name confirmed blind
+(`docs/studies/`). CI waits for a remote to run on. Order from here:
 
-1. **Kick-start** -- the build, the licence, the third-party list.
-2. ~~**The lift**~~ -- done; `docs/COMPLETED.md`.
-3. ~~**Headless core and command line**~~ -- done; `docs/COMPLETED.md`.
-4. **Parameter triage and sensitivity study**, which the macros depend on.
-5. **The galaxy from any star** -- the vantage atlas first, then dust and a
-   band made of stars; its observer position feeds the macros.
-6. **In context** -- headless stills first, then a minimal window and
-   look-around to show them in, pulled ahead of the rest of the interface.
-7. **Macros.**
-8. **The preview ladder and the rest of the interface.**
+1. ~~**Kick-start**, **the lift**, **headless core and command line**~~ -- done.
+2. ~~**Parameter triage and sensitivity study**; **macros**~~ -- done but for
+   their ranges and styles (*Macros*).
+3. **Retire the shell**, all of it, with the distant nebulae remade as masses in
+   the same look version (*The shell's retirement, and bubbles*). Bubbles wait.
+4. **The galaxy from any star** -- the vantage atlas first, then dust and a band
+   made of stars; the galactic macro and the external galaxies come back with it.
+5. **In context** -- headless stills first, then a minimal window and
+   look-around to show them in.
+6. **The preview ladder** -- a resolution-stable light volume first -- **and the
+   rest of the interface.**
 
 ---
 
@@ -93,15 +95,17 @@ testable without a window and give the A/B tools in-context sheets at once.
 
 ### Macros
 
-- [x] Triage the ~100 lab parameters: 56 look, 25 retiring with the shell, 5 off by
-      a decision, 3 debug, 7 quality, 3 with no visible effect
+- [x] Triage the ~100 lab parameters: 58 look, 25 retiring with the shell, 5 off by
+      a decision, 3 debug, 7 quality, 1 with no visible effect
       (`docs/studies/parameters.md`)
 - [x] Sensitivity study: each dial alone over four seeds, the fine ones again at
       512 a face, and Morris's effects for what matters only together and what
       adds up (`docs/studies/parameters.md`; `tools/study`)
-- [ ] Look by eye at the three dials the study saw change nothing -- the
-      clusters' own stars (`young`, `cluster-stars`) and `external-galaxies` --
-      before keeping or removing them
+- [x] Look by eye at the three dials the study saw change nothing: all three
+      implemented. The cluster's own stars and its young stars are points round
+      it, invisible to whole-sky measures; the study now has a local one, and
+      they are look dials. The external galaxies are smudges a star across, for
+      the galaxy work (*Points* in `docs/studies/parameters.md`)
 - [x] Macro table (`DESIGN.md` §5) and its resolution, with tests: `[macros]` in
       projects, `render --macro`, `starcanopy macros`
 - [ ] First macro set, iterated with blind scoring (`docs/studies/macros.md`):
@@ -200,6 +204,10 @@ from it goes in `SOURCES.md`.
       strictly, so most seeds sit in the band and few far out. Today the seed
       picks only the angle, and radius and height are raw dials. Raw material
       for a macro (*Macros*)
+- [ ] The external galaxies: implemented, but smudges a star across that change
+      no patch of sky by more than two levels (`docs/studies/parameters.md`,
+      *Points*). Make them worth seeing -- resolved discs, a few degrees for the
+      nearest -- or drop them
 - [ ] A galactic / remote macro, once the band is made of stars. The first one
       -- nearer the centre, more glow -- lost its name 0-3 blind: the glow read
       as a brown haze over the stars, and the remote end, black sky and sharp
@@ -225,10 +233,12 @@ something new, earning its place blind like anything else.
 - [ ] Retire the shell style: `form`, the 25 shell-only dials (the parameter
       study's *shell style (retiring)*), the capsule pillars and clouds, lane dust;
       the march's stride, which `thickness` sets for the mass too, given a dial
-      of its own; a new look version if any default sky's pixels move
+      of its own. The distant nebulae are shells, so they go too, and must be
+      replaced in the same step, not left out
 - [ ] Distant nebulae as masses: the form chosen per bubble, not only for the
       main one, so a distant nebula is a lumpy glowing cloud seen from outside.
-      Blind against today's distant shells
+      With the retirement, look 2 -- the mass's own pixels move only where a
+      distant nebula shows -- blind against look 1
 - [ ] Bubbles, as their own object: a supernova remnant or wind-blown bubble --
       thin, transparent, limb-brightened, its wrinkles seen edge on as
       filaments. The shell's geometry is right for it and its light is not: a
