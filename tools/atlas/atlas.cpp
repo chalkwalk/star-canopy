@@ -3,7 +3,8 @@
 // several seeds -- to see what the model makes from each, and where it breaks,
 // and then as the bench every step of the galaxy work is judged on.
 //
-//   atlas --out DIR [--size N] [--seeds 1,7,12] [--vantages a,b] [--context K]
+//   atlas --out DIR [--size N] [--seeds 1,7,12] [--vantages a,b] [--set NAME=VALUE]...
+//         [--context K]
 //
 // One sheet a vantage and seed, DIR/VANTAGE-seedN.png: the whole sky above, in
 // the Equal Earth projection and galactic coordinates -- the galaxy's centre in the middle, its plane across,
@@ -110,7 +111,7 @@ int main(int argc, char** argv) {
   std::string outDir, error;
   int size = 1024;
   std::vector<uint32_t> seeds = {1, 7, 12};
-  std::vector<std::string> names;
+  std::vector<std::string> names, sets;
   ContextKind kind = ContextKind::Auto;
   for (int i = 1; i + 1 < argc; i += 2) {
     std::string arg = argv[i], v = argv[i + 1];
@@ -125,6 +126,8 @@ int main(int argc, char** argv) {
       }
     } else if (arg == "--vantages") {
       names = split(v);
+    } else if (arg == "--set") {
+      sets.push_back(v);
     } else if (arg == "--context") {
       if (!parseContextKind(v, kind)) {
         std::fprintf(stderr, "atlas: unknown context %s\n", v.c_str());
@@ -175,6 +178,16 @@ int main(int argc, char** argv) {
       s.nebula = 0;
       s.galaxyRadius = v->radius;
       s.galaxyHeight = v->height;
+      // Raw dials over every sheet's, for trying a step before it is made.
+      for (const std::string& assignment : sets) {
+        size_t eq = assignment.find('=');
+        if (eq == std::string::npos ||
+            !setDial(s, assignment.substr(0, eq), assignment.substr(eq + 1), error)) {
+          std::fprintf(stderr, "atlas: %s\n", eq == std::string::npos ? "--set wants NAME=VALUE"
+                                                                        : error.c_str());
+          return 2;
+        }
+      }
       CubemapTarget target(size);
       bakeSky(baker, s, target);
       Sky sky = buildSky(s);
