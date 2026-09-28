@@ -3,7 +3,8 @@
 // number or a whole-sky map.
 //
 //   blind --out DIR [--size N] [--seeds 3,7,12] [--macros a,b] [--value V]
-//         [--around] [--three] [--context K]
+//         [--around] [--three] [--toward distant] [--context K]
+//   blind --out DIR --dial NAME=A,B [--dial NAME=A,B]... [options as above]
 //
 // For each macro and seed, the sky at -V and at +V (default 1), each seen
 // twice at 75 degrees across, 16:9: toward the key light, and turned 150
@@ -11,7 +12,13 @@
 // the horizon from the key light: for what shows only as one looks around,
 // such as the size of the forms. With --three, each sheet is three skies, at
 // -V, 0 and +V in an order drawn at random, labelled A, B, C from the left, to
-// be put in order: the macro's two ends seen against the seed's own sky. One sheet a pair, the two skies side by side, which side is
+// be put in order: the macro's two ends seen against the seed's own sky.
+//
+// With --dial, each pair is two settings of raw dials instead of a macro's
+// ends -- the first value of every --dial against the second -- and the
+// scorer only says which they would rather have: for judging a change to the
+// look, not a name. --toward distant turns the views to the two distant nebulae
+// the main one hides least, for judging those. One sheet a pair, the two skies side by side, which side is
 // which drawn at random; the pairs shuffled. The key goes to DIR/key.csv, to be
 // opened only when the scores are in; DIR/scores.md is the sheet to score on.
 //
@@ -23,11 +30,13 @@
 #include "gl_context.h"
 #include "macros.h"
 #include "sample.h"
+#include "scene.h"
 #include "settings.h"
 #include "sky.h"
 #include "writers.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -115,21 +124,85 @@ void turned(const float light[3], float degrees, float out[3]) {
   }
 }
 
-// The views of one sky at column x0: toward the key light above, and turned
-// 150 degrees from it below; or, around, two columns of three every 60 degrees
-// from the key light, level.
-void views(const Cubemap& sky, const Settings& s, bool around, Image& sheet, int x0) {
-  float light[3], d[3];
+using Direction = std::array<float, 3>;
+
+// Where a sky is looked at: toward the key light and turned 150 degrees from
+// it; or, around, every 60 degrees from the key light, level.
+std::vector<Direction> directions(const Settings& s, bool around) {
+  float light[3];
   keyLight(s, light);
+  std::vector<Direction> out;
   if (!around) {
-    turned(light, 150.0f, d);
-    view(sky, light, sheet, x0, 0);
-    view(sky, d, sheet, x0, kViewHeight + kGap);
-    return;
+    Direction d;
+    out.push_back({light[0], light[1], light[2]});
+    turned(light, 150.0f, d.data());
+    out.push_back(d);
+    return out;
   }
   for (int k = 0; k < 6; k++) {
-    turned(light, 60.0f * k, d);
-    view(sky, d, sheet, x0 + (k % 2) * (kViewWidth + kGap / 2), (k / 2) * (kViewHeight + kGap / 2));
+    Direction d;
+    turned(light, 60.0f * k, d.data());
+    out.push_back(d);
+  }
+  return out;
+}
+
+// The two distant nebulae the main one hides least: the main nebula baked
+// alone, small, and its transmittance read toward each distant one's centre.
+// Fewer than two, and the rest of the views go 150 degrees round from the
+// first.
+std::vector<Direction> towardDistant(Baker& baker, const Settings& s) {
+  Settings alone = s;
+  alone.distantCount = 0;
+  CubemapTarget target(64);
+  bakeSky(baker, alone, target);
+  auto alpha = target.readTransmittance();
+  Cubemap clear;
+  clear.size = 64;
+  for (int f = 0; f < 6; f++) {
+    for (float a : alpha[f]) {
+      clear.faces[f].insert(clear.faces[f].end(), {a, a, a});
+    }
+  }
+  Scene scene = generateScene(buildSky(s).scene);
+  std::vector<std::pair<float, Direction>> seen;
+  for (int i = 1; i < scene.bubbleCount; i++) {
+    const float* c = scene.bubble[i].center;
+    float t[3];
+    sampleCube(clear, c, t);
+    seen.push_back({t[0], {c[0], c[1], c[2]}});
+  }
+  std::sort(seen.begin(), seen.end(), [](const auto& a, const auto& b) { return a.first > b.first; });
+  for (const auto& e : seen) {
+    std::fprintf(stderr, "\nblind: seed %u, a distant nebula %.0f%% clear of the main one", s.seed,
+                 100.0 * e.first);
+  }
+  std::vector<Direction> out;
+  for (size_t i = 0; i < seen.size() && i < 2; i++) {
+    out.push_back(seen[i].second);
+  }
+  if (out.empty()) {
+    return directions(s, false);
+  }
+  if (out.size() < 2) {
+    Direction d;
+    turned(out[0].data(), 150.0f, d.data());
+    out.push_back(d);
+  }
+  return out;
+}
+
+// The views of one sky at column x0: two, one above the other, or six, in two
+// columns of three.
+void views(const Cubemap& sky, const std::vector<Direction>& dirs, Image& sheet, int x0) {
+  if (dirs.size() == 2) {
+    view(sky, dirs[0].data(), sheet, x0, 0);
+    view(sky, dirs[1].data(), sheet, x0, kViewHeight + kGap);
+    return;
+  }
+  for (size_t k = 0; k < dirs.size(); k++) {
+    view(sky, dirs[k].data(), sheet, x0 + static_cast<int>(k % 2) * (kViewWidth + kGap / 2),
+         static_cast<int>(k / 2) * (kViewHeight + kGap / 2));
   }
 }
 
@@ -142,6 +215,9 @@ int main(int argc, char** argv) {
   bool around = false, three = false;
   std::vector<uint32_t> seeds = {3, 7, 12};
   std::vector<std::string> names;
+  // --dial: each raw dial and its two values, the first variant's and the second's.
+  std::vector<std::pair<std::string, std::vector<std::string>>> dialPairs;
+  bool distant = false;
   ContextKind kind = ContextKind::Auto;
   for (int i = 1; i < argc; i += 2) {
     std::string arg = argv[i];
@@ -168,6 +244,21 @@ int main(int argc, char** argv) {
       }
     } else if (arg == "--macros") {
       names = split(v);
+    } else if (arg == "--dial") {
+      size_t eq = v.find('=');
+      std::vector<std::string> both = eq == std::string::npos ? std::vector<std::string>{}
+                                                              : split(v.substr(eq + 1));
+      if (both.size() != 2) {
+        std::fprintf(stderr, "blind: --dial wants NAME=A,B\n");
+        return 2;
+      }
+      dialPairs.push_back({v.substr(0, eq), both});
+    } else if (arg == "--toward") {
+      if (v != "distant") {
+        std::fprintf(stderr, "blind: --toward takes distant\n");
+        return 2;
+      }
+      distant = true;
     } else if (arg == "--context") {
       if (!parseContextKind(v, kind)) {
         std::fprintf(stderr, "blind: unknown context %s\n", v.c_str());
@@ -178,10 +269,13 @@ int main(int argc, char** argv) {
       return 2;
     }
   }
-  if (outDir.empty() || size < 16 || !(value > 0.0f && value <= 1.0f)) {
+  if (outDir.empty() || size < 16 || !(value > 0.0f && value <= 1.0f) ||
+      (!dialPairs.empty() && three)) {
     std::fprintf(stderr,
                  "usage: blind --out DIR [--size N] [--seeds 3,7,12] [--macros a,b] [--value V]\n"
-                 "             [--around] [--three]\n");
+                 "             [--around] [--three] [--toward distant]\n"
+                 "       blind --out DIR --dial NAME=A,B [--dial NAME=A,B]... [--size N]\n"
+                 "             [--seeds 3,7,12] [--around] [--toward distant]\n");
     return 2;
   }
   if (around) {
@@ -197,6 +291,18 @@ int main(int argc, char** argv) {
   for (int i = 0; i < count; i++) {
     if (names.empty() || std::find(names.begin(), names.end(), all[i].name) != names.end()) {
       list.push_back(&all[i]);
+    }
+  }
+  if (!dialPairs.empty()) {
+    list = {nullptr};  // one pair a seed, of the two variants
+    Settings check;
+    for (const auto& [name, both] : dialPairs) {
+      for (const std::string& v : both) {
+        if (!setDial(check, name, v, error)) {
+          std::fprintf(stderr, "blind: %s\n", error.c_str());
+          return 2;
+        }
+      }
     }
   }
   if (list.empty()) {
@@ -238,10 +344,34 @@ int main(int argc, char** argv) {
     std::fprintf(stderr, "blind: cannot write in %s\n", outDir.c_str());
     return 1;
   }
-  const char* seen = around ? "each seen six times round the horizon from its key light (reading\n"
-                              "across, then down)"
-                            : "each seen toward its key light (top) and turned away from it (bottom)";
-  if (three) {
+  const char* seen = distant ? "each seen toward the two distant nebulae the main one hides least\n"
+                               "(top and bottom)"
+                     : around ? "each seen six times round the horizon from its key light (reading\n"
+                                "across, then down)"
+                              : "each seen toward its key light (top) and turned away from it (bottom)";
+  if (!dialPairs.empty()) {
+    std::fprintf(key.get(), "pair,seed,left,right\n");
+    std::fprintf(scores.get(),
+                 "# Blind pairs\n\n"
+                 "Each sheet is one seed's sky made two ways, left and right, %s, at 75 degrees\n"
+                 "across. Which side is which is drawn at random. Do not open key.csv until every\n"
+                 "line below is filled in.\n\n"
+                 "For each pair: which you would rather have as a sky (L, R or = for no\n"
+                 "preference), and a note on what differs, or if either is a sky nobody would\n"
+                 "want.\n\n"
+                 "| pair | rather have | note |\n"
+                 "|---|---|---|\n",
+                 seen);
+    std::unique_ptr<FILE, int (*)(FILE*)> variants(
+        std::fopen((outDir + "/variants.txt").c_str(), "w"), std::fclose);
+    for (int v = 0; v < 2 && variants; v++) {
+      std::fprintf(variants.get(), "variant %d:", v + 1);
+      for (const auto& [name, both] : dialPairs) {
+        std::fprintf(variants.get(), " %s=%s", name.c_str(), both[v].c_str());
+      }
+      std::fprintf(variants.get(), "\n");
+    }
+  } else if (three) {
     std::fprintf(key.get(), "sheet,macro,seed,A,B,C\n");
     std::fprintf(scores.get(),
                  "# Blind sheets: the macros, three ways\n\n"
@@ -271,7 +401,8 @@ int main(int argc, char** argv) {
   }
   for (size_t i = 0; i < pairs.size(); i++) {
     const Pair& p = pairs[i];
-    std::vector<float> values = {-value, value};
+    // For a macro its values; for --dial the variants' numbers, 0 and 1.
+    std::vector<float> values = p.macro ? std::vector<float>{-value, value} : std::vector<float>{0, 1};
     if (three) {
       values.push_back(0.0f);
     }
@@ -282,13 +413,30 @@ int main(int argc, char** argv) {
     sheet.height = sideHeight;
     // The gaps a mid grey, so no side's dark bleeds into the next.
     sheet.rgb.assign(static_cast<size_t>(sheet.width) * sheet.height * 3, 0.02f);
+    auto variant = [&](float v) {
+      Settings s;
+      s.seed = p.seed;
+      if (p.macro) {
+        return resolveMacros(s, {{p.macro->name, v}});
+      }
+      for (const auto& [name, both] : dialPairs) {
+        setDial(s, name, both[static_cast<int>(v)], error);
+      }
+      return s;
+    };
+    // The same views of every side, from the first variant, or the seed's own
+    // sky: which way to look is not part of what is compared.
+    Settings first = variant(0.0f);
+    std::vector<Direction> dirs = distant ? towardDistant(baker, first) : directions(first, around);
+    if (around && distant) {
+      std::vector<Direction> more = directions(first, true);
+      dirs.insert(dirs.end(), more.begin(), more.begin() + 4);
+    }
     for (int side = 0; side < sides; side++) {
-      Settings base;
-      base.seed = p.seed;
-      Settings s = resolveMacros(base, {{p.macro->name, values[side]}});
+      Settings s = variant(values[side]);
       CubemapTarget target(size);
       bakeSky(baker, s, target);
-      views(target.read(), s, around, sheet, side * (sideWidth + 2 * kGap));
+      views(target.read(), dirs, sheet, side * (sideWidth + 2 * kGap));
     }
     char name[32];
     std::snprintf(name, sizeof(name), three ? "sheet%02zu.png" : "pair%02zu.png", i + 1);
@@ -296,12 +444,18 @@ int main(int argc, char** argv) {
       std::fprintf(stderr, "blind: %s\n", error.c_str());
       return 1;
     }
-    std::fprintf(key.get(), "%zu,%s,%u", i + 1, p.macro->name, p.seed);
+    if (p.macro) {
+      std::fprintf(key.get(), "%zu,%s,%u", i + 1, p.macro->name, p.seed);
+    } else {
+      std::fprintf(key.get(), "%zu,%u", i + 1, p.seed);
+    }
     for (float v : values) {
-      std::fprintf(key.get(), ",%g", static_cast<double>(v));
+      std::fprintf(key.get(), ",%g", static_cast<double>(p.macro ? v : v + 1.0f));
     }
     std::fprintf(key.get(), "\n");
-    if (three) {
+    if (!p.macro) {
+      std::fprintf(scores.get(), "| %zu | | |\n", i + 1);
+    } else if (three) {
       std::fprintf(scores.get(), "| %zu | least to most %s? | | | |\n", i + 1, p.macro->name);
     } else {
       std::fprintf(scores.get(), "| %zu | which is more %s? | | | |\n", i + 1, p.macro->name);
