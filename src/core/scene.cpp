@@ -464,10 +464,11 @@ Scene generateScene(const SceneParams& p) {
       }
       for (int c = 0; c < count; c++) {
         float* pos = b.cluster[c].pos;
-        // As bright at the nebula's heart as from where it was: light falls
-        // with the square of distance.
+        // Brighter for being further: by the distance, not its square, which
+        // keeps its heart lit as from within but made them too bright beside
+        // the main nebula (distant, blind, round 4).
         float was = fmaxf(sqrtf(dot3(pos, pos)), 0.2f);
-        b.cluster[c].luminosity *= (1.4f * 1.4f) / (was * was);
+        b.cluster[c].luminosity *= 1.4f / was;
         float along = dot3(pos, view);
         for (int k = 0; k < 3; k++) {
           pos[k] -= 0.8f * along * view[k];
