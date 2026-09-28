@@ -60,12 +60,13 @@ const Binding kDetailed[] = {
 // than round them; and only a little larger, since large deep lumps pull the
 // mass apart into clumps in clear sky, a second open.
 const Binding kBillowing[] = {
-  {"mass-billow", A, 0.8f, -0.6f},
-  {"filament", A, -0.45f, 0.45f},
-  {"mass-scale", O, -0.2f, 0.3f},
-  {"erosion", A, -0.3f, 0.25f},
-  {"hardness", A, 0.2f, 0.0f},
-  {"mass-warp", A, 0.0f, 0.3f},
+  {"mass-billow", A, 1.3f, -0.8f},
+  {"filament", A, -0.5f, 0.5f},
+  {"mass-scale", O, -0.25f, 0.4f},
+  {"erosion", A, -0.35f, 0.3f},
+  {"hardness", A, 0.3f, -0.1f},
+  {"mass-warp", A, -0.1f, 0.4f},
+  {"detail-gain", A, 0.0f, 0.1f},
 };
 
 // Hard edges and hard shadows: crisp detail, small clusters, a sharp fill,
