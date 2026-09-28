@@ -126,6 +126,51 @@ Image cross(const Cubemap& c) {
   return image;
 }
 
+Image perspective(const Cubemap& c, const float forwardIn[3], const float upIn[3], float fovDegrees,
+                  int width, int height) {
+  auto normalise = [](float v[3]) {
+    float n = std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    for (int i = 0; i < 3; i++) {
+      v[i] /= n;
+    }
+  };
+  auto cross3 = [](const float a[3], const float b[3], float out[3]) {
+    out[0] = a[1] * b[2] - a[2] * b[1];
+    out[1] = a[2] * b[0] - a[0] * b[2];
+    out[2] = a[0] * b[1] - a[1] * b[0];
+  };
+  float forward[3] = {forwardIn[0], forwardIn[1], forwardIn[2]};
+  float up[3] = {upIn[0], upIn[1], upIn[2]}, right[3];
+  normalise(forward);
+  normalise(up);
+  if (std::fabs(forward[0] * up[0] + forward[1] * up[1] + forward[2] * up[2]) > 0.95f) {
+    bool alongY = std::fabs(forward[1]) > 0.95f;
+    up[0] = 0.0f;
+    up[1] = alongY ? 0.0f : 1.0f;
+    up[2] = alongY ? 1.0f : 0.0f;
+  }
+  cross3(forward, up, right);
+  normalise(right);
+  cross3(right, forward, up);
+  float half = std::tan(fovDegrees * 0.5f * 3.14159265f / 180.0f);
+  Image out;
+  out.width = width;
+  out.height = height;
+  out.rgb.resize(static_cast<size_t>(width) * height * 3);
+  for (int y = 0; y < height; y++) {
+    for (int x = 0; x < width; x++) {
+      float sx = ((x + 0.5f) / width * 2.0f - 1.0f) * half;
+      float sy = (1.0f - (y + 0.5f) / height * 2.0f) * half * height / width;
+      float d[3];
+      for (int i = 0; i < 3; i++) {
+        d[i] = forward[i] + sx * right[i] + sy * up[i];
+      }
+      sampleCube(c, d, &out.rgb[3 * (static_cast<size_t>(y) * width + x)]);
+    }
+  }
+  return out;
+}
+
 Cubemap rotate(const Cubemap& c, const float r[9]) {
   if (isIdentity(r)) {
     return c;

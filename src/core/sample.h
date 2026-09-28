@@ -42,6 +42,13 @@ Image equirect(const Cubemap& c, int width);
 // each face as it is written alone. The empty cells are black.
 Image cross(const Cubemap& c);
 
+// A pinhole view of the sky, as a camera in a game sees it: width by height,
+// fovDegrees across, looking along forward with up toward the top of the
+// frame (up is made square to forward; if it is along forward, the view's up
+// is whichever of +y and +z is not).
+Image perspective(const Cubemap& c, const float forward[3], const float up[3], float fovDegrees,
+                  int width, int height);
+
 // The sky turned by the rotation r (row major, orthonormal): the result along
 // direction d is the sky along r^T d, so what lay along v now lies along r v.
 // The identity copies the cubemap exactly, texel for texel; anything else is

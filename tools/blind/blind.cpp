@@ -70,47 +70,11 @@ std::vector<std::string> split(const std::string& list) {
   return out;
 }
 
-void normalise(float v[3]) {
-  float n = std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-  for (int i = 0; i < 3; i++) {
-    v[i] /= n;
-  }
-}
-
-void crossProduct(const float a[3], const float b[3], float out[3]) {
-  out[0] = a[1] * b[2] - a[2] * b[1];
-  out[1] = a[2] * b[0] - a[0] * b[2];
-  out[2] = a[0] * b[1] - a[1] * b[0];
-}
-
-// A pinhole view of the sky along `forward`, level with the sky's +y, drawn
-// into `sheet` at (x0, y0).
-void view(const Cubemap& sky, const float forwardIn[3], Image& sheet, int x0, int y0) {
-  float forward[3] = {forwardIn[0], forwardIn[1], forwardIn[2]}, up[3] = {0, 1, 0}, right[3];
-  normalise(forward);
-  if (std::fabs(forward[1]) > 0.95f) {
-    up[1] = 0.0f;
-    up[2] = 1.0f;
-  }
-  crossProduct(forward, up, right);
-  normalise(right);
-  crossProduct(right, forward, up);
-  float half = std::tan(kFovDegrees * 0.5f * 3.14159265f / 180.0f);
-  for (int y = 0; y < kViewHeight; y++) {
-    for (int x = 0; x < kViewWidth; x++) {
-      float sx = ((x + 0.5f) / kViewWidth * 2.0f - 1.0f) * half;
-      float sy = (1.0f - (y + 0.5f) / kViewHeight * 2.0f) * half * kViewHeight / kViewWidth;
-      float d[3], c[3];
-      for (int i = 0; i < 3; i++) {
-        d[i] = forward[i] + sx * right[i] + sy * up[i];
-      }
-      sampleCube(sky, d, c);
-      float* p = &sheet.rgb[3 * ((y0 + y) * sheet.width + x0 + x)];
-      p[0] = c[0];
-      p[1] = c[1];
-      p[2] = c[2];
-    }
-  }
+// A view of the sky along forward, level with the sky's +y, at 75 degrees
+// across, drawn into sheet at (x0, y0).
+void view(const Cubemap& sky, const float forward[3], Image& sheet, int x0, int y0) {
+  static const float up[3] = {0.0f, 1.0f, 0.0f};
+  paste(sheet, perspective(sky, forward, up, kFovDegrees, kViewWidth, kViewHeight), x0, y0);
 }
 
 // The key light turned `degrees` about +y, level; +z if it is overhead.

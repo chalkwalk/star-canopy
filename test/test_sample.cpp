@@ -158,5 +158,29 @@ int main() {
   }
   std::printf("worst rotation error %.4f\n", moved);
   CHECK(moved < 2.0f * texel);
+  // A pinhole view: its centre looks along forward, its left and right edges
+  // half its field of view either side, and up is up.
+  {
+    const float forward[3] = {1.0f, 0.2f, -0.3f}, up[3] = {0.0f, 1.0f, 0.0f};
+    const int w = 65, h = 33;
+    Image v = perspective(sky, forward, up, 60.0f, w, h);
+    CHECK(v.width == w && v.height == h);
+    auto look = [&](int x, int y, float d[3]) {
+      for (int k = 0; k < 3; k++) {
+        d[k] = v.rgb[3 * (static_cast<size_t>(y) * w + x) + k] - 2.0f;
+      }
+    };
+    float f[3] = {forward[0], forward[1], forward[2]}, c[3], l[3], r[3], t[3];
+    normalize(f);
+    look(w / 2, h / 2, c);
+    CHECK(distance(c, f) < 2.0f * texel);
+    look(0, h / 2, l);
+    look(w - 1, h / 2, r);
+    float edge = std::acos(l[0] * r[0] + l[1] * r[1] + l[2] * r[2]) * 180.0f / 3.14159265f;
+    CHECK(std::fabs(edge - 60.0f * (w - 1) / w) < 2.0f);
+    look(w / 2, 0, t);
+    CHECK(t[1] > c[1]);
+  }
+
   return test::finish();
 }
