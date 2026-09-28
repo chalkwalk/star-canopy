@@ -107,6 +107,22 @@ Galaxy generateGalaxy(uint32_t seed, const GalaxyParams& p) {
   return g;
 }
 
+// The galaxy's dust between the observer and a point offset from it, kpc.
+float dustDepth(const Galaxy& g, const float offset[3]) {
+  const int steps = 16;
+  float p[3];
+  float len = sqrtf(offset[0] * offset[0] + offset[1] * offset[1] + offset[2] * offset[2]);
+  float tau = 0.0f;
+  for (int i = 0; i < steps; i++) {
+    float t = (static_cast<float>(i) + 0.5f) / static_cast<float>(steps);
+    for (int k = 0; k < 3; k++) {
+      p[k] = g.observer[k] + offset[k] * t;
+    }
+    tau += galaxyDensity(g, p).dust;
+  }
+  return tau * len / static_cast<float>(steps);
+}
+
 void galaxyToFrame(const Galaxy& g, const float sky[3], float out[3]) {
   for (int i = 0; i < 3; i++) {
     out[i] = g.rot[i * 3 + 0] * sky[0] + g.rot[i * 3 + 1] * sky[1] + g.rot[i * 3 + 2] * sky[2];

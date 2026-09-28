@@ -106,6 +106,10 @@ struct Bubble {
   float squeeze[3];
   float edge;
   float density;  // multiplies the gas, so a thicker shell keeps its column
+  // What of its light reaches the viewer through the dust in front of it, per
+  // channel: 1 for the main bubble, less and redder for one far off behind
+  // the galaxy's dust. Set once the galaxy is known (sky.cpp); 1 until then.
+  float veil[3];
   Cluster cluster[kMaxClusters];
   int firstPillar, pillarCount;  // a range of the scene's pillars
 };

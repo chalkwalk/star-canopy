@@ -253,6 +253,9 @@ void main()
 		vec3 origin = rot * (-u_BubbleSphere[b].xyz / radius);
 		vec3 d = rot * dir;
 		float thick = u_BubbleShape[b].x;
+		/* The dust in front of the bubble, on its light alone: what lies behind it has its
+		 * own (the galaxy's glow is dimmed by the galaxy's dust already). */
+		vec3 veil = u_BubbleVeil[b];
 		float ds_fine = thick * u_StepFrac;
 		float s_end = leave[k] / radius;
 		float s = enter[k] / radius + ds_fine * jitter;
@@ -493,7 +496,7 @@ void main()
 				 * cannot emit more than it could ever let out. */
 				sigma_t = rho * u_Sigma * (1.0 + u_DustOpacity * g.dust) * u_Reddening;
 				att = exp(-sigma_t * ds);
-				glow += transmit * src * (vec3(1.0) - att) / max(sigma_t, vec3(1e-6));
+				glow += transmit * veil * src * (vec3(1.0) - att) / max(sigma_t, vec3(1e-6));
 				/* The share of this step's extinction that is dust's, times what
 				 * of the light behind it the step took out and the eye would
 				 * otherwise have seen.  Summed, it is the part of the view this ray

@@ -343,6 +343,7 @@ void shapeBubble(Random& rng, Bubble& b, const SceneParams& p) {
   b.squeeze[0] = b.squeeze[1] = b.squeeze[2] = 1.0f;
   b.edge = 1.0f;
   b.density = 1.0f;
+  b.veil[0] = b.veil[1] = b.veil[2] = 1.0f;
 }
 
 // A distant bubble's form. Real nebulae seen from outside are lobes, arcs and

@@ -83,4 +83,9 @@ GalaxySample galaxyDensity(const Galaxy& g, const float p[3]);
 // A sky direction into the galaxy frame.
 void galaxyToFrame(const Galaxy& g, const float sky[3], float out[3]);
 
+// The optical depth of the galaxy's dust between the observer and a point
+// offset from it, kpc in the galaxy frame: what dims and reddens the stars, and
+// what lies in front of a distant nebula.
+float dustDepth(const Galaxy& g, const float offset[3]);
+
 }  // namespace starcanopy

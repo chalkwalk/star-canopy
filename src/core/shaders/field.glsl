@@ -77,6 +77,7 @@ uniform float u_MassEdgePatch;	/* 0 hard all over, 1 only in patches */
  * u_OuterSharpness.  See struct Bubble. */
 uniform vec4 u_BubbleForm[NSKY_MAX_BUBBLES];
 uniform float u_BubbleDensity[NSKY_MAX_BUBBLES];	/* multiplies each bubble's gas */
+uniform vec3 u_BubbleVeil[NSKY_MAX_BUBBLES];	/* what of its light passes the dust in front */
 uniform float u_DetailScale;	/* the coarsest detail octave, cycles per bubble radius */
 uniform float u_DetailGain;	/* amplitude kept per octave */
 uniform float u_Erosion;	/* how far detail eats into the shell, 0..1 */
@@ -345,7 +346,7 @@ nsky_gas nsky_coarse(int b, vec3 p)
 			h *= mix(1.0, smoothstep(-0.12, 0.12, nsky_noise(g.q * 0.9 + o * 0.53).z),
 				u_MassEdgePatch);
 		dens = smoothstep(mix(-0.02, 0.03, h), mix(0.1, 0.05, h), r - rin + 0.12 * billow) *
-			(1.0 - smoothstep(b == 0 ? 0.92 : 0.55, 1.05, r - 0.06 * billow));
+			(1.0 - smoothstep(0.92, 1.05, r - 0.06 * billow));
 		dens *= smoothstep(mix(-0.2, 0.06, h), mix(0.4, 0.14, h), billow + 0.2);
 		/* A hard surface is thinner than the march's stride, and whether a texel's step
 		 * lands on it or over it is its jitter's say -- grain along every crisp edge.  So
@@ -448,8 +449,23 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	g.cavity = u_CavityDensity * smoothstep(0.35, 0.95, r) * (1.0 - smoothstep(0.95, 1.1, r));
 	/* A mass's cavity is inside its inner surface, lobes and all. */
 	if (nsky_mass(b))
-		g.cavity = (b == 0 ? u_CavityDensity : u_DistantCavity) * smoothstep(0.1, 0.6, r / rin) *
+		g.cavity = u_CavityDensity * smoothstep(0.1, 0.6, r / rin) *
 				(1.0 - smoothstep(0.9, 1.05, r / rin));
+	/* A distant mass is seen by its ionised heart: the glowing gas filling it to the mass's
+	 * lumpy inner surface, where the glow ends -- an edge, not a fade, or it reads as a piece
+	 * cut from a larger nebula -- and a layer brighter just inside it, the ionisation front,
+	 * which seen edge on rims the whole.  The thin mass round it lies across the glow in
+	 * lanes. */
+	if (b > 0 && nsky_mass(b)) {
+		/* And lobed: its outline pushed in and out by a low noise of direction, a third
+		 * either way, so it is an irregular cloud and not a moon.  Of direction, since it is
+		 * only ever seen from outside, where the prisms that makes are never seen along. */
+		vec3 lo = normalize(g.q) * 1.4 + o * 0.61;
+		float x = r / (rin * (1.0 + 0.35 * (nsky_noise(lo).x + 0.5 * nsky_noise(lo * 2.3).y)));
+
+		g.cavity = u_DistantCavity * smoothstep(0.05, 0.5, x) * (1.0 - smoothstep(0.96, 1.0, x)) *
+				(1.0 + 3.0 * exp(-(x - 0.93) * (x - 0.93) / 0.0016));
+	}
 	/* Clumped the same way as the shell, from a noise of its own: the ionised gas glows in
 	 * patches, so it does not lay a veil over every gap in the shell. */
 	g.cavity *= exp(u_Contrast * 2.5 * contrast_noise) / exp(0.03 * u_Contrast * u_Contrast * 6.25);

@@ -102,6 +102,8 @@ const Dial kDials[] = {
   GEO0("distant-cavity", "a distant mass's cavity glow, seen through its walls; 0 none",
        distantCavity, 0.0005f, 0.5f),
   REAL("distant-blister", "how far a distant mass is blown open, 0..1", distantBlister, 0.0f, 1.0f),
+  GEO0("distant-dust", "the galaxy's dust in front of the distant nebulae, dimming and reddening "
+       "them; 0 none", distantDust, 0.1f, 20.0f),
   REAL("mass-inner", "the mass's inner surface, in bubble radii", massInner, 0.1f, 0.95f),
   REAL("mass-lobes", "how far the mass's lobes reach in over the cavity", massLobes, 0.0f, 0.8f),
   GEO("mass-scale", "the mass's billows, cycles per bubble radius", massScale, 0.5f, 20.0f),
@@ -317,6 +319,7 @@ std::string dialValue(const Settings& s, const Dial& d) {
 
 Sky buildSky(const Settings& s) {
   Sky sky{};
+  sky.distantDust = s.distantDust;
   SceneParams& p = sky.scene;
   p.seed = s.seed;
   p.viewerOffset = s.viewerOffset;

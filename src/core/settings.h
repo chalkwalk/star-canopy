@@ -54,7 +54,8 @@ struct Settings {
   int distantForm = 0;  // shell
   float distantDensity = 1.0f;
   float distantCavity = 0.0f;
-  float distantBlister = 0.3f;
+  float distantBlister = 0.45f;
+  float distantDust = 1.0f;
   float massInner = 0.75f;
   float massLobes = 0.4f;
   float massScale = 1.5f;
@@ -172,6 +173,7 @@ std::string dialValue(const Settings& s, const Dial& d);
 // What one bake needs, made from the dials.
 struct Sky {
   SceneParams scene;
+  float distantDust;  // scales the dust in front of the distant nebulae
   Look look;
   GalaxyParams galaxy;
   StarParams stars;

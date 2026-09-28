@@ -177,7 +177,7 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
   float sphere[kMaxBubbles][4] = {}, shape[kMaxBubbles][4] = {};
   float cluster[kAllClusters][4] = {}, rot[kMaxBubbles][9] = {};
   float axis[kMaxBubbles][3] = {}, form[kMaxBubbles][4] = {};
-  float density[kMaxBubbles] = {};
+  float density[kMaxBubbles] = {}, veil[kMaxBubbles][3] = {};
   for (int i = 0; i < s.bubbleCount; i++) {
     const Bubble& b = s.bubble[i];
     std::memcpy(sphere[i], b.center, sizeof(b.center));
@@ -200,6 +200,7 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
     std::memcpy(form[i], b.squeeze, sizeof(b.squeeze));
     form[i][3] = b.edge;
     density[i] = b.density;
+    std::memcpy(veil[i], b.veil, sizeof(b.veil));
     std::memcpy(rot[i], b.rot, sizeof(b.rot));
   }
   float base[kMaxPillars][4] = {}, tip[kMaxPillars][4] = {}, range[kMaxBubbles][2] = {};
@@ -231,6 +232,7 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
   glUniform1f(p.uniform("u_Blister"), look.blister);
   glUniform4fv(p.uniform("u_BubbleForm"), kMaxBubbles, &form[0][0]);
   glUniform1fv(p.uniform("u_BubbleDensity"), kMaxBubbles, density);
+  glUniform3fv(p.uniform("u_BubbleVeil"), kMaxBubbles, &veil[0][0]);
   glUniform1i(p.uniform("u_Form"), look.form);
   glUniform1i(p.uniform("u_DistantForm"), look.distantForm);
   glUniform1f(p.uniform("u_DistantDensity"), look.distantDensity);
