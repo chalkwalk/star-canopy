@@ -52,10 +52,20 @@ const Binding kDetailed[] = {
   {"graze", A, 1.0f, -1.5f},
 };
 
-// Billowed rather than ridged, in broad billows; wispy is filaments.
+// Deep rounded lumps with firm edges, like cumulus; wispy is the
+// lumps flattened and their edges eaten into ridged, swirled strands. The
+// lumps' depth is the macro's own dial (mass-billow): without it, billowing
+// could only trade billowed detail for ridged, which the scorer could barely
+// see in two rounds. Not more fine lumps, which crumple the billows rather
+// than round them; and only a little larger, since large deep lumps pull the
+// mass apart into clumps in clear sky, a second open.
 const Binding kBillowing[] = {
+  {"mass-billow", A, 0.8f, -0.6f},
   {"filament", A, -0.45f, 0.45f},
-  {"mass-scale", O, -0.3f, 0.3f},
+  {"mass-scale", O, -0.2f, 0.3f},
+  {"erosion", A, -0.3f, 0.25f},
+  {"hardness", A, 0.2f, 0.0f},
+  {"mass-warp", A, 0.0f, 0.3f},
 };
 
 // Hard edges and hard shadows: crisp detail, small clusters, a sharp fill,
@@ -107,22 +117,16 @@ const Binding kStarry[] = {
 };
 
 
-// Buckled, swirled and blown out; calm is smooth and whole.
-const Binding kViolent[] = {
+// Buckled, swirled and blown out; calm is smooth and whole. Named violent in
+// its first two rounds, and picked by name every time, but the scorer could
+// not say what violent meant; turbulent says it.
+const Binding kTurbulent[] = {
   {"fold", A, 0.15f, -0.15f},
   {"mass-warp", A, 0.25f, -0.2f},
   {"mass-blister", A, 0.25f, -0.25f},
   {"fold-scale", O, 0.7f, -0.7f},
 };
 
-// Structure in few large forms; busy is many small ones. Not the mass's own
-// scale, whose largest effect is how much sky it leaves clear: with it, grand
-// was a second open.
-const Binding kGrand[] = {
-  {"fold-scale", O, -0.8f, 0.8f},
-  {"hole-scale", O, -1.0f, 1.0f},
-  {"detail-scale", O, -0.7f, 0.7f},
-};
 
 #define MACRO(name, opposite, help, b) Macro{name, opposite, help, b, static_cast<int>(std::size(b))}
 
@@ -133,8 +137,7 @@ const Macro kMacros[] = {
   MACRO("detailed", "smooth", "fine structure in the gas", kDetailed),
   MACRO("billowing", "wispy", "rounded billows, or ridged filaments", kBillowing),
   MACRO("crisp", "soft", "hard edges and hard shadows", kCrisp),
-  MACRO("grand", "busy", "few large forms, or many small ones", kGrand),
-  MACRO("violent", "calm", "gas buckled, swirled and blown out", kViolent),
+  MACRO("turbulent", "calm", "gas buckled, swirled and blown out", kTurbulent),
   MACRO("luminous", "brooding", "light from within the nebula", kLuminous),
   MACRO("bright", "dim", "the whole sky, as an exposure", kBright),
   MACRO("hazy", "clear", "a glow over the sky, the dark between not black", kHazy),

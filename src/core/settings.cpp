@@ -104,6 +104,8 @@ const Dial kDials[] = {
   GEO0("mass-cavity", "a mass's cavity glow: gas in front of all of it, lifting its darks; 0 none",
        massCavity, 0.0005f, 0.5f),
   REAL("mass-fine", "fine lumps carved into a mass's surface; 0 none", massFine, 0.0f, 3.0f),
+  OWNED("mass-billow", "how deep a mass's lumps are; 0 a smooth surface", massBillow, 0.0f, 3.0f,
+        "billowing"),
   REAL("mass-edge", "how hard a mass's surface is: 0 soft fades, 1 crisp edges", massEdge, 0.0f,
        1.0f),
   REAL("mass-edge-patch",
@@ -353,6 +355,7 @@ Sky buildSky(const Settings& s) {
   l.massDensity = s.massDensity;
   l.massWarp = s.massWarp;
   l.massFine = s.massFine;
+  l.massBillow = s.massBillow;
   l.massEdge = s.massEdge;
   l.massEdgePatch = s.massEdgePatch;
   l.graze = s.graze;

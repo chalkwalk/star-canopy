@@ -4,7 +4,7 @@
 `macros.py` makes the tables below; `tools/blind` makes the blind pairs. Data:
 `docs/studies/data/macros_mass.csv`.*
 
-The first macro set: thirteen controls (fourteen in its first round), each from -1 to 1 between two words for
+The first macro set: twelve controls (fourteen in its first round), each from -1 to 1 between two words for
 the sky, made of the look dials the parameter study found
 (`docs/studies/parameters.md`). What each binds, and how far, is in
 `src/core/macros.cpp` and printed by `starcanopy macros` -- the one definition
@@ -23,10 +23,9 @@ are scored the set is a proposal.
 | dense | tenuous | dense | the gas's density, and the mass's |
 | fragmented | whole | fragmented | column-density contrast, erosion, the holes' size and share |
 | detailed | smooth | detailed | the detail octaves' gain and start, the mass's fine lumps and their grazing shadows |
-| billowing | wispy | billowing | billowed against ridged detail, and a little of the mass's scale |
+| billowing | wispy | billowing | how deep the mass's lumps are (`mass-billow`, its own), billowed against ridged detail, the edges eroded and swirled or firm |
 | crisp | soft | crisp | edge hardness, the clusters' size, the fill's shadows, the ionising opacity |
-| grand | busy | grand | the scale of the mass's folds, holes and detail |
-| violent | calm | violent | fold, swirl, and how far the far side is blown out |
+| turbulent | calm | turbulent | fold, swirl, and how far the far side is blown out |
 | luminous | brooding | luminous | the clusters' output, the cavity's glow, the fill |
 | bright | dim | bright | exposure, with the stars and the galaxy |
 | hazy | clear | hazy | the haze, and the dust's reflection |
@@ -63,10 +62,9 @@ reach in display levels, the share of the sky visibly changed, and the seven
 descriptors, none of them checked against blind scores).
 
 A macro's **promise** is the descriptor its name speaks of, where one does: open
-is clear sky, dense is opaque sky, detailed and crisp are detail, grand is less
-detail, luminous, bright and galactic are brightness, hazy is less contrast,
+is clear sky, dense is opaque sky, detailed and crisp are detail, luminous, bright and galactic are brightness, hazy is less contrast,
 vivid is chroma. **Kept on** counts the seeds on which that descriptor rises (or
-falls) in order through -1, -1/2, 0, 1/2 and 1. Billowing, violent and starry
+falls) in order through -1, -1/2, 0, 1/2 and 1. Billowing, turbulent and starry
 promise nothing these descriptors see: they are for the eye.
 
 ## Tuned by measurement, before the blind pairs
@@ -86,9 +84,9 @@ showed three faults, fixed before the round below:
 
 ## What each macro does
 
-The set as it stands after round 1 (below): galactic withdrawn; vivid, starry,
-luminous, hazy and grand measured again with their new bindings, the others as in
-the tuning above.
+The set as it stands after round 2 (below): galactic and grand withdrawn, violent
+renamed turbulent, billowing remade; vivid, starry, luminous, hazy and billowing
+measured with their current bindings, the others as in the tuning above.
 
 8 seeds. The seeds' own skies: clear 4%-29%, brightness 0.16-0.25.
 
@@ -98,15 +96,14 @@ the tuning above.
 | dense | 8.8 / 6.2 | 73% / 62% | bright-(8/8) contr-(7/8) clear-(8/8) opaque+(8/8) detail+(8/8) top10+(5/8) | opaque+ | 8/8 in order |
 | fragmented | 7.9 / 13.8 | 62% / 79% | bright+(8/8) clear+(8/8) opaque-(8/8) detail+(8/8) top10-(7/8) | clear+ | 6/8 in order |
 | detailed | 8.4 / 7.3 | 70% / 67% | bright-(8/8) contr-(7/8) clear-(8/8) detail+(8/8) top10-(6/8) | detail+ | 8/8 in order |
-| billowing | 11.8 / 11.1 | 76% / 74% | bright-(5/8) contr-(7/8) clear+(4/8) opaque-(3/8) detail-(5/8) | -- | by eye |
 | crisp | 5.5 / 4.4 | 65% / 55% | contr+(8/8) detail+(8/8) top10+(8/8) | detail+ | 8/8 in order |
-| violent | 5.0 / 13.6 | 55% / 77% | bright+(6/8) contr+(6/8) clear+(8/8) opaque-(8/8) detail+(7/8) | -- | by eye |
+| turbulent | 5.0 / 13.6 | 55% / 77% | bright+(6/8) contr+(6/8) clear+(8/8) opaque-(8/8) detail+(7/8) | -- | by eye |
 | bright | 11.4 / 19.1 | 85% / 91% | bright+(8/8) contr+(8/8) chroma+(8/8) detail+(8/8) top10+(8/8) | bright+ | 8/8 in order |
-| grand | 13.0 / 11.0 | 80% / 72% | bright-(8/8) opaque+(5/8) detail-(8/8) top10+(8/8) | detail- | 6/8 in order |
 | luminous | 7.8 / 13.2 | 65% / 75% | bright+(8/8) contr+(8/8) chroma+(8/8) detail+(8/8) | bright+ | 8/8 in order |
 | hazy | 4.4 / 24.6 | 89% / 100% | bright+(8/8) contr-(8/8) chroma+(8/8) detail-(8/8) top10-(8/8) | contr- | 8/8 in order |
 | vivid | 6.5 / 5.3 | 82% / 82% | bright+(5/8) contr-(8/8) chroma+(8/8) detail-(8/8) | chroma+ | 8/8 in order |
 | starry | 0.9 / 2.5 | 9% / 21% | bright+(8/8) contr+(8/8) detail+(8/8) top10+(8/8) | -- | by eye |
+| billowing | 12.7 / 11.2 | 80% / 74% | contr+(7/8) clear+(8/8) opaque-(5/8) detail+(7/8) | -- | by eye |
 
 The skies at the ends, over the seeds (min-median-max):
 
@@ -116,31 +113,26 @@ The skies at the ends, over the seeds (min-median-max):
 | dense | 6%-20%-34% | 3%-14%-25% | 0.19-0.24-0.29 | 0.15-0.17-0.23 |
 | fragmented | 3%-9%-19% | 13%-24%-39% | 0.14-0.18-0.24 | 0.18-0.22-0.26 |
 | detailed | 4%-18%-32% | 3%-14%-25% | 0.17-0.22-0.29 | 0.16-0.20-0.25 |
-| billowing | 5%-14%-23% | 6%-19%-46% | 0.16-0.21-0.25 | 0.17-0.20-0.24 |
 | crisp | 4%-17%-30% | 4%-16%-28% | 0.19-0.20-0.24 | 0.17-0.21-0.25 |
-| violent | 4%-16%-29% | 12%-26%-41% | 0.16-0.20-0.26 | 0.17-0.22-0.24 |
+| turbulent | 4%-16%-29% | 12%-26%-41% | 0.16-0.20-0.26 | 0.17-0.22-0.24 |
 | bright | 4%-16%-29% | 4%-16%-29% | 0.11-0.14-0.19 | 0.24-0.29-0.34 |
-| grand | 5%-15%-24% | 5%-15%-21% | 0.15-0.21-0.25 | 0.15-0.18-0.25 |
 | luminous | 4%-16%-29% | 4%-16%-28% | 0.13-0.16-0.21 | 0.22-0.27-0.32 |
 | hazy | 4%-16%-29% | 4%-16%-29% | 0.12-0.16-0.22 | 0.30-0.32-0.37 |
 | vivid | 4%-16%-29% | 4%-16%-29% | 0.16-0.20-0.23 | 0.16-0.20-0.29 |
 | starry | 4%-16%-29% | 4%-16%-29% | 0.16-0.20-0.25 | 0.17-0.21-0.26 |
+| billowing | 2%-8%-13% | 6%-21%-43% | 0.15-0.20-0.23 | 0.17-0.20-0.24 |
 
 Macros that move the descriptors alike (cosine over the seven, from -1 to 1, over 0.8):
 
 - bright and luminous: +0.97
 - crisp and starry: +0.96
 - open and fragmented: +0.95
-- fragmented and violent: +0.95
+- fragmented and turbulent: +0.95
 - detailed and starry: +0.94
-- detailed and grand: -0.89
-- grand and starry: -0.89
-- open and violent: +0.89
-- billowing and starry: -0.87
-- billowing and crisp: -0.86
-- fragmented and grand: -0.85
+- turbulent and billowing: +0.91
+- open and turbulent: +0.89
 - detailed and crisp: +0.85
-- detailed and billowing: -0.83
+- fragmented and billowing: +0.81
 
 ## Reading it
 
@@ -150,16 +142,15 @@ Macros that move the descriptors alike (cosine over the seven, from -1 to 1, ove
   closed, enveloping has little left to close (seed 11 sits so deep in its mass
   that open takes it only from 4% clear to 9%), and fragmented saturates at its top
   on two.
-- **Grand is no longer a second open.** Without the mass's own scale the median
-  clear share is 15% at both ends; it makes the sky less detailed on every seed,
-  in order on six. Detail here is a texel's difference from its neighbours at 128
-  a face, which sees fine structure, not the size of forms; whether grand gives few
-  large forms is for the eye.
+- **Billowing still moves how open the sky is**, 8% clear at wispy to 21% at
+  billowing by the median: flattened lumps close the mass into a smooth sheet, deep
+  ones leave gaps between them. Less than grand did, and it may be part of what
+  billows are; the blind pairs will say whether it reads as billowing or as open.
 - **The ends are skies, not voids.** Open reaches 9-58% clear at 1 and 2-14% at
-  -1; no other macro moves the median clear share outside 9-26%; brightness stays
+  -1; no other macro moves the median clear share outside 8-26%; brightness stays
   within 0.11-0.37, where the seeds' own skies span 0.16-0.25.
 - **The ends are uneven.** Hazy reaches 25 levels at 1 and 4 at -1 -- there is
-  little haze to take away -- and bright, luminous, violent and starry reach
+  little haze to take away -- and bright, luminous, turbulent and starry reach
   further at 1 than at -1 too. Some of that is the display curve, which shows
   brightening more than dimming, and some is room.
 - **Macros alike to these descriptors are not the same macro.** Seven numbers
@@ -232,3 +223,42 @@ galactic -- say something of the defaults rather than of the macros: the sky may
 want a lower exposure, more detail, and less of the galaxy's glow. Each would be a
 look change, for a new look version and a blind test of its own (`ROADMAP.md`,
 *Macros*); nothing here changes a default.
+
+## Round 2, blind
+
+Seeds 5, 11 and 19, none seen before. Vivid, starry, luminous and hazy with their
+ends moved, as in round 1, 12 pairs; grand, billowing and violent looking around
+(`--around`), 9 pairs. Scored 2026-09-27.
+
+| macro | named | rather have (5, 11, 19) | the scorer's notes, in short |
+|---|---|---|---|
+| starry | 3/3 | + + = | |
+| luminous | 3/3 | - = - | |
+| hazy | 3/3 | - - - | |
+| vivid | 3/3 | - + = | |
+| violent | 3/3 | = - - | |
+| billowing | 3/3 | = - + | "doesn't read as billowing"; "perhaps the action is not strong enough? A scale problem?"; "not obvious at either end" |
+| grand | 0/3 | = = = | "still unclear to me what this means", every pair |
+
+- **Starry, luminous, hazy and vivid keep their names** with their ends moved. The
+  scorer would rather have the clear end of hazy on every seed, as the dim end of
+  bright in round 1: a sky with less over it. Another note for the defaults.
+- **Violent is renamed turbulent**, at the scorer's word: named every time in both
+  rounds, never understood.
+- **Grand is withdrawn.** Looking around, the busy end was picked as the grand
+  one on every seed. Seen, grand's few large forms leave whole views empty between
+  them, and the busy end has structure everywhere -- which is what reads as grand.
+  Two rounds, two ways of seeing it, and the scorer could not say what it meant: a
+  control people cannot read is not one to keep (`PRINCIPLES §5`). What it held --
+  the scale of folds, holes and detail -- stays in the dials, and in fragmented and
+  detailed.
+- **Billowing was named, but barely seen.** The billows' depth was fixed in the
+  shader; the macro could only trade billowed detail for ridged. It now has a dial
+  of its own, `mass-billow`, the depth of the mass's lumps (1 as judged, so
+  `test_look` does not move), owned by billowing like vivid's chroma: deep rounded
+  lumps with firm edges at 1, flattened ones eroded into ridged, swirled strands at
+  -1. Two versions were rejected by eye before any pair was drawn: fine lumps on
+  the billows crumple them rather than round them, and larger deep lumps pull the
+  mass apart into clumps in clear sky, a second open. Round 3 tests it looking
+  around, on seeds 2, 23 and 29.
+

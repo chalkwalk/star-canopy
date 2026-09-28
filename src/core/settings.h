@@ -58,6 +58,7 @@ struct Settings {
   int massClusters = 1;
   float massCavity = 0.0f;
   float massFine = 1.0f;
+  float massBillow = 1.0f;
   float massEdge = 0.0f;
   float massEdgePatch = 0.0f;
   float graze = 3.0f;

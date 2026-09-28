@@ -21,7 +21,7 @@ struct Look {
   // The main bubble's form, 0 a shell, 1 a mass, and the mass's shape.
   int form;
   float massInner, massLobes, massScale, massDensity, massWarp;
-  float massFine, graze;
+  float massFine, massBillow, graze;
   // How hard a mass's surface is, 0..1, and how much of it, 0 all, 1 patches.
   float massEdge, massEdgePatch;
   float fill, fillShadow;

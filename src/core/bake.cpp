@@ -239,6 +239,7 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
   glUniform1f(p.uniform("u_MassWarp"), look.massWarp);
   glUniform1f(p.uniform("u_ClusterSize"), look.clusterSize);
   glUniform1f(p.uniform("u_MassFine"), look.massFine);
+  glUniform1f(p.uniform("u_MassBillow"), look.massBillow);
   glUniform1f(p.uniform("u_MassEdge"), look.massEdge);
   glUniform1f(p.uniform("u_MassEdgePatch"), look.massEdgePatch);
   glUniform1f(p.uniform("u_DetailScale"), look.detailScale);
@@ -281,6 +282,7 @@ void Baker::bakeLight(const Scene& s, const Look& look) {
   lit.massDensity = look.massDensity;
   lit.massWarp = look.massWarp;
   lit.massFine = look.massFine;
+  lit.massBillow = look.massBillow;
   lit.massEdge = look.massEdge;
   lit.massEdgePatch = look.massEdgePatch;
   lit.clusterSize = look.clusterSize;

@@ -105,13 +105,14 @@ testable without a window and give the A/B tools in-context sheets at once.
 - [x] Macro table (`DESIGN.md` §5) and its resolution, with tests: `[macros]` in
       projects, `render --macro`, `starcanopy macros`
 - [ ] First macro set, iterated with blind scoring (`docs/studies/macros.md`):
-      round 1 confirmed eleven names of fourteen on every seed; galactic waits
-      for the galaxy work (*The galaxy from any star*); grand and billowing
-      are re-tested looking around, with violent, whose intent was unclear;
-      vivid, starry, luminous and hazy re-tested with their ends moved
+      twelve now. Rounds 1 and 2 confirmed eleven names on every seed; violent
+      became turbulent; galactic waits for the galaxy work (*The galaxy from any
+      star*); grand was withdrawn, unreadable twice. Billowing, remade with the
+      depth of the lumps as its own dial, awaits round 3
 - [ ] What the macros' preferences say about the defaults, each a look change
-      for a new look version and its own blind test: round 1 preferred dim to
-      bright, detailed to smooth, and remote to galactic on all three seeds
+      for a new look version and its own blind test: preferred on every seed
+      were dim to bright, detailed to smooth, remote to galactic (round 1) and
+      clear to hazy (round 2)
 - [ ] Styles: mass, shell, and the sparse compositions
 
 ## The look

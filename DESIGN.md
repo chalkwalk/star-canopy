@@ -167,7 +167,8 @@ one parameter can serve several macros.
 Macros bind only look parameters (`docs/studies/parameters.md`): never quality,
 debug, or those off by a decision or retiring with the shell; `test_macros` holds
 the table to that. A parameter that exists only to serve one macro -- the
-palettes' chroma, vivid's -- belongs to it (`Dial::owner`): it is not a raw
+palettes' chroma, vivid's; the depth of the mass's lumps, billowing's -- belongs to
+it (`Dial::owner`): it is not a raw
 parameter, and is set only through its macro. The first set, made from the
 parameter study, is measured and scored blind in `docs/studies/macros.md`; which
 way each end should go, and how far, is iterated with blind scoring. Colour family

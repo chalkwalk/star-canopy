@@ -64,6 +64,7 @@ uniform float u_MassScale;	/* its billows, cycles per bubble radius */
 uniform float u_MassDensity;	/* its density, relative to the shell's */
 uniform float u_MassWarp;	/* how far the fold warp bends it, 0..1 */
 uniform float u_MassFine;	/* fine lumps on its surface, 0 none */
+uniform float u_MassBillow;	/* how deep its lumps are: 1 as judged, 0 a smooth sphere */
 uniform float u_MassEdge;	/* how hard its surface is, 0..1 */
 uniform float u_MassEdgePatch;	/* 0 hard all over, 1 only in patches */
 /* Each bubble's squeeze along its own axes (1 or more) and outer edge hardness relative to
@@ -316,6 +317,7 @@ nsky_gas nsky_coarse(int b, vec3 p)
 			}
 			billow += u_MassFine * 0.35 * fine;
 		}
+		billow *= u_MassBillow;
 		rin = clamp(u_MassInner - u_MassLobes * max(lobe + 0.15, 0.0), 0.1, 0.95);
 		/* How hard the surface is.  Soft, the gas thins over a good part of a lump's width
 		 * and every edge is a fade -- seen whole, the sky reads well, but at a game's field
