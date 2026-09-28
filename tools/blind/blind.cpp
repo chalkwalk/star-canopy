@@ -3,13 +3,15 @@
 // number or a whole-sky map.
 //
 //   blind --out DIR [--size N] [--seeds 3,7,12] [--macros a,b] [--value V]
-//         [--around] [--context K]
+//         [--around] [--three] [--context K]
 //
 // For each macro and seed, the sky at -V and at +V (default 1), each seen
 // twice at 75 degrees across, 16:9: toward the key light, and turned 150
 // degrees from it. With --around, six times, smaller, every 60 degrees round
 // the horizon from the key light: for what shows only as one looks around,
-// such as the size of the forms. One sheet a pair, the two skies side by side, which side is
+// such as the size of the forms. With --three, each sheet is three skies, at
+// -V, 0 and +V in an order drawn at random, labelled A, B, C from the left, to
+// be put in order: the macro's two ends seen against the seed's own sky. One sheet a pair, the two skies side by side, which side is
 // which drawn at random; the pairs shuffled. The key goes to DIR/key.csv, to be
 // opened only when the scores are in; DIR/scores.md is the sheet to score on.
 //
@@ -137,14 +139,14 @@ int main(int argc, char** argv) {
   std::string outDir, error;
   int size = 1024;
   float value = 1.0f;
-  bool around = false;
+  bool around = false, three = false;
   std::vector<uint32_t> seeds = {3, 7, 12};
   std::vector<std::string> names;
   ContextKind kind = ContextKind::Auto;
   for (int i = 1; i < argc; i += 2) {
     std::string arg = argv[i];
-    if (arg == "--around") {
-      around = true;
+    if (arg == "--around" || arg == "--three") {
+      (arg == "--around" ? around : three) = true;
       i--;
       continue;
     }
@@ -179,12 +181,12 @@ int main(int argc, char** argv) {
   if (outDir.empty() || size < 16 || !(value > 0.0f && value <= 1.0f)) {
     std::fprintf(stderr,
                  "usage: blind --out DIR [--size N] [--seeds 3,7,12] [--macros a,b] [--value V]\n"
-                 "             [--around]\n");
+                 "             [--around] [--three]\n");
     return 2;
   }
   if (around) {
-    kViewWidth = 480;
-    kViewHeight = 270;
+    kViewWidth = three ? 400 : 480;
+    kViewHeight = three ? 225 : 270;
   }
   // One side's width and height: one column of two views, or two of three.
   int sideWidth = around ? 2 * kViewWidth + kGap / 2 : kViewWidth;
@@ -236,47 +238,74 @@ int main(int argc, char** argv) {
     std::fprintf(stderr, "blind: cannot write in %s\n", outDir.c_str());
     return 1;
   }
-  std::fprintf(key.get(), "pair,macro,seed,left,right\n");
-  std::fprintf(scores.get(),
-               "# Blind pairs: the macros\n\n"
-               "Each sheet is one seed's sky at the two ends of one macro, left and right, %s,\n"
-               "at 75 degrees across. Which side is which is drawn at random. Do not open key.csv\n"
-               "until every line below is filled in.\n\n"
-               "For each pair: which side is more as the question says (L or R), and which you\n"
-               "would rather have as a sky (L, R or = for no preference). A note if either end\n"
-               "is a sky nobody would want.\n\n"
-               "| pair | question | more so | rather have | note |\n"
-               "|---|---|---|---|---|\n",
-               around ? "each seen six times round the horizon from its key light (reading across,\n"
-                        "then down)"
-                      : "each seen toward its key light (top) and turned away from it (bottom)");
+  const char* seen = around ? "each seen six times round the horizon from its key light (reading\n"
+                              "across, then down)"
+                            : "each seen toward its key light (top) and turned away from it (bottom)";
+  if (three) {
+    std::fprintf(key.get(), "sheet,macro,seed,A,B,C\n");
+    std::fprintf(scores.get(),
+                 "# Blind sheets: the macros, three ways\n\n"
+                 "Each sheet is one seed's sky three times, A, B and C from the left: at one end\n"
+                 "of one macro, at its other end, and as the seed made it, in an order drawn at\n"
+                 "random -- %s, at 75 degrees across. Do not open key.csv until every line below is\n"
+                 "filled in.\n\n"
+                 "For each sheet: the three in order from least to most as the question says (such\n"
+                 "as B A C), and which you would rather have as a sky (A, B, C, or = for no\n"
+                 "preference). A note if any is a sky nobody would want.\n\n"
+                 "| sheet | question | least to most | rather have | note |\n"
+                 "|---|---|---|---|---|\n",
+                 seen);
+  } else {
+    std::fprintf(key.get(), "pair,macro,seed,left,right\n");
+    std::fprintf(scores.get(),
+                 "# Blind pairs: the macros\n\n"
+                 "Each sheet is one seed's sky at the two ends of one macro, left and right, %s,\n"
+                 "at 75 degrees across. Which side is which is drawn at random. Do not open key.csv\n"
+                 "until every line below is filled in.\n\n"
+                 "For each pair: which side is more as the question says (L or R), and which you\n"
+                 "would rather have as a sky (L, R or = for no preference). A note if either end\n"
+                 "is a sky nobody would want.\n\n"
+                 "| pair | question | more so | rather have | note |\n"
+                 "|---|---|---|---|---|\n",
+                 seen);
+  }
   for (size_t i = 0; i < pairs.size(); i++) {
     const Pair& p = pairs[i];
-    bool plusLeft = std::uniform_int_distribution<int>(0, 1)(rng) == 1;
+    std::vector<float> values = {-value, value};
+    if (three) {
+      values.push_back(0.0f);
+    }
+    std::shuffle(values.begin(), values.end(), rng);
+    int sides = static_cast<int>(values.size());
     Image sheet;
-    sheet.width = 2 * sideWidth + 2 * kGap;
+    sheet.width = sides * sideWidth + (sides - 1) * 2 * kGap;
     sheet.height = sideHeight;
-    // The gaps a mid grey, so neither side's dark bleeds into the other's.
+    // The gaps a mid grey, so no side's dark bleeds into the next.
     sheet.rgb.assign(static_cast<size_t>(sheet.width) * sheet.height * 3, 0.02f);
-    for (int side = 0; side < 2; side++) {
-      float v = (side == 0) == plusLeft ? value : -value;
+    for (int side = 0; side < sides; side++) {
       Settings base;
       base.seed = p.seed;
-      Settings s = resolveMacros(base, {{p.macro->name, v}});
+      Settings s = resolveMacros(base, {{p.macro->name, values[side]}});
       CubemapTarget target(size);
       bakeSky(baker, s, target);
       views(target.read(), s, around, sheet, side * (sideWidth + 2 * kGap));
     }
     char name[32];
-    std::snprintf(name, sizeof(name), "pair%02zu.png", i + 1);
+    std::snprintf(name, sizeof(name), three ? "sheet%02zu.png" : "pair%02zu.png", i + 1);
     if (!writePng(outDir + "/" + name, sheet, error)) {
       std::fprintf(stderr, "blind: %s\n", error.c_str());
       return 1;
     }
-    std::fprintf(key.get(), "%zu,%s,%u,%g,%g\n", i + 1, p.macro->name, p.seed,
-                 static_cast<double>(plusLeft ? value : -value),
-                 static_cast<double>(plusLeft ? -value : value));
-    std::fprintf(scores.get(), "| %zu | which is more %s? | | | |\n", i + 1, p.macro->name);
+    std::fprintf(key.get(), "%zu,%s,%u", i + 1, p.macro->name, p.seed);
+    for (float v : values) {
+      std::fprintf(key.get(), ",%g", static_cast<double>(v));
+    }
+    std::fprintf(key.get(), "\n");
+    if (three) {
+      std::fprintf(scores.get(), "| %zu | least to most %s? | | | |\n", i + 1, p.macro->name);
+    } else {
+      std::fprintf(scores.get(), "| %zu | which is more %s? | | | |\n", i + 1, p.macro->name);
+    }
     std::fprintf(stderr, "\rblind %zu/%zu", i + 1, pairs.size());
   }
   std::fprintf(stderr, "\nblind: %zu pairs in %s\n", pairs.size(), outDir.c_str());
