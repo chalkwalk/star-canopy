@@ -95,6 +95,13 @@ const Dial kDials[] = {
        cavitySpread, 1.0f, 4.0f),
   CHOICE("form", "the main bubble: a thin shell, or a thick billowing mass round its cavity", form,
          kFormNames),
+  CHOICE("distant-form", "the distant nebulae: shells, or masses seen from outside", distantForm,
+         kFormNames),
+  GEO("distant-density", "a distant mass's density, relative to the main mass's", distantDensity,
+      0.01f, 4.0f),
+  GEO0("distant-cavity", "a distant mass's cavity glow, seen through its walls; 0 none",
+       distantCavity, 0.0005f, 0.5f),
+  REAL("distant-blister", "how far a distant mass is blown open, 0..1", distantBlister, 0.0f, 1.0f),
   REAL("mass-inner", "the mass's inner surface, in bubble radii", massInner, 0.1f, 0.95f),
   REAL("mass-lobes", "how far the mass's lobes reach in over the cavity", massLobes, 0.0f, 0.8f),
   GEO("mass-scale", "the mass's billows, cycles per bubble radius", massScale, 0.5f, 20.0f),
@@ -349,6 +356,10 @@ Sky buildSky(const Settings& s) {
   // times.
   l.blister = s.form == 1 ? s.massBlister : s.blister;
   l.form = s.form;
+  l.distantForm = s.distantForm;
+  l.distantDensity = s.distantDensity;
+  l.distantCavity = s.distantCavity;
+  l.distantBlister = s.distantBlister;
   l.massInner = s.massInner;
   l.massLobes = s.massLobes;
   l.massScale = s.massScale;

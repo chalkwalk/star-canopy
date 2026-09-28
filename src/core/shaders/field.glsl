@@ -58,6 +58,12 @@ uniform vec3 u_BlisterAxis[NSKY_MAX_BUBBLES];
 uniform float u_Blister;	/* how far the far side is blown out, 0..1 */
 /* The main bubble's form: 0 a thin shell, 1 a thick billowing mass.  See nsky_coarse(). */
 uniform int u_Form;
+/* The distant bubbles' form, the same two.  Temporary: the shell is retiring, and this
+ * lets distant masses be judged against distant shells before it goes. */
+uniform int u_DistantForm;
+uniform float u_DistantDensity;	/* a distant mass's density, relative to the main one's */
+uniform float u_DistantCavity;	/* a distant mass's cavity glow, as u_CavityDensity */
+uniform float u_DistantBlister;	/* how far a distant mass is blown open, as u_Blister */
 uniform float u_MassInner;	/* the mass's inner surface, in bubble radii */
 uniform float u_MassLobes;	/* how far its lobes reach in from that, in bubble radii */
 uniform float u_MassScale;	/* its billows, cycles per bubble radius */
@@ -216,6 +222,12 @@ float nsky_pillars(int b, vec3 q, vec3 p, out float core, out float width, out f
 	return inside;
 }
 
+/* Whether bubble b is a mass rather than a shell. */
+bool nsky_mass(int b)
+{
+	return b == 0 ? u_Form == 1 : u_DistantForm == 1;
+}
+
 /* How much of the gas survives at the direction dir from the bubble's centre, given a
  * noise to rag the edge with: 1 on the dense side, down to a faint haze on the open side.
  *
@@ -232,11 +244,11 @@ float nsky_blister(int b, vec3 dir, float rag)
 	vec3 axis = u_BlisterAxis[b];
 	float len = length(axis), side, edge;
 
-	if (u_Blister <= 0.0 || len < 1e-4)
+	if ((b > 0 && nsky_mass(b) ? u_DistantBlister : u_Blister) <= 0.0 || len < 1e-4)
 		return 1.0;
 	side = dot(dir, axis / len) + 0.6 * rag;
 	/* 0 opens nothing, 1 leaves a cap about a third of the sky across. */
-	edge = mix(-1.9, 0.45, u_Blister);
+	edge = mix(-1.9, 0.45, b > 0 && nsky_mass(b) ? u_DistantBlister : u_Blister);
 	return mix(0.04, 1.0, smoothstep(edge - 0.3, edge + 0.3, side));
 }
 
@@ -258,13 +270,17 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	/* A mass is modelled, not folded: the fold's swirl, which gives a thin shell its
 	 * filaments, covers a thick one in deep waves, where the references' masses are blocked
 	 * out like clay.  Mostly straightened. */
-	if (u_Form == 1 && b == 0)
+	if (nsky_mass(b))
 		g.q = p + w * shape.y * u_MassWarp;
 	g.min_feature = 0.0;
 	g.near_pillar = 0.0;
 	g.near_width = 1.0;
 	g.core = 0.0;
 	r = length(g.q * u_BubbleForm[b].xyz);
+	/* A mass is not squeezed: its lobes and billows make it irregular, and squeezed it is a
+	 * saucer. */
+	if (nsky_mass(b))
+		r = length(g.q);
 
 	n = nsky_noise(g.q * u_HoleScale + o * 0.37);
 	thick = shape.x * (0.6 + 0.8 * clamp(n.y + 0.5, 0.0, 1.0));
@@ -284,7 +300,7 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	 * as part of the one mass and not as clouds of their own.  Its lumps are a smooth noise
 	 * of a few octaves, in the density and on the surface.  Cleared about the viewer: gas at
 	 * the eye is fog over the whole sky. */
-	if (u_Form == 1 && b == 0) {
+	if (nsky_mass(b)) {
 		vec3 view = u_BubbleRot[b] * (-u_BubbleSphere[b].xyz / u_BubbleSphere[b].w);
 		/* The lobes from a noise of the point, not of its direction alone: of the direction,
 		 * the inner surface moves in and out the same all along each ray from the centre,
@@ -329,7 +345,7 @@ nsky_gas nsky_coarse(int b, vec3 p)
 			h *= mix(1.0, smoothstep(-0.12, 0.12, nsky_noise(g.q * 0.9 + o * 0.53).z),
 				u_MassEdgePatch);
 		dens = smoothstep(mix(-0.02, 0.03, h), mix(0.1, 0.05, h), r - rin + 0.12 * billow) *
-			(1.0 - smoothstep(0.92, 1.05, r - 0.06 * billow));
+			(1.0 - smoothstep(b == 0 ? 0.92 : 0.55, 1.05, r - 0.06 * billow));
 		dens *= smoothstep(mix(-0.2, 0.06, h), mix(0.4, 0.14, h), billow + 0.2);
 		/* A hard surface is thinner than the march's stride, and whether a texel's step
 		 * lands on it or over it is its jitter's say -- grain along every crisp edge.  So
@@ -348,7 +364,7 @@ nsky_gas nsky_coarse(int b, vec3 p)
 			if (cl.w > 0.0)
 				dens *= smoothstep(0.12, 0.35, length(p - cl.xyz));
 		}
-		g.shell = dens * u_MassDensity;
+		g.shell = dens * u_MassDensity * (b == 0 ? 1.0 : u_DistantDensity);
 		/* The dust keeps to the body of the mass, which is all of it now. */
 		s = 0.0;
 	}
@@ -404,7 +420,7 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	 * molecular gas the front has not yet eaten; the light volume sees them, so they shadow
 	 * the wall behind, and the fine self shadowing lights their tips.  keep applies, so no
 	 * pillar stands in a hole with nothing to be rooted in. */
-	if (u_PillarRange[b].y > 0.0 && !(u_Form == 1 && b == 0) &&
+	if (u_PillarRange[b].y > 0.0 && !nsky_mass(b) &&
 			(abs(r - 1.0) < 0.5 || length(p) < 0.85)) {
 		float core, width, drift;
 		float pillar = nsky_pillars(b, g.q, p, core, width, g.near_pillar, drift,
@@ -431,8 +447,8 @@ nsky_gas nsky_coarse(int b, vec3 p)
 	 * light is fiercest, and it burns out to white. */
 	g.cavity = u_CavityDensity * smoothstep(0.35, 0.95, r) * (1.0 - smoothstep(0.95, 1.1, r));
 	/* A mass's cavity is inside its inner surface, lobes and all. */
-	if (u_Form == 1 && b == 0)
-		g.cavity = u_CavityDensity * smoothstep(0.1, 0.6, r / rin) *
+	if (nsky_mass(b))
+		g.cavity = (b == 0 ? u_CavityDensity : u_DistantCavity) * smoothstep(0.1, 0.6, r / rin) *
 				(1.0 - smoothstep(0.9, 1.05, r / rin));
 	/* Clumped the same way as the shell, from a noise of its own: the ionised gas glows in
 	 * patches, so it does not lay a veil over every gap in the shell. */

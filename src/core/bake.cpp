@@ -232,6 +232,10 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
   glUniform4fv(p.uniform("u_BubbleForm"), kMaxBubbles, &form[0][0]);
   glUniform1fv(p.uniform("u_BubbleDensity"), kMaxBubbles, density);
   glUniform1i(p.uniform("u_Form"), look.form);
+  glUniform1i(p.uniform("u_DistantForm"), look.distantForm);
+  glUniform1f(p.uniform("u_DistantDensity"), look.distantDensity);
+  glUniform1f(p.uniform("u_DistantCavity"), look.distantCavity);
+  glUniform1f(p.uniform("u_DistantBlister"), look.distantBlister);
   glUniform1f(p.uniform("u_MassInner"), look.massInner);
   glUniform1f(p.uniform("u_MassLobes"), look.massLobes);
   glUniform1f(p.uniform("u_MassScale"), look.massScale);
@@ -276,6 +280,10 @@ void Baker::bakeLight(const Scene& s, const Look& look) {
   lit.holeScale = look.holeScale;
   lit.cavityDensity = look.cavityDensity;
   lit.form = look.form;
+  lit.distantForm = look.distantForm;
+  lit.distantDensity = look.distantDensity;
+  lit.distantCavity = look.distantCavity;
+  lit.distantBlister = look.distantBlister;
   lit.massInner = look.massInner;
   lit.massLobes = look.massLobes;
   lit.massScale = look.massScale;

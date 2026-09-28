@@ -358,7 +358,7 @@ void main()
 				 * near a cluster a hundredth of its light is still bright.) */
 				bool seen = transmit.g > 0.01;
 
-				if (u_Graze > 0.0 && best > 0.0 && u_Form == 1 && b == 0 && seen) {
+				if (u_Graze > 0.0 && best > 0.0 && nsky_mass(b) && seen) {
 					/* A mass's fine lumps shadowing each other: two samples
 					 * at full detail a little way toward the light, a lump's
 					 * and a few lumps' width.  Where the light grazes the

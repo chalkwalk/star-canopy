@@ -19,7 +19,8 @@ struct Look {
   // The field; see field.glsl.
   float foldScale, outerSharpness, holeScale, cavityDensity;
   // The main bubble's form, 0 a shell, 1 a mass, and the mass's shape.
-  int form;
+  int form, distantForm;
+  float distantDensity, distantCavity, distantBlister;
   float massInner, massLobes, massScale, massDensity, massWarp;
   float massFine, massBillow, graze;
   // How hard a mass's surface is, 0..1, and how much of it, 0 all, 1 patches.

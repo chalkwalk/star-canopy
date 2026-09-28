@@ -51,6 +51,10 @@ struct Settings {
   float cavityDensity = 0.006f;
   float cavitySpread = 1.7f;
   int form = 1;  // mass
+  int distantForm = 0;  // shell
+  float distantDensity = 1.0f;
+  float distantCavity = 0.0f;
+  float distantBlister = 0.3f;
   float massInner = 0.75f;
   float massLobes = 0.4f;
   float massScale = 1.5f;
