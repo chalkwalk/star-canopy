@@ -38,8 +38,8 @@ Rules the table keeps, held by `test_macros`:
   dials as they were; `test_look` does not move.
 - **Only look dials.** Never the quality dials, the debug views, the dials off by
   a decision (`mass-edge` waits on its own blind test), those with no visible
-  effect, or those retiring with the shell. So the set is the mass's; the shell
-  reads only the dials the two share.
+  effect, or those retiring with the shell. So the set was the mass's from the
+  start, and the shell's retirement in look 2 took nothing from it.
 - **Composition is left to the seed** except where a macro needs it: `open` moves
   the viewer. Colour family and hue type stay choices (`DESIGN.md` §5).
 - **Two slopes.** Each binding says how far at 1 and how far at -1, since most

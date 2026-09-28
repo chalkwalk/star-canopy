@@ -110,270 +110,44 @@ void lightBubble(Random& rng, Bubble& b, int n, float offset, float luminosity) 
   }
 }
 
-// Pillars come in groups -- the Eagle's are three abreast -- on the stretch of
-// wall facing a cluster, each pointing at it; the brighter the cluster, the
-// likelier it has them.
-//
-// From a stream of their own, one per bubble: drawn from the scene's, a change
-// to the number of pillars would move every bubble placed after them.
-void raisePillars(uint32_t seed, int index, Scene& s, Bubble& b, int want, const SceneParams& p) {
-  Random rng(seed * 1597334677u + 911u * static_cast<uint32_t>(index + 1));
-  static const float origin[3] = {0.0f, 0.0f, 0.0f};
-  float viewer[3];
-  float total = 0.0f, groupDir[3] = {0.0f, 0.0f, 1.0f}, cdir[3], toCluster[3], d[3];
-  int chosen = 0, inGroup = 0;
-
-  b.firstPillar = s.pillarCount;
-  b.pillarCount = 0;
-  skyToBubble(b, origin, viewer);
-  for (int c = 0; c < kMaxClusters; c++) {
-    total += b.cluster[c].luminosity;
-  }
-  if (total <= 0.0f) {
-    return;
-  }
-  for (int i = 0; i < want && s.pillarCount < kMaxPillars; i++) {
-    Pillar& pl = s.pillar[s.pillarCount];
-    if (inGroup == 0) {
-      float u = rng.uniform() * total;
-      for (chosen = 0; chosen < kMaxClusters - 1; chosen++) {
-        u -= b.cluster[chosen].luminosity;
-        if (u <= 0.0f) {
-          break;
-        }
-      }
-      // Where on the wall. A pillar points at its cluster, often between the
-      // viewer and the far wall, so one placed merely where the light falls
-      // tends to point at the eye and is seen end on, as a blob; the Eagle
-      // reads as pillars because its stars are off to one side of our line of
-      // sight. So of two dozen sites, the one whose pillar is most nearly side
-      // on, weighted toward the cluster, where the light is.
-      float best = -1.0f;
-      for (int tries = 0; tries < 24; tries++) {
-        float site[3], axis[3], sight[3];
-        rng.unitVector(site);
-        for (int k = 0; k < 3; k++) {
-          axis[k] = b.cluster[chosen].pos[k] - site[k];
-          sight[k] = site[k] - viewer[k];
-        }
-        float dc = sqrtf(dot3(axis, axis));
-        normalize3(axis);
-        normalize3(sight);
-        cdir[0] = axis[1] * sight[2] - axis[2] * sight[1];
-        cdir[1] = axis[2] * sight[0] - axis[0] * sight[2];
-        cdir[2] = axis[0] * sight[1] - axis[1] * sight[0];
-        float sine = sqrtf(dot3(cdir, cdir));
-        float score = sine * sine / (dc * dc + 0.1f);
-        if (score > best) {
-          best = score;
-          std::memcpy(groupDir, site, sizeof(site));
-        }
-      }
-      inGroup = 2 + rng.below(3);
-    }
-    inGroup--;
-    const float* cl = b.cluster[chosen].pos;
-    rng.unitVector(d);
-    for (int k = 0; k < 3; k++) {
-      pl.base[k] = groupDir[k] + 0.12f * d[k];
-    }
-    normalize3(pl.base);
-    // Buried a little in the wall, so the root never shows.
-    for (int k = 0; k < 3; k++) {
-      pl.base[k] *= 1.02f;
-    }
-    for (int k = 0; k < 3; k++) {
-      toCluster[k] = cl[k] - pl.base[k];
-    }
-    float len = sqrtf(dot3(toCluster, toCluster));
-    if (len < 1e-4f) {
-      continue;
-    }
-    float scale = p.pillarLength * rng.range(0.5f, 1.4f);
-    for (int k = 0; k < 3; k++) {
-      pl.tip[k] = pl.base[k] + toCluster[k] / len * fminf(scale, 0.8f * len);
-    }
-    pl.baseRadius = p.pillarWidth * rng.range(0.8f, 1.6f);
-    pl.tipRadius = pl.baseRadius * rng.range(0.4f, 0.7f);
-    s.pillarCount++;
-    b.pillarCount++;
-  }
-}
-
-float segmentDistance(const float x[3], const float a[3], const float b[3]) {
-  float ab[3], ax[3], d[3];
-  for (int k = 0; k < 3; k++) {
-    ab[k] = b[k] - a[k];
-    ax[k] = x[k] - a[k];
-  }
-  float len2 = dot3(ab, ab);
-  float h = len2 > 0.0f ? dot3(ax, ab) / len2 : 0.0f;
-  h = h < 0.0f ? 0.0f : (h > 1.0f ? 1.0f : h);
-  for (int k = 0; k < 3; k++) {
-    d[k] = ax[k] - ab[k] * h;
-  }
-  return sqrtf(dot3(d, d));
-}
-
-// Dark clouds adrift in the cavity: cold molecular gas the clusters have not
-// yet dispersed, silhouetted against the glow with a bright rim where they face
-// a cluster -- the Rosette's globules, the Horsehead. Each is a short curved
-// chain of capsules laid across the line of sight, so it reads as a filament
-// and not end on; a few are one short capsule, a globule.
-//
-// Each goes between the viewer and a cluster, a little off the line: BACKLIT.
-// A cloud lit from the viewer's side shows its lit face and reads as one more
-// bright cloud; one lit from behind shows its dark side against the brightest
-// part of the sky with the light breaking round its edges -- the silhouette,
-// the Horsehead's whole look. Kept clear of the viewer, so none swallows the
-// camera, and of the clusters, which would have evaporated anything so close.
-void setCloudsAdrift(uint32_t seed, Scene& s, Bubble& b, const SceneParams& p) {
-  Random rng(seed * 3812015801u + 4099u);
-  static const float origin[3] = {0.0f, 0.0f, 0.0f};
-  float viewer[3];
-  skyToBubble(b, origin, viewer);
-  for (int i = 0; i < p.clouds; i++) {
-    float sight[3], across[3], node[6][3], radius[6], centre[3], t;
-    int nodes = rng.uniform() < 0.3f ? 2 : 3 + rng.below(3);
-    bool ok = false;
-
-    if (s.pillarCount + nodes - 1 > kMaxPillars) {
-      break;
-    }
-    for (int tries = 0; tries < 32 && !ok; tries++) {
-      float toward[3], off[3];
-      int chosen = rng.below(kMaxClusters);
-      if (b.cluster[chosen].luminosity <= 0.0f) {
-        chosen = 0;
-      }
-      for (int k = 0; k < 3; k++) {
-        toward[k] = b.cluster[chosen].pos[k] - viewer[k];
-      }
-      float reach = sqrtf(dot3(toward, toward));
-      normalize3(toward);
-      // Ten to thirty-five degrees off the line to the cluster.
-      rng.perpendicular(toward, off);
-      t = tanf(rng.range(10.0f, 35.0f) * kPi / 180.0f);
-      for (int k = 0; k < 3; k++) {
-        sight[k] = toward[k] + t * off[k];
-      }
-      normalize3(sight);
-      t = rng.range(0.4f, 1.0f) * fminf(p.cloudDistance, 0.7f * reach);
-      for (int k = 0; k < 3; k++) {
-        centre[k] = viewer[k] + sight[k] * t;
-      }
-      ok = sqrtf(dot3(centre, centre)) < 0.8f;
-      for (int c = 0; c < kMaxClusters && ok; c++) {
-        float dc[3];
-        if (b.cluster[c].luminosity <= 0.0f) {
-          continue;
-        }
-        for (int k = 0; k < 3; k++) {
-          dc[k] = centre[k] - b.cluster[c].pos[k];
-        }
-        ok = sqrtf(dot3(dc, dc)) > 0.25f;
-      }
-    }
-    if (!ok) {
-      continue;
-    }
-
-    // A walk across the line of sight, turning a little at each node.
-    rng.perpendicular(sight, across);
-    float seg = p.cloudLength * rng.range(0.6f, 1.4f) / static_cast<float>(nodes - 1);
-    if (nodes == 2) {
-      seg *= 0.25f;
-    }
-    std::memcpy(node[0], centre, sizeof(centre));
-    for (int j = 1; j < nodes; j++) {
-      float turn[3];
-      rng.unitVector(turn);
-      for (int k = 0; k < 3; k++) {
-        across[k] += 0.5f * turn[k];
-      }
-      // Stay across the line of sight, not along it.
-      t = dot3(across, sight);
-      for (int k = 0; k < 3; k++) {
-        across[k] -= 0.7f * t * sight[k];
-      }
-      normalize3(across);
-      for (int k = 0; k < 3; k++) {
-        node[j][k] = node[j - 1][k] + across[k] * seg;
-      }
-    }
-    for (int j = 0; j < nodes; j++) {
-      // Thick in the middle, thin at the ends.
-      float mid = 1.0f - fabsf(2.0f * static_cast<float>(j) / static_cast<float>(nodes - 1) - 1.0f);
-      radius[j] = p.cloudWidth * rng.range(0.7f, 1.3f) * (0.5f + 0.7f * mid);
-      if (nodes == 2) {
-        radius[j] = p.cloudWidth * rng.range(1.0f, 1.8f);
-      }
-    }
-    // Never over the camera: a segment too near the viewer drops the whole
-    // cloud rather than half of it.
-    int j = 0;
-    for (; j < nodes - 1; j++) {
-      if (segmentDistance(viewer, node[j], node[j + 1]) <
-          2.5f * fmaxf(radius[j], radius[j + 1]) + 0.03f) {
-        break;
-      }
-    }
-    if (j < nodes - 1) {
-      continue;
-    }
-    for (j = 0; j < nodes - 1; j++) {
-      Pillar& pl = s.pillar[s.pillarCount++];
-      std::memcpy(pl.base, node[j], sizeof(pl.base));
-      std::memcpy(pl.tip, node[j + 1], sizeof(pl.tip));
-      pl.baseRadius = radius[j];
-      pl.tipRadius = radius[j + 1];
-      pl.adrift = true;
-      b.pillarCount++;
-    }
-  }
-}
-
 void shapeBubble(Random& rng, Bubble& b, const SceneParams& p) {
   randomRotation(rng, b.rot);
-  b.thickness = p.thickness * rng.range(0.8f, 1.25f);
+  b.stride = p.stride * rng.range(0.8f, 1.25f);
   b.fold = p.fold * rng.range(0.8f, 1.25f);
   b.keep = p.keep;
   // Anywhere in the tiling volume; a period's worth of range is all there is.
   b.noiseOffset = rng.range(0.0f, 64.0f);
   b.squeeze[0] = b.squeeze[1] = b.squeeze[2] = 1.0f;
-  b.edge = 1.0f;
   b.density = 1.0f;
   b.veil[0] = b.veil[1] = b.veil[2] = 1.0f;
 }
 
-// A distant bubble's form. Real nebulae seen from outside are lobes, arcs and
-// irregular shells, never spheres: squeezed along two axes by up to about two,
-// one kept whole so it keeps its angular size; and a soft outer edge, since
-// from outside the edge is the rim, and a hard rim is what draws the circle.
+// A distant bubble's form: squeezed along two axes by up to about two, one
+// kept whole so it keeps its angular size, so it is a lobe or an arc and not a
+// sphere. Its stride is longer and its gas thinner in step, as look 1's
+// shells were thicker: kept, so the distant nebulae judged blind are these.
 void shapeDistant(Random& rng, Bubble& b) {
   int keepAxis = rng.below(3);
   for (int k = 0; k < 3; k++) {
     b.squeeze[k] = k == keepAxis ? 1.0f : rng.range(1.0f, 2.2f);
   }
-  b.edge = rng.range(0.15f, 0.35f);
-  // Thicker and less folded. A thin, deeply folded shell seen from inside is
-  // filaments; from outside every fold is a crease seen edge on, and a few
-  // degrees of them read as crumpled paper.
-  float thicker = rng.range(2.0f, 3.0f);
-  b.thickness *= thicker;
+  // Look 1's shells drew their edge's softness here; drawn still, and
+  // dropped, so the rest of the stream is as it was.
+  rng.range(0.15f, 0.35f);
+  float longer = rng.range(2.0f, 3.0f);
+  b.stride *= longer;
+  // Less folded: from outside every fold is a crease seen edge on.
   b.fold *= 0.6f;
-  // At the same column, or its dust blocks the glow behind it and the nebula
-  // sits in a black silhouette of itself.
-  b.density = 1.0f / thicker;
+  b.density = 1.0f / longer;
 }
 
 }  // namespace
 
 float bubbleBound(const Bubble& b) {
-  // The fold warp is two octaves of noise of about 0.7 and 0.35 at most, and
-  // the thickness varies up to 1.4 times nominal with a gaussian profile gone
-  // to nothing by three of them.
-  return 1.0f + 1.2f * b.fold + 4.2f * b.thickness;
+  // The fold warp is two octaves of noise of about 0.7 and 0.35 at most; and
+  // four strides, which were look 1's shell's reach, kept so that the bound --
+  // and so the light volume's box, and the sky -- are as they were.
+  return 1.0f + 1.2f * b.fold + 4.2f * b.stride;
 }
 
 void bubbleToSky(const Bubble& b, const float local[3], float out[3]) {
@@ -398,9 +172,6 @@ Scene generateScene(const SceneParams& p) {
   shapeBubble(rng, main, p);
   int n = p.clusters < 1 ? 1 : (p.clusters > kMaxClusters ? kMaxClusters : p.clusters);
   lightBubble(rng, main, n, p.clusterOffset, p.luminosity);
-  raisePillars(p.seed, 0, s, main, p.pillars, p);
-  // Straight after the main bubble's pillars, so they share its range.
-  setCloudsAdrift(p.seed, s, main, p);
   s.bubbleCount = 1;
 
   float mainReach = p.viewerOffset + bubbleBound(main);
@@ -437,7 +208,7 @@ Scene generateScene(const SceneParams& p) {
     for (int k = 0; k < 3; k++) {
       b.center[k] = dir[k] * distance;
     }
-    // Clusters inside the squeezed shell, and dimmer than the main bubble's: a
+    // Clusters inside the squeezed bubble, and dimmer than the main bubble's: a
     // nebula seen across the disc is behind a kiloparsec or so of dust, a
     // magnitude or more; at full brightness it stands out like a decal.
     //
@@ -454,39 +225,35 @@ Scene generateScene(const SceneParams& p) {
     // outside it, and round toward the side as we see it -- lit from behind
     // it would be a black silhouette, from in front a flat disc. After the
     // draws, which stay as they were.
-    if (p.distantMass) {
-      static const float origin[3] = {0.0f, 0.0f, 0.0f};
-      float view[3];
-      skyToBubble(b, origin, view);
-      float vl = sqrtf(dot3(view, view));
+    static const float origin[3] = {0.0f, 0.0f, 0.0f};
+    float view[3];
+    skyToBubble(b, origin, view);
+    float vl = sqrtf(dot3(view, view));
+    for (int k = 0; k < 3; k++) {
+      view[k] /= vl;
+    }
+    for (int c = 0; c < count; c++) {
+      float* pos = b.cluster[c].pos;
+      // Brighter for being further: by the distance, not its square, which
+      // keeps its heart lit as from within but made them too bright beside
+      // the main nebula (distant, blind, round 4).
+      float was = fmaxf(sqrtf(dot3(pos, pos)), 0.2f);
+      b.cluster[c].luminosity *= 1.4f / was;
+      float along = dot3(pos, view);
       for (int k = 0; k < 3; k++) {
-        view[k] /= vl;
+        pos[k] -= 0.8f * along * view[k];
       }
-      for (int c = 0; c < count; c++) {
-        float* pos = b.cluster[c].pos;
-        // Brighter for being further: by the distance, not its square, which
-        // keeps its heart lit as from within but made them too bright beside
-        // the main nebula (distant, blind, round 4).
-        float was = fmaxf(sqrtf(dot3(pos, pos)), 0.2f);
-        b.cluster[c].luminosity *= 1.4f / was;
-        float along = dot3(pos, view);
-        for (int k = 0; k < 3; k++) {
-          pos[k] -= 0.8f * along * view[k];
-        }
-        float len = fmaxf(sqrtf(dot3(pos, pos)), 1e-4f);
-        for (int k = 0; k < 3; k++) {
-          pos[k] *= 1.4f / len;
-        }
-      }
-      // Their stars again where the clusters now are, from a stream of their
-      // own so the scene's stays as it was.
-      Random stars(p.seed * 2246822519u + 97u * static_cast<uint32_t>(s.bubbleCount));
-      for (int c = 0; c < count; c++) {
-        placeStars(stars, b, b.cluster[c]);
+      float len = fmaxf(sqrtf(dot3(pos, pos)), 1e-4f);
+      for (int k = 0; k < 3; k++) {
+        pos[k] *= 1.4f / len;
       }
     }
-    // No pillars: at a few degrees a pillar's dark core is a black blot.
-    raisePillars(p.seed, s.bubbleCount, s, b, 0, p);
+    // Their stars again where the clusters now are, from a stream of their
+    // own so the scene's stays as it was.
+    Random stars(p.seed * 2246822519u + 97u * static_cast<uint32_t>(s.bubbleCount));
+    for (int c = 0; c < count; c++) {
+      placeStars(stars, b, b.cluster[c]);
+    }
     s.bubbleCount++;
   }
   return s;

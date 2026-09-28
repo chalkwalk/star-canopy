@@ -1,6 +1,11 @@
-// A seed makes the same scene as in the labs, float for float. The expected
-// hashes were computed by the labs' own nebula_sky_model.c over the same
-// fields in the same order, with the labs' default dials.
+// A seed makes the same scene as in the labs, float for float, where look 2
+// kept it: every bubble's place, turn, stride, fold, holes, noise and squeeze,
+// and the main bubble's clusters and their stars. The expected hashes are over
+// those fields, with the labs' two clusters; they were computed by look 1,
+// whose scenes the labs' own nebula_sky_model.c had matched in full, and look
+// 2 matching them is what says the shell's retirement moved no draw of the
+// seed's. (Look 2 moves the distant bubbles' clusters out and lights them from
+// beside; see the tests below.)
 
 #include "check.h"
 #include "scene.h"
@@ -38,34 +43,28 @@ uint32_t sceneHash(const Scene& s) {
     fv(u.center, 3);
     f(u.radius);
     fv(u.rot, 9);
-    f(u.thickness);
+    f(u.stride);
     f(u.fold);
     f(u.keep);
     f(u.noiseOffset);
     fv(u.squeeze, 3);
-    f(u.edge);
     f(u.density);
-    for (const Cluster& c : u.cluster) {
-      fv(c.pos, 3);
-      f(c.luminosity);
-      for (const ClusterStar& st : c.star) {
-        fv(st.dir, 3);
-        f(st.intensity);
+    if (b == 0) {
+      for (const Cluster& c : u.cluster) {
+        fv(c.pos, 3);
+        f(c.luminosity);
+        for (const ClusterStar& st : c.star) {
+          fv(st.dir, 3);
+          f(st.intensity);
+        }
       }
     }
-    f(static_cast<float>(u.firstPillar));
-    f(static_cast<float>(u.pillarCount));
-  }
-  f(static_cast<float>(s.pillarCount));
-  for (int i = 0; i < s.pillarCount; i++) {
-    const Pillar& p = s.pillar[i];
-    fv(p.base, 3);
-    f(p.baseRadius);
-    fv(p.tip, 3);
-    f(p.tipRadius);
-    f(p.adrift ? 1.0f : 0.0f);
   }
   return h;
+}
+
+float length3(const float v[3]) {
+  return std::sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 }
 
 }  // namespace
@@ -73,24 +72,56 @@ uint32_t sceneHash(const Scene& s) {
 int main() {
   const struct {
     uint32_t seed;
-    int bubbles, pillars;
+    int bubbles;
     uint32_t hash;
   } expected[] = {
-    {1, 4, 20, 3886375356u},
-    {7, 4, 23, 3116510298u},
-    {12345, 4, 20, 1847972669u},
+    {1, 4, 4256231499u},
+    {7, 4, 847006508u},
+    {12345, 4, 3017844379u},
   };
   for (const auto& e : expected) {
     SceneParams p;
     p.seed = e.seed;
+    p.clusters = 2;
     Scene s = generateScene(p);
     uint32_t got = sceneHash(s);
     if (got != e.hash) {
       std::printf("seed %u: hash %u, want %u\n", e.seed, got, e.hash);
     }
     CHECK(s.bubbleCount == e.bubbles);
-    CHECK(s.pillarCount == e.pillars);
     CHECK(got == e.hash);
+  }
+
+  // A distant bubble is lit from beside it: its clusters outside it, 1.4 of
+  // its radii from its centre, and mostly across our line of sight to it.
+  for (uint32_t seed = 1; seed <= 20; seed++) {
+    SceneParams p;
+    p.seed = seed;
+    Scene s = generateScene(p);
+    for (int b = 1; b < s.bubbleCount; b++) {
+      const Bubble& u = s.bubble[b];
+      float toViewer[3];
+      for (int k = 0; k < 3; k++) {
+        toViewer[k] = -u.center[k];
+      }
+      float d = length3(toViewer);
+      for (const Cluster& c : u.cluster) {
+        if (c.luminosity <= 0.0f) {
+          continue;
+        }
+        CHECK(std::fabs(length3(c.pos) - 1.4f) < 1e-3f);
+        // The cluster in sky units, from the bubble's centre, against the
+        // line to the viewer: well off it either way.
+        float sky[3], rel[3];
+        bubbleToSky(u, c.pos, sky);
+        for (int k = 0; k < 3; k++) {
+          rel[k] = sky[k] - u.center[k];
+        }
+        float cosine = (rel[0] * toViewer[0] + rel[1] * toViewer[1] + rel[2] * toViewer[2]) /
+                       (length3(rel) * d);
+        CHECK(std::fabs(cosine) < 0.9f);
+      }
+    }
   }
 
   // The same params, the same scene; a different seed, a different one.

@@ -14,7 +14,7 @@
 namespace {
 
 const char kUsage[] =
-    "usage: starcanopy new PROJECT.toml [--seed N] [--style mass|shell]\n"
+    "usage: starcanopy new PROJECT.toml [--seed N]\n"
     "       starcanopy render PROJECT.toml [--macro NAME=VALUE]... [--set NAME=VALUE]...\n"
     "                         [--size N] [--out DIR] [--context K]\n"
     "       starcanopy macros\n"
@@ -82,7 +82,7 @@ int newProject(int argc, char** argv) {
     std::fputs(kUsage, stderr);
     return 2;
   }
-  std::string path = argv[2], style = "mass";
+  std::string path = argv[2];
   uint32_t seed = 1;
   for (int i = 3; i < argc; i++) {
     std::string arg = argv[i];
@@ -94,12 +94,6 @@ int newProject(int argc, char** argv) {
         return 2;
       }
       seed = s.seed;
-    } else if (arg == "--style" && i + 1 < argc) {
-      style = argv[++i];
-      if (style != "mass" && style != "shell") {
-        std::fprintf(stderr, "starcanopy: style is mass or shell\n");
-        return 2;
-      }
     } else {
       std::fputs(kUsage, stderr);
       return 2;
@@ -111,7 +105,7 @@ int newProject(int argc, char** argv) {
   }
   std::string name = std::filesystem::path(path).stem().string();
   std::ofstream out(path);
-  out << projectText(seed, style, name.empty() ? "sky" : name);
+  out << projectText(seed, name.empty() ? "sky" : name);
   if (!out) {
     std::fprintf(stderr, "starcanopy: %s: could not write\n", path.c_str());
     return 1;

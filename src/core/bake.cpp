@@ -61,7 +61,7 @@ void starTint(const Look& look, float tint[3]) {
 //
 // From well outside, though, away from the viewer is the wrong way: then we
 // look through the opening at the lit inside of the far wall, a bright disc,
-// the coin again. A shell open to one side and seen side on is an arc or a
+// the coin again. A bubble open to one side and seen side on is an arc or a
 // crescent, which is what distant nebulae look like; so for those the dense
 // side is the clusters' direction with the line of sight taken out of it.
 //
@@ -182,7 +182,7 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
     const Bubble& b = s.bubble[i];
     std::memcpy(sphere[i], b.center, sizeof(b.center));
     sphere[i][3] = b.radius;
-    shape[i][0] = b.thickness;
+    shape[i][0] = b.stride;
     shape[i][1] = b.fold;
     shape[i][2] = b.keep;
     shape[i][3] = b.noiseOffset;
@@ -198,34 +198,16 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
     }
     blisterAxis(b, axis[i]);
     std::memcpy(form[i], b.squeeze, sizeof(b.squeeze));
-    form[i][3] = b.edge;
     density[i] = b.density;
     std::memcpy(veil[i], b.veil, sizeof(b.veil));
     std::memcpy(rot[i], b.rot, sizeof(b.rot));
   }
-  float base[kMaxPillars][4] = {}, tip[kMaxPillars][4] = {}, range[kMaxBubbles][2] = {};
-  for (int i = 0; i < s.pillarCount; i++) {
-    std::memcpy(base[i], s.pillar[i].base, sizeof(s.pillar[i].base));
-    // A negative radius marks a capsule adrift rather than rooted; see
-    // nsky_pillars().
-    base[i][3] = s.pillar[i].adrift ? -s.pillar[i].baseRadius : s.pillar[i].baseRadius;
-    std::memcpy(tip[i], s.pillar[i].tip, sizeof(s.pillar[i].tip));
-    tip[i][3] = s.pillar[i].tipRadius;
-  }
-  for (int i = 0; i < s.bubbleCount; i++) {
-    range[i][0] = static_cast<float>(s.bubble[i].firstPillar);
-    range[i][1] = static_cast<float>(s.bubble[i].pillarCount);
-  }
-  glUniform4fv(p.uniform("u_PillarBase"), kMaxPillars, &base[0][0]);
-  glUniform4fv(p.uniform("u_PillarTip"), kMaxPillars, &tip[0][0]);
-  glUniform2fv(p.uniform("u_PillarRange"), kMaxBubbles, &range[0][0]);
   glUniform4fv(p.uniform("u_BubbleSphere"), kMaxBubbles, &sphere[0][0]);
   glUniform4fv(p.uniform("u_BubbleShape"), kMaxBubbles, &shape[0][0]);
   glUniform4fv(p.uniform("u_Cluster"), kAllClusters, &cluster[0][0]);
   // rot is row major, so GL is asked to transpose it into its column major mat3.
   glUniformMatrix3fv(p.uniform("u_BubbleRot"), kMaxBubbles, GL_TRUE, &rot[0][0]);
   glUniform1f(p.uniform("u_FoldScale"), look.foldScale);
-  glUniform1f(p.uniform("u_OuterSharpness"), look.outerSharpness);
   glUniform1f(p.uniform("u_HoleScale"), look.holeScale);
   glUniform1f(p.uniform("u_CavityDensity"), look.cavityDensity);
   glUniform3fv(p.uniform("u_BlisterAxis"), kMaxBubbles, &axis[0][0]);
@@ -233,8 +215,6 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
   glUniform4fv(p.uniform("u_BubbleForm"), kMaxBubbles, &form[0][0]);
   glUniform1fv(p.uniform("u_BubbleDensity"), kMaxBubbles, density);
   glUniform3fv(p.uniform("u_BubbleVeil"), kMaxBubbles, &veil[0][0]);
-  glUniform1i(p.uniform("u_Form"), look.form);
-  glUniform1i(p.uniform("u_DistantForm"), look.distantForm);
   glUniform1f(p.uniform("u_DistantDensity"), look.distantDensity);
   glUniform1f(p.uniform("u_DistantCavity"), look.distantCavity);
   glUniform1f(p.uniform("u_DistantBlister"), look.distantBlister);
@@ -254,12 +234,6 @@ void Baker::uploadField(const Program& p, const Scene& s, const Look& look) {
   glUniform1f(p.uniform("u_Filament"), look.filament);
   glUniform1f(p.uniform("u_Hardness"), look.hardness);
   glUniform1f(p.uniform("u_Contrast"), look.contrast);
-  glUniform1f(p.uniform("u_PillarDensity"), look.pillarDensity);
-  glUniform1f(p.uniform("u_CloudDensity"), look.cloudDensity);
-  glUniform1f(p.uniform("u_DustAmount"), look.dustAmount);
-  glUniform1f(p.uniform("u_DustScale"), look.dustScale);
-  glUniform1i(p.uniform("u_DustVein"), look.dustStyle);
-  glUniform1f(p.uniform("u_DustOpacity"), look.dustOpacity);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_3D, noise_);
@@ -278,11 +252,8 @@ void Baker::bakeLight(const Scene& s, const Look& look) {
   // stale one.
   Look lit{};
   lit.foldScale = look.foldScale;
-  lit.outerSharpness = look.outerSharpness;
   lit.holeScale = look.holeScale;
   lit.cavityDensity = look.cavityDensity;
-  lit.form = look.form;
-  lit.distantForm = look.distantForm;
   lit.distantDensity = look.distantDensity;
   lit.distantCavity = look.distantCavity;
   lit.distantBlister = look.distantBlister;
@@ -303,12 +274,6 @@ void Baker::bakeLight(const Scene& s, const Look& look) {
   lit.filament = look.filament;
   lit.hardness = look.hardness;
   lit.contrast = look.contrast;
-  lit.pillarDensity = look.pillarDensity;
-  lit.cloudDensity = look.cloudDensity;
-  lit.dustAmount = look.dustAmount;
-  lit.dustScale = look.dustScale;
-  lit.dustStyle = look.dustStyle;
-  lit.dustOpacity = look.dustOpacity;
   lit.density = look.density;
   lit.sigma = look.sigma;
   lit.ionOpacity = look.ionOpacity;
@@ -360,7 +325,7 @@ void Baker::bakeLight(const Scene& s, const Look& look) {
       glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, lightTexture_, 0, b * res + z);
       glUniform1f(light_.uniform("u_Slice"), (static_cast<float>(z) + 0.5f) / static_cast<float>(res));
       // A slice in four strips, each its own job: a thick mass lit by clusters
-      // of a size is many times the work of a shell lit by points, and one draw
+      // of a size is many times the work of a thin sheet lit by points, and one draw
       // of a whole slice ran long enough for the driver to decide the GPU had
       // hung and reset it.
       glEnable(GL_SCISSOR_TEST);
@@ -511,7 +476,6 @@ void Baker::uploadBake() {
   glUniform3fv(p.uniform("u_DustAlbedo"), 1, look.dustAlbedo);
   glUniform1f(p.uniform("u_Anisotropy"), look.anisotropy);
   glUniform1f(p.uniform("u_Reflection"), look.reflection);
-  glUniform1f(p.uniform("u_RimShadow"), look.rimShadow);
   glUniform1f(p.uniform("u_IonOpacity"), look.ionOpacity);
   glUniform3fv(p.uniform("u_Reddening"), 1, look.reddening);
   glActiveTexture(GL_TEXTURE3);
@@ -577,7 +541,6 @@ void Baker::denoiseFace(int face) {
   glUniform1i(p.uniform("u_GradeInfo"), 1);
   glUniform1f(p.uniform("u_GradeGalaxy"), look.gradeGalaxy);
   glActiveTexture(GL_TEXTURE0);
-  glUniform3fv(p.uniform("u_DustRamp"), kRampStops, &look.dustRamp[0][0]);
   glUniform1f(p.uniform("u_Strength"), look.denoise);
   glUniform1i(p.uniform("u_Supersample"), marchSize_ / target_->size());
   glUniform3fv(p.uniform("u_Ramp"), kRampStops, &look.ramp[0][0]);

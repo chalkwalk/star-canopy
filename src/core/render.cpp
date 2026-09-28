@@ -26,14 +26,6 @@ bool writeSidecar(const std::string& path, const Project& p, const float light[3
   const double degrees = 180.0 / 3.14159265358979323846;
   double azimuth = std::atan2(light[0], light[2]) * degrees;
   double elevation = std::asin(std::fmax(-1.0f, std::fmin(1.0f, light[1]))) * degrees;
-  int count = 0;
-  const Dial* d = dials(count);
-  std::string form;
-  for (int i = 0; i < count; i++) {
-    if (std::string(d[i].name) == "form") {
-      form = dialValue(p.settings, d[i]);
-    }
-  }
   // The macros as set, in the table's order; those at 0 are left out.
   std::string macroList;
   int macroCount = 0;
@@ -52,7 +44,7 @@ bool writeSidecar(const std::string& path, const Project& p, const float light[3
                "  \"generator\": \"StarCanopy\",\n"
                "  \"look\": %d,\n"
                "  \"seed\": %u,\n"
-               "  \"style\": \"%s\",\n"
+               "  \"style\": \"mass\",\n"
                "  \"size\": %d,\n"
                "  \"macros\": {%s},\n"
                "  \"orientation\": {\"yaw\": %g, \"pitch\": %g, \"roll\": %g},\n"
@@ -66,7 +58,7 @@ bool writeSidecar(const std::string& path, const Project& p, const float light[3
                "convention the faces are written in. Azimuth is measured from +z toward +x, "
                "elevation toward +y, as in the equirectangular map, whose centre looks along +z.\",\n"
                "  \"files\": [",
-               p.look, p.settings.seed, form.c_str(), p.size, macroList.c_str(), p.yaw, p.pitch, p.roll, light[0],
+               p.look, p.settings.seed, p.size, macroList.c_str(), p.yaw, p.pitch, p.roll, light[0],
                light[1], light[2], azimuth, elevation, -light[0], -light[1], -light[2]);
   for (size_t i = 0; i < files.size(); i++) {
     std::fprintf(f.get(), "%s\"%s\"", i ? ", " : "",

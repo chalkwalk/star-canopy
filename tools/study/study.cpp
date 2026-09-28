@@ -2,12 +2,12 @@
 // macros made of the dials (ROADMAP.md, Macros). Results are CSV, one row per
 // bake; docs/studies/parameters.md is what was made of them.
 //
-//   study oat    --style mass|shell [--size N] [--seeds 1,3,5,7] [--dials a,b] --out FILE
+//   study oat    [--size N] [--seeds 1,3,5,7] [--dials a,b] --out FILE
 //     One at a time: every dial swept across its range from the defaults, on
 //     each seed, each compared with that seed's default sky. What each dial
 //     does alone: whether anything, how much, which way.
 //
-//   study morris --style mass|shell [--size N] [--trajectories R] [--dials a,b] --out FILE
+//   study morris [--size N] [--trajectories R] [--dials a,b] --out FILE
 //     Morris's elementary effects: trajectories from random points across a
 //     usable space of the dials, near enough their defaults to be skies
 //     someone might make (see interval()), stepping one dial at a time. A dial's mean
@@ -15,7 +15,7 @@
 //     whether that depends on the other dials -- large spread and small effect
 //     at the defaults is a dial that matters only together with others.
 //
-//   study macros --style mass|shell [--size N] [--seeds 1,3,5,7] [--dials a,b] --out FILE
+//   study macros [--size N] [--seeds 1,3,5,7] [--dials a,b] --out FILE
 //     Each macro (--dials names macros here) at -1, -1/2, 1/2 and 1 on each
 //     seed, each compared with that seed's own sky: whether it moves the sky
 //     the way its name says, on every seed, and how far (docs/studies/macros.md).
@@ -94,7 +94,7 @@ double current(const Settings& s, const Dial& d) {
 // times it, if its default is off. Narrow, for morris, whose random points
 // must be skies someone might make: a wide interval for every dial at once
 // made nearly every point an empty sky (the median point was 100% clear in
-// both styles). Narrow is a quarter of the range either side of the default,
+// look 1's two styles). Narrow is a quarter of the range either side of the default,
 // or a factor of two either way, or up to eight times the floor.
 void interval(const Dial& d, double def, bool narrow, double& lo, double& hi) {
   if (!d.geometric) {
@@ -210,8 +210,8 @@ std::vector<const Dial*> chosen(const std::vector<std::string>& names, bool with
   std::vector<const Dial*> out;
   for (int i = 0; i < count; i++) {
     std::string name = all[i].name;
-    // The seed, and the style, which is the study's own axis.
-    if (all[i].seed || all[i].owner || name == "form" ||
+    // The seed, and the dials macros own.
+    if (all[i].seed || all[i].owner ||
         (!withQuality && (kQuality.count(name) || kDebug.count(name)))) {
       continue;
     }
@@ -343,19 +343,17 @@ void macroSweep(Study& st, const Settings& defaults, const std::vector<uint32_t>
 
 int main(int argc, char** argv) {
   if (argc < 2) {
-    std::fprintf(stderr, "usage: study oat|morris|macros --style mass|shell [options] --out FILE\n");
+    std::fprintf(stderr, "usage: study oat|morris|macros [options] --out FILE\n");
     return 2;
   }
-  std::string mode = argv[1], style = "mass", outPath, error;
+  std::string mode = argv[1], outPath, error;
   std::vector<uint32_t> seeds = {1, 3, 5, 7};
   std::vector<std::string> names;
   int trajectories = 8;
   Study st;
   for (int i = 2; i + 1 < argc; i += 2) {
     std::string arg = argv[i], value = argv[i + 1];
-    if (arg == "--style") {
-      style = value;
-    } else if (arg == "--size") {
+    if (arg == "--size") {
       st.size = std::atoi(value.c_str());
     } else if (arg == "--seeds") {
       seeds.clear();
@@ -374,10 +372,11 @@ int main(int argc, char** argv) {
     }
   }
   Settings defaults;
-  if (!setDial(defaults, "form", style, error) || outPath.empty()) {
-    std::fprintf(stderr, "study: %s\n", outPath.empty() ? "--out is required" : error.c_str());
+  if (outPath.empty()) {
+    std::fprintf(stderr, "study: --out is required\n");
     return 2;
   }
+
   st.context = GlContext::create(ContextKind::Auto, error);
   if (!st.context) {
     std::fprintf(stderr, "study: no context: %s\n", error.c_str());
@@ -393,7 +392,7 @@ int main(int argc, char** argv) {
     std::fprintf(stderr, "study: cannot write %s\n", outPath.c_str());
     return 1;
   }
-  std::fprintf(stderr, "study: %s, %s, %d a face, on %s\n", mode.c_str(), style.c_str(), st.size,
+  std::fprintf(stderr, "study: %s, %d a face, on %s\n", mode.c_str(), st.size,
                st.context->description().c_str());
   if (mode == "oat") {
     oat(st, defaults, seeds, chosen(names, true));

@@ -37,17 +37,16 @@ const char* const kStatNames[kStats] = {"mean r", "mean g", "mean b", "p50 lum",
 
 struct Reference {
   uint32_t seed;
-  const char* style;
   double stat[kStats];
 };
 
-// Look 1, recorded on the Radeon (radeonsi) at 48 a face with the default
-// dials. The next look version adds its own table; this one stays, for as
-// long as look 1 is rendered.
-const Reference kLook1[] = {
-    {3, "mass", {0.0164123, 0.0227799, 0.0203558, 0.0112129, 0.0324633, 0.297831, 0.563484}},
-    {7, "mass", {0.0157283, 0.0185782, 0.0195, 0.0130116, 0.033103, 0.0991907, 0.430874}},
-    {12, "shell", {0.0339929, 0.0367949, 0.0415598, 0.0256057, 0.0655808, 0.177883, 0.410589}},
+// Look 2, recorded on the Radeon (radeonsi) at 48 a face with the default
+// dials. A look version's table stays for as long as it is rendered; look 1's
+// went when look 2 retired the shell.
+const Reference kLook2[] = {
+    {3, {0.0164035, 0.0227748, 0.0203515, 0.0112067, 0.0324071, 0.297831, 0.563484}},
+    {7, {0.0157179, 0.0185687, 0.0194915, 0.013042, 0.033103, 0.0991907, 0.430874}},
+    {12, {0.0158727, 0.0175248, 0.0200159, 0.0123305, 0.0314227, 0.0789904, 0.417458}},
 };
 
 void measure(const Cubemap& c, double out[kStats]) {
@@ -82,19 +81,18 @@ int main(int argc, char** argv) {
     return 1;
   }
   std::printf("context: %s\n", context->description().c_str());
-  CHECK(kLookVersion == 1);  // a new look version needs its own table here
+  CHECK(kLookVersion == 2);  // a new look version needs its own table here
 
   double worst = 0.0;
-  for (const Reference& ref : kLook1) {
+  for (const Reference& ref : kLook2) {
     Settings s;
     s.seed = ref.seed;
-    CHECK(setDial(s, "form", ref.style, error));
     CubemapTarget target(kSize);
     CHECK(bakeSky(s, target, error));
     double got[kStats];
     measure(target.read(), got);
     if (print) {
-      std::printf("    {%u, \"%s\", {", ref.seed, ref.style);
+      std::printf("    {%u, {", ref.seed);
       for (int k = 0; k < kStats; k++) {
         std::printf("%s%.6g", k ? ", " : "", got[k]);
       }
@@ -106,8 +104,8 @@ int main(int argc, char** argv) {
       double tolerance = k < 5 ? 0.015 : 0.04;
       worst = std::fmax(worst, off / tolerance);
       if (off > tolerance) {
-        std::printf("seed %u %s: %s is %.6g, look %d recorded %.6g (%.1f%% off)\n", ref.seed,
-                    ref.style, kStatNames[k], got[k], kLookVersion, ref.stat[k], 100.0 * off);
+        std::printf("seed %u: %s is %.6g, look %d recorded %.6g (%.1f%% off)\n", ref.seed,
+                    kStatNames[k], got[k], kLookVersion, ref.stat[k], 100.0 * off);
       }
       CHECK(off <= tolerance);
     }

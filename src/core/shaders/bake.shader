@@ -15,8 +15,9 @@
  *	[S II]	strongest in the skin just behind the front, where ionisation is partial
  *
  * so the stratification of colour -- teal inside, red at the rims -- is not painted on; it is
- * where the photons run out.  The dust meanwhile scatters the stars' visible light forward
- * (reflection nebulosity, blue) and absorbs everything behind it, bluer light more.
+ * where the photons run out.  The dust mixed through the gas meanwhile scatters the stars'
+ * visible light forward (reflection nebulosity, blue) and absorbs everything behind it,
+ * bluer light more.
  *
  * The line colours are uniforms, so the same physics can be shown in the natural palette or
  * in the mapped palettes astrophotographers use.
@@ -46,7 +47,7 @@ uniform float u_LightSlabs;
 
 uniform float u_Density;	/* multiplies the gas everywhere */
 uniform float u_Sigma;		/* extinction per bubble radius at density 1 */
-uniform float u_StepFrac;	/* march step, as a fraction of the shell's thickness */
+uniform float u_StepFrac;	/* march step, as a fraction of the bubble's stride scale */
 uniform int u_MaxSteps;		/* per bubble */
 
 uniform vec3 u_LineColor[3];	/* [O III], H-alpha, [S II] */
@@ -57,7 +58,6 @@ uniform float u_OxygenThreshold;
 uniform vec3 u_DustAlbedo;
 uniform float u_Anisotropy;	/* Henyey-Greenstein g */
 uniform float u_Reflection;
-uniform float u_RimShadow;	/* fine self shadowing toward the cluster; 0 is off */
 /* How much more opaque the gas is to ionising ultraviolet than to visible light.  Large, in
  * reality: the ultraviolet is used up within a thin skin, which is why an ionisation front is
  * a sharp bright rim and not a gradual fade.  The light volume already carries it. */
@@ -92,10 +92,8 @@ out vec4 f_FragColor;
  * infinity.  Bound to colour attachments 1 and 2 by name before linking; see bake.cpp. */
 out vec4 f_Tau0;
 out vec4 f_Tau1;
-/* What the grade needs to know here.  x: how much of the light from behind this texel dust
- * took out, 0..1, which is what it knows the dust by -- a dark cloud against the glow is
- * near 1, a lit front near 0.  yzw: the galaxy's light in it, as it reaches the eye, which
- * the grade may give back its own colour.  Its colour, not merely its share of the light:
+/* What the grade needs to know here.  x: unused (look 1's dust).  yzw: the galaxy's light
+ * in it, as it reaches the eye, which the grade may give back its own colour.  Its colour, not merely its share of the light:
  * restoring a share of the texel's physical colour restores the gas's too, and the faint
  * wall in front of the band comes out magenta. */
 out vec4 f_Grade;
@@ -116,9 +114,9 @@ vec3 face_direction(int face, vec2 st)
 }
 
 /* A per texel offset for where the march starts, so the step pattern shows as a fine grain
- * rather than as contour lines across the shell.  A hash, i.e. white noise: interleaved
+ * rather than as contour lines across the gas.  A hash, i.e. white noise: interleaved
  * gradient noise was tried first, and its regular lattice shows as a dotted hatching wherever
- * a step crosses a hard edge, which on a dense pillar is everywhere. */
+ * a step crosses a hard edge. */
 float start_jitter(vec2 xy)
 {
 	vec3 p = fract(vec3(xy.xyx) * 0.1031);
@@ -162,32 +160,6 @@ vec3 light_depth(int b, vec3 p)
 	return -log(max(light / 6.0, vec3(1e-12))) / 0.3;
 }
 
-/* Which of bubble b's capsules this ray, from origin along d in the bubble's frame, passes
- * near enough to matter -- the bits nsky_pillars() then looks at.  Each capsule is bounded by
- * a sphere: half its length plus its thickest radius, padded for everything that can move
- * its surface or draw fine steps toward it -- three radii of noise and near zone, and for a
- * pillar, which is placed in the WARPED frame, the most the fold warp can displace it.
- * Conservative: a capsule missed here would simply vanish from this texel. */
-void capsule_mask(int b, vec3 origin, vec3 d, float s0, float s1)
-{
-	int first = int(u_PillarRange[b].x), n = int(u_PillarRange[b].y), i;
-	float warp = 1.1 * u_BubbleShape[b].y;
-
-	nsky_mask[0] = 0u;
-	nsky_mask[1] = 0u;
-	for (i = 0; i < n; i++) {
-		vec4 a = u_PillarBase[first + i], t = u_PillarTip[first + i];
-		vec3 mid = 0.5 * (a.xyz + t.xyz);
-		float reach = 0.5 * length(t.xyz - a.xyz) + 3.2 * max(abs(a.w), t.w) +
-				(a.w < 0.0 ? 0.0 : warp);
-		float along = clamp(dot(mid - origin, d), s0, s1);
-		vec3 off = origin + d * along - mid;
-
-		if (dot(off, off) < reach * reach)
-			nsky_mask[i >> 5] |= 1u << uint(i & 31);
-	}
-}
-
 /* Henyey-Greenstein, normalised to 1 for isotropic scattering, as the old nebula lab found it
  * had to be: with the 4 pi left in, the scattered light is two orders of magnitude under the
  * emission and never shows. */
@@ -213,7 +185,6 @@ void main()
 	float tau_at[NSKY_TAU_LAYERS];
 	int recorded = 0;
 	vec3 transmit = vec3(1.0), glow = vec3(0.0), base, haze;
-	float dusty = 0.0;
 	int n = 0, i, j, k, c;
 	bool opaque = false;
 
@@ -252,11 +223,11 @@ void main()
 		mat3 rot = u_BubbleRot[b];
 		vec3 origin = rot * (-u_BubbleSphere[b].xyz / radius);
 		vec3 d = rot * dir;
-		float thick = u_BubbleShape[b].x;
+		float stride = u_BubbleShape[b].x;
 		/* The dust in front of the bubble, on its light alone: what lies behind it has its
 		 * own (the galaxy's glow is dimmed by the galaxy's dust already). */
 		vec3 veil = u_BubbleVeil[b];
-		float ds_fine = thick * u_StepFrac;
+		float ds_fine = stride * u_StepFrac;
 		float s_end = leave[k] / radius;
 		float s = enter[k] / radius + ds_fine * jitter;
 		/* Where the last stride started and how many depths the stars need had been
@@ -265,8 +236,6 @@ void main()
 		float s_prev = s, fine_until = s;
 		int recorded_prev = recorded;
 		bool was_long = false;
-
-		capsule_mask(b, origin, d, s, s_end);
 
 		/* Nothing lies between bubbles, so any distance passed getting here has the
 		 * depth there was on leaving the last one. */
@@ -292,7 +261,7 @@ void main()
 			 * the sandy grain on every cloud's edge.  So go back to where the stride
 			 * started and come in at the fine stride instead -- and forget the stars'
 			 * depths recorded on the way, which have gas in front of them after all. */
-			if (was_long && g.shell + g.cavity >= 0.05) {
+			if (was_long && g.mass + g.cavity >= 0.05) {
 				fine_until = s;
 				s = s_prev;
 				recorded = recorded_prev;
@@ -300,34 +269,26 @@ void main()
 				continue;
 			}
 			/* Long strides through the cavity's faint, smooth fill and the empty
-			 * space around the shell; short ones in it.  Three fine strides and not
+			 * space around the mass; short ones in it.  Three fine strides and not
 			 * five: gas too thin to count as landed in is still eroded into wisps,
 			 * and at five a single sample stood for too much of one. */
-			was_long = g.shell + g.cavity < 0.05 && s >= fine_until;
+			was_long = g.mass + g.cavity < 0.05 && s >= fine_until;
 			ds = was_long ? ds_fine * 3.0 : ds_fine;
 
-			/* And near a pillar or a cloud, a fraction of its width.  A capsule's lit
-			 * skin, between its dark core and its edge, is only about a quarter of its
-			 * radius thick; a step longer than that either lands in the skin or steps
-			 * clean over it into the core, and which is decided by each texel's jitter
-			 * -- bright or black texel by texel, a fixed pepper over every cloud near
-			 * the camera. */
-			if (g.near_pillar > 0.0)
-				ds = mix(ds, min(ds, 0.12 * g.near_width), g.near_pillar);
+			/* And near a hard surface, a fraction of its thickness: a longer step either
+			 * lands in its lit skin or steps clean over it, and which is decided by each
+			 * texel's jitter -- bright or black texel by texel, a pepper along the edge. */
+			if (g.near_edge > 0.0)
+				ds = mix(ds, min(ds, 0.12 * g.near_width), g.near_edge);
 
 			/* Shorter still where the gas is dense, so no one step spans more than
 			 * about a third of an optical depth: a coarse step through opaque gas is
-			 * what shows the start jitter as hatching.  The dust's extra opacity
-			 * counts: left out, a step through a dusty lane, pillar or cloud spans
-			 * several optical depths, and whether a texel's step happens to land in
-			 * the dust or skip it decides between black and bright -- pepper. */
+			 * what shows the start jitter as hatching. */
 			if (rho > 0.0)
-				ds = clamp(0.35 / max(rho * u_Density * u_Sigma *
-						(1.0 + u_DustOpacity * g.dust), 1e-4),
-						0.12 * ds_fine, ds);
+				ds = clamp(0.35 / max(rho * u_Density * u_Sigma, 1e-4), 0.12 * ds_fine, ds);
 
 			/* Every step a little random in length, not only the first.  Wherever the
-			 * stride changes -- entering the shell from the cavity, nearing a cloud,
+			 * stride changes -- entering the mass from the cavity, nearing an edge,
 			 * the clamp above taking over -- it changes at almost the same place for
 			 * neighbouring texels, and from there on they sample in lockstep whatever
 			 * jitter they started with: the thin structures beyond come out in
@@ -361,7 +322,7 @@ void main()
 				 * near a cluster a hundredth of its light is still bright.) */
 				bool seen = transmit.g > 0.01;
 
-				if (u_Graze > 0.0 && best > 0.0 && nsky_mass(b) && seen) {
+				if (u_Graze > 0.0 && best > 0.0 && seen) {
 					/* A mass's fine lumps shadowing each other: two samples
 					 * at full detail a little way toward the light, a lump's
 					 * and a few lumps' width.  Where the light grazes the
@@ -375,21 +336,19 @@ void main()
 
 					tau[best_c] += u_Graze * u_Sigma * u_IonOpacity * u_Density *
 						(0.01 * d1 + 0.02 * d2);
-				} else if (u_RimShadow > 0.0 && best > 0.0) {
-					/* What the light volume is too coarse to hold: the
-					 * gas's own detail shadowing itself, within a shell's
-					 * thickness of this point, toward whichever cluster
-					 * lights it most.  It is what puts a bright rim on the
-					 * lit side of every knot.  One sample, midway, at
-					 * coarse detail: two, one near and one far, cost a
-					 * third of the whole bake and changed the picture by
-					 * about one percent. */
+				} else if (best > 0.0) {
+					/* Where the grazing shadows are not worth their cost -- almost
+					 * hidden -- the gas's own detail shadowing itself still counts,
+					 * at coarse detail: one sample midway toward the light, within
+					 * two strides.  Near a cluster a hundredth of its light is bright,
+					 * and without it such points came out up to 18 levels brighter
+					 * (look 1's rim-shadow dial, at its 2; look 2 keeps it fixed). */
 					nsky_gas g1;
-					float between = nsky_density(b, p + best_dir * thick * 0.6,
-							max(s * pixel_angle, thick * 0.25), g1);
+					float between = nsky_density(b, p + best_dir * stride * 0.6,
+							max(s * pixel_angle, stride * 0.25), g1);
 
-					tau[best_c] += u_RimShadow * u_Sigma * u_IonOpacity *
-						u_Density * thick * between;
+					tau[best_c] += 2.0 * u_Sigma * u_IonOpacity * u_Density * stride *
+						between;
 				}
 				for (c = 0; c < NSKY_CLUSTERS; c++) {
 					vec4 cl = u_Cluster[first + c];
@@ -420,36 +379,18 @@ void main()
 					w_o = o * w_h;
 					w_s = (1.0 - o) * exp(-0.5 * tau[c]) * (1.0 - exp(-2.0 * tau[c]));
 					w_h *= 1.0 - 0.8 * o;
-					/* Molecular cloud is not ionised through; only its
-					 * lit skin glows, and the light volume already puts
-					 * that on its face.  Nothing, then, once the dust is
-					 * substantial: taken off only in proportion, a lane at
-					 * the dust dial's 0.6 still glowed at 0.4 -- and, three
-					 * times as dense, brighter than the gas around it -- so
-					 * the dark lanes were lit lanes coloured brown.  What is
-					 * left glowing is the partly dusty edge: the rim. */
-					src += flux * rho * nsky_dust_glow(g.dust) *
+					src += flux * rho *
 						(u_LineColor[0] * (u_LineStrength.x * w_o) +
 						u_LineColor[1] * (u_LineStrength.y * w_h) +
 						u_LineColor[2] * (u_LineStrength.z * w_s));
 					/* Visible starlight reaches far deeper than the
-					 * ultraviolet, and dust scatters it, forward most.
-					 *
-					 * But not into dust: dust stops visible light as the
-					 * view march has it stop it, u_DustOpacity times
-					 * harder, and the starlight that lights a dusty point
-					 * has come through the dust around it -- this point's
-					 * dust stands for the path's.  Without it a dark
-					 * cloud's inside was lit nearly as clear gas is, and
-					 * glowed brown, where in every reference sky dust is
-					 * dark, with only its skin toward the stars lit. */
-					src += flux / u_IonOpacity * rho * (0.3 + g.dust) *
+					 * ultraviolet, and the gas's dust scatters it,
+					 * forward most. */
+					src += flux / u_IonOpacity * rho * 0.3 *
 						u_Reflection * u_DustAlbedo *
 						phase(dot(lc * inversesqrt(max(d2, 1e-8)), d),
 							u_Anisotropy) *
-						exp(-tau[c] / u_IonOpacity *
-							(u_DustVein == 2 ? 1.0 :
-							1.0 + u_DustOpacity * g.dust));
+						exp(-tau[c] / u_IonOpacity);
 				}
 
 				/* Fill light: a dim light raking across whatever face is seen.  The
@@ -478,32 +419,19 @@ void main()
 					db = nsky_density(b, p + rake * 0.03, fp, gb);
 					gc = nsky_coarse(b, p + rake * 0.08);
 					near_tau = u_Sigma * u_Density * u_FillShadow * (0.01 * da + 0.02 * db +
-						0.05 * gc.shell * u_BubbleDensity[b]);
+						0.05 * gc.mass * u_BubbleDensity[b]);
 					src += u_Fill * lum * u_Sigma * u_IonOpacity * rho *
-						exp(-near_tau) * nsky_dust_glow(g.dust) *
+						exp(-near_tau) *
 						(u_LineColor[1] * u_LineStrength.y +
 						u_LineColor[2] * u_LineStrength.z);
 				}
 
-				/* A pillar's core neither glows nor scatters: starlight does not
-				 * reach it.  The light volume is coarser than a pillar is wide and
-				 * cannot say so -- left to it, the dust in the core scatters blue
-				 * and the pillar comes out a hollow tube with a bright outline. */
-				src *= 1.0 - g.core;
-
 				/* Integrated exactly over the step for a constant source and
 				 * extinction, rather than as source times step, so a dense step
 				 * cannot emit more than it could ever let out. */
-				sigma_t = rho * u_Sigma * (1.0 + u_DustOpacity * g.dust) * u_Reddening;
+				sigma_t = rho * u_Sigma * u_Reddening;
 				att = exp(-sigma_t * ds);
 				glow += transmit * veil * src * (vec3(1.0) - att) / max(sigma_t, vec3(1e-6));
-				/* The share of this step's extinction that is dust's, times what
-				 * of the light behind it the step took out and the eye would
-				 * otherwise have seen.  Summed, it is the part of the view this ray
-				 * lost to dust -- 1 for a dark cloud against the glow. */
-				/* Physical dust takes the gas's colour, lit as it is lit. */
-				dusty += transmit.g * (1.0 - att.g) *
-					(u_DustVein == 2 ? g.core : max(g.dust, g.core));
 				transmit *= att;
 			}
 			s_prev = s;
@@ -546,7 +474,7 @@ void main()
 	f_FragColor = vec4(base * transmit + glow + haze, dot(transmit, vec3(1.0 / 3.0)));
 	f_Tau0 = vec4(tau_at[0], tau_at[1], tau_at[2], tau_at[3]);
 	f_Tau1 = vec4(tau_at[4], tau_at[5], tau_at[6], tau_at[7]);
-	f_Grade = vec4(dusty, texture(u_GalaxySky, dir).rgb * u_GalaxyGlow * u_Exposure * transmit);
+	f_Grade = vec4(0.0, texture(u_GalaxySky, dir).rgb * u_GalaxyGlow * u_Exposure * transmit);
 }
 
 #endif

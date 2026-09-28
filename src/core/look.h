@@ -17,10 +17,11 @@ constexpr float kDisplayGain = 1.18f;
 // say what each does.
 struct Look {
   // The field; see field.glsl.
-  float foldScale, outerSharpness, holeScale, cavityDensity;
-  // The main bubble's form, 0 a shell, 1 a mass, and the mass's shape.
-  int form, distantForm;
+  float foldScale, holeScale, cavityDensity;
+  // The distant nebulae's own: their density relative to the main one's, their
+  // glow, how far they are blown open.
   float distantDensity, distantCavity, distantBlister;
+  // The mass's shape.
   float massInner, massLobes, massScale, massDensity, massWarp;
   float massFine, massBillow, graze;
   // How hard a mass's surface is, 0..1, and how much of it, 0 all, 1 patches.
@@ -31,9 +32,6 @@ struct Look {
   float blister;
   float detailScale, detailGain, erosion, filament, hardness;
   float contrast;
-  float pillarDensity, cloudDensity;
-  float dustAmount, dustScale;
-  int dustStyle;  // 0 lanes, 1 veins, 2 physical
 
   // The light.
   float density, sigma;
@@ -43,8 +41,7 @@ struct Look {
   float dustAlbedo[3];
   float anisotropy, reflection;
   float reddening[3];
-  float rimShadow;
-  float ionOpacity, dustOpacity;
+  float ionOpacity;
   float starBrightness, starHalo, starHaloDegrees;
   float starSpike;      // share of a spiked star's light in its spikes
   float starSpikeFlux;  // stars brighter than this get spikes
@@ -58,11 +55,9 @@ struct Look {
 
   // The grade: the sky's colour as a ramp along its displayed lightness, from
   // shadows to highlights, kRampStops evenly spaced stops of linear colour of
-  // luminance 1, and how far toward it the physical colour goes, 0..1. The
-  // same for dust, which the grade moves toward as far as the dust goes in
-  // each texel. See denoise.shader.
+  // luminance 1, and how far toward it the physical colour goes, 0..1. See
+  // denoise.shader.
   float ramp[kRampStops][3];
-  float dustRamp[kRampStops][3];
   float grade;
   // A second palette over part of the sky: its ramp; the share of the sky it
   // covers, 0 for none; where a smooth field of three waves -- each a direction

@@ -12,7 +12,7 @@ namespace starcanopy {
 //
 // A star painted into a texture before the nebula existed can only be dimmed
 // uniformly by all the gas on its line of sight; it has no distance, so it
-// cannot be in front of the shell, or in it. These carry one, and the bake
+// cannot be in front of the nebula, or in it. These carry one, and the bake
 // looks up how much gas lies between the viewer and exactly that distance: a
 // star in front of the near wall is untouched, one behind a dark lane vanishes,
 // one seen through a thin edge is dimmed and reddened by exactly that edge.

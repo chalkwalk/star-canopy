@@ -22,8 +22,8 @@ studied, and twelve macros steer it, every name confirmed blind
 1. ~~**Kick-start**, **the lift**, **headless core and command line**~~ -- done.
 2. ~~**Parameter triage and sensitivity study**; **macros**~~ -- done but for
    their ranges and styles (*Macros*).
-3. **Retire the shell**, all of it, with the distant nebulae remade as masses in
-   the same look version (*The shell's retirement, and bubbles*). Bubbles wait.
+3. ~~**Retire the shell**~~ -- done in look 2, the distant nebulae remade as
+   masses (*The shell's retirement, and bubbles*). Bubbles wait.
 4. **The galaxy from any star** -- the vantage atlas first, then dust and a band
    made of stars; the galactic macro and the external galaxies come back with it.
 5. **In context** -- headless stills first, then a minimal window and
@@ -139,7 +139,8 @@ Full notes: `labs/features/nebula_sky/NEXT.md` in Space Nerds In Space.
 
 The wrap-around mass is imposing (`PRINCIPLES §11`). Four styles made from existing
 dials in the labs -- one region, scattered clouds, a band, a veil -- with their
-settings in the labs' `NEXT.md`.
+settings in the labs' `NEXT.md`. Some were made with the shell, retired
+in look 2: those are to be found again from the mass.
 
 - [ ] Pick which become styles; make each reliable across seeds (the band only
       works on some)
@@ -227,24 +228,28 @@ shell is to be retired completely, not kept by half: as a style, with its
 dials, its capsules and its lane dust. What is worth keeping of it comes back as
 something new, earning its place blind like anything else.
 
-- [ ] Blind A/B: the shell's veil (the labs' *Sparse and lighter skies*) against
-      a translucent mass (`mass-density` near 0.8). If the mass holds its own,
-      nothing is lost that 9-1 did not already give up
-- [ ] Retire the shell style: `form`, the 25 shell-only dials (the parameter
-      study's *shell style (retiring)*), the capsule pillars and clouds, lane dust;
-      the march's stride, which `thickness` sets for the mass too, given a dial
-      of its own. The distant nebulae are shells, so they go too, and must be
-      replaced in the same step, not left out
-- [ ] Distant nebulae as masses: the form chosen per bubble, not only for the
-      main one, so a distant nebula is a lumpy glowing cloud seen from outside.
-      With the retirement, look 2 -- the mass's own pixels move only where a
-      distant nebula shows -- blind against look 1
+- [x] ~~Blind A/B: the shell's veil against a translucent mass~~ -- not run: the
+      shell was retired whole by decision; lighter skies are for *Sparse and
+      lighter skies*, made from the mass
+- [x] Retire the shell style (look 2): `form`, 22 shell-only dials, the capsule
+      pillars and clouds, and all the nebula's dust -- lanes, veins and the
+      mass's own, which lost to none three times -- with the grade's dust ramp.
+      The march's stride keeps its per-seed value, no longer a dial (`step-frac`
+      scales it). The rim shading the mass drew from the shell's `rim-shadow`,
+      up to 18 levels near a cluster, stays, fixed. A mass sky's main nebula is
+      as in look 1: 99.997% of texels identical on four seeds, the rest within
+      0.03 levels. Look-1 projects are refused, saying how to render them
+- [x] Distant nebulae as masses, lit from beside, dimmed by the dust in front:
+      four blind rounds against look 1's distant shells, the last two won 4-0
+      (`docs/studies/distant.md`)
 - [ ] Bubbles, as their own object: a supernova remnant or wind-blown bubble --
       thin, transparent, limb-brightened, its wrinkles seen edge on as
       filaments. The shell's geometry is right for it and its light is not: a
       remnant glows because a shock heats its whole skin, not because a cluster
-      inside ionises one side of it. A self-glowing skin, no light volume. Blind:
-      a mass sky with one against one without
+      inside ionises one side of it. A self-glowing skin, no light volume. Placed
+      at any depth, veiled by the dust in front as the distant nebulae are
+      (`Bubble::veil`) -- ahead of the main mass bright and unveiled, far off
+      dim. Blind: a mass sky with one against one without
 - [ ] Pillars and dark clouds that emerge from the mass rather than being
       placed: the light eroding the gas that faces it, leaving the shadowed
       tails behind dense knots pointing at it; dense lumps of the mass seen

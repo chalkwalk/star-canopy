@@ -21,13 +21,10 @@ struct Settings {
   float viewerOffset = 0.55f;
   float clusterOffset = 0.85f;
   float luminosity = 1.0f;
-  int clusters = 2;
-  float thickness = 0.06f;
   float fold = 0.18f;
   float foldScale = 1.6f;
   float keep = 0.7f;
   float holeScale = 1.3f;
-  float outerSharpness = 6.0f;
 
   // Detail, and the distant nebulae.
   float detailScale = 5.0f;
@@ -35,23 +32,7 @@ struct Settings {
   float erosion = 0.65f;
   float filament = 0.5f;
   float contrast = 1.5f;
-  int pillars = 9;
-  float pillarLength = 0.3f;
-  float pillarWidth = 0.045f;
-  float pillarDensity = 2.5f;
-  int clouds = 4;
-  float cloudLength = 0.15f;
-  float cloudWidth = 0.022f;
-  float cloudDistance = 0.35f;
-  float cloudDensity = 3.0f;
   float hardness = 0.5f;
-  int dustStyle = 0;  // lanes
-  float dust = 0.6f;
-  float dustScale = 4.0f;
-  float cavityDensity = 0.006f;
-  float cavitySpread = 1.7f;
-  int form = 1;  // mass
-  int distantForm = 0;  // shell
   float distantDensity = 1.0f;
   float distantCavity = 0.008f;
   float distantBlister = 0.45f;
@@ -69,12 +50,9 @@ struct Settings {
   float graze = 3.0f;
   float massBlister = 0.3f;
   float massClusterSize = 0.15f;
-  float massDust = 0.0f;
   float massWarp = 0.25f;
-  float clusterSize = 0.0f;
   float fillShadow = 15.0f;
   float fill = 0.1f;
-  float blister = 0.8f;
   int distantCount = 3;
   float distantMinDegrees = 3.0f;
   float distantMaxDegrees = 14.0f;
@@ -92,7 +70,6 @@ struct Settings {
   float gradeChroma = 1.0f;
   float haze = 0.004f;
   float shoulder = 0.8f;
-  float gradeDust = 1.0f;
   int hueType = 0;  // auto
   int paletteFamily = 0;  // auto
   float gradeGalaxy = 0.2f;
@@ -100,8 +77,6 @@ struct Settings {
   float reflection = 0.2f;
   float anisotropy = 0.5f;
   float ionOpacity = 8.0f;
-  float dustOpacity = 6.0f;
-  float rimShadow = 2.0f;
 
   // The stars and the galaxy.
   float starBrightness = 0.55f;

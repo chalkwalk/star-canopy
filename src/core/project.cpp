@@ -82,6 +82,11 @@ bool loadProject(const std::string& path, Project& p, std::string& error) {
   if (*look < 1) {
     return fail("look " + std::to_string(*look) + " is not a look version");
   }
+  if (*look == 1) {
+    return fail("made with look 1, which this StarCanopy no longer renders: look 2 retired the "
+                "shell style and remade the distant nebulae. A mass sky's main nebula is the "
+                "same in look 2; to render it so, set look = 2");
+  }
   p.look = static_cast<int>(*look);
 
   if (const toml::node* seed = t.get("seed")) {
@@ -92,10 +97,10 @@ bool loadProject(const std::string& path, Project& p, std::string& error) {
   }
   if (const toml::node* style = t.get("style")) {
     auto s = style->value<std::string>();
-    if (!s || (*s != "mass" && *s != "shell")) {
-      return fail("style is \"mass\" or \"shell\"");
+    if (!s || *s != "mass") {
+      return fail(s && *s == "shell" ? "the shell style was retired in look 2; style is \"mass\""
+                                     : "style is \"mass\"");
     }
-    setDial(p.settings, "form", *s, error);
   }
 
   if (const toml::node* macros = t.get("macros")) {
@@ -121,9 +126,8 @@ bool loadProject(const std::string& path, Project& p, std::string& error) {
     }
     for (const auto& [key, value] : *o) {
       std::string name(key.str()), text;
-      if (name == "seed" || name == "form") {
-        return fail("'" + name + "' is set at the top of the project" +
-                    (name == "form" ? ", as style" : "") + ", not in [overrides]");
+      if (name == "seed") {
+        return fail("'seed' is set at the top of the project, not in [overrides]");
       }
       if (!valueText(value, text)) {
         return fail("[overrides] " + name + " should be a number or a name");
@@ -209,17 +213,17 @@ bool loadProject(const std::string& path, Project& p, std::string& error) {
   return true;
 }
 
-std::string projectText(uint32_t seed, const std::string& style, const std::string& name) {
+std::string projectText(uint32_t seed, const std::string& name) {
   char head[512];
   std::snprintf(head, sizeof(head),
                 "# A StarCanopy project: how a sky is made again.\n"
                 "\n"
                 "look = %d        # the look version it was made with; do not change it by hand\n"
                 "seed = %u\n"
-                "style = \"%s\"   # mass or shell\n"
+                "style = \"mass\"\n"
                 "\n"
                 "[macros]        # -1..1; 0 is the seed's own sky\n",
-                kLookVersion, seed, style.c_str());
+                kLookVersion, seed);
   std::string text = head;
   // Every macro, at 0, with its two ends: the controls, where they are seen.
   int count = 0;

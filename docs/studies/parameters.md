@@ -4,6 +4,10 @@
 measures, `analyse.py` and `triage.py` make the tables below. Data:
 `docs/studies/data/`.*
 
+*Since: look 2 retired the shell (`ROADMAP.md`), and with it the dials classed
+here as shell style, except the distant nebulae's three, and all the nebula's
+dust. What follows is the study as made, of look 1.*
+
 The model has a hundred raw dials. The macros are to be made of them
 (`PRINCIPLES §5`, `DESIGN.md` §5), and before a macro can be designed it has to be
 known which dials do anything, how much, in which direction, and which only do

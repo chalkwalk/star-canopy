@@ -33,12 +33,6 @@
  * scaled together, the brightest gas stays the colour it was graded.  Stars are drawn after
  * this and keep theirs.
  *
- * Dust gets a ramp of its own.  By lightness alone a dark cloud is just dark, and the ramp is
- * near grey at its dark end, so every dark cloud came out neutral black -- ink on the glow.
- * In the reference skies the dust is a different colour from the gas at the same lightness,
- * dark brown against green, its lit edges cream and orange.  The march says how much of each
- * texel's view the dust took, and the grade moves that far toward the dust's ramp.
- *
  * And the galaxy's light may be spared.  It is graded with the rest by default, the sky one
  * palette; with less, the band keeps some of its own colour: what the grade made of the
  * galaxy's light is taken back out and the light itself, as the march recorded it, put in.
@@ -58,13 +52,12 @@ void main()
 #if defined(INCLUDE_FS)
 
 uniform sampler2D u_Marched;
-uniform sampler2D u_GradeInfo;	/* per marched texel: dust's share of the view, the galaxy's light */
+uniform sampler2D u_GradeInfo;	/* per marched texel: the galaxy's light, in yzw */
 uniform float u_GradeGalaxy;	/* how far the galaxy is graded, 0..1 */
 uniform int u_Supersample;	/* the march's texels per face texel, along each side */
 uniform float u_Strength;	/* how different in brightness a neighbour may be, relative */
 #define RAMP_STOPS 8		/* must match kRampStops */
 uniform vec3 u_Ramp[RAMP_STOPS];	/* colour by displayed lightness, luminance 1 each */
-uniform vec3 u_DustRamp[RAMP_STOPS];	/* the same, for dust */
 uniform float u_Grade;		/* how far toward the ramp, 0..1 */
 uniform float u_Shoulder;	/* the brightest channel's ceiling; 0 is none */
 uniform float u_DisplayGain;	/* the gain the display curve is applied with */
@@ -130,26 +123,22 @@ float second_weight(void)
 vec3 grade(vec3 c, vec4 info)
 {
 	vec3 ramp;
-	float dust = info.x;
 	float y = luma(c), f, m, k;
-	vec3 gas, dark;
 	int i;
 
 	if (u_Grade > 0.0 && y > 0.0) {
 		/* The ramp's stops are the centres of equal bands of lightness. */
 		f = clamp(displayed(y) * float(RAMP_STOPS) - 0.5, 0.0, float(RAMP_STOPS - 1));
 		i = min(int(f), RAMP_STOPS - 2);
-		gas = mix(u_Ramp[i], u_Ramp[i + 1], f - float(i));
+		ramp = mix(u_Ramp[i], u_Ramp[i + 1], f - float(i));
 		/* The second palette where the field puts it, giving way in the highlights -- and in
 		 * the near black of the empty sky, which is the first's dark tint all over, so the
 		 * edge of the field's region shows only in the gas: two objects of their own colour
 		 * on one sky, not a sky cut in two. */
 		if (u_Ramp2Share > 0.0)
-			gas = mix(gas, mix(u_Ramp2[i], u_Ramp2[i + 1], f - float(i)), second_weight() *
+			ramp = mix(ramp, mix(u_Ramp2[i], u_Ramp2[i + 1], f - float(i)), second_weight() *
 					smoothstep(0.03, 0.12, displayed(y)) *
 					(1.0 - smoothstep(u_Ramp2Top - 0.15, u_Ramp2Top, displayed(y))));
-		dark = mix(u_DustRamp[i], u_DustRamp[i + 1], f - float(i));
-		ramp = mix(gas, dark, clamp(dust, 0.0, 1.0));
 		c = mix(c, y * ramp, u_Grade);
 		/* The galaxy's light, back as its own colour, luminance kept. */
 		c = max(c + u_Grade * (1.0 - u_GradeGalaxy) *

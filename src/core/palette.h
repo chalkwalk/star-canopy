@@ -28,7 +28,9 @@ struct Palette {
   float chroma;  // at its peak
   float peak;    // the OKLab lightness it peaks at
   float drift;   // how far toward `top` by the highlights, 0..1
-  float dust;    // how far the dust's hue is from the gas's toward brown, 0..1
+  // Look 1's dust's hue, toward brown, 0..1: drawn still, so the rest of a
+  // seed's palette is as it was, and read by nothing.
+  float dust;
   float top;     // the hue the highlights turn toward, OKLCh degrees
   float start;   // the OKLab lightness the turn begins at
 };
@@ -40,7 +42,6 @@ struct PaletteChoice {
   int family = -1;        // a PaletteFamily, or -1 to draw one by seed
   float strength = 1.0f;  // how far toward the grade, 0..1
   float chroma = 1.0f;    // a factor on the palettes' chroma
-  float dust = 1.0f;      // how far the dust takes its own colour, 0..1
   int hueType = 0;        // 0 by seed, 1 one palette, 2 a fan, 3 two regions
 };
 

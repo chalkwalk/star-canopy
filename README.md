@@ -21,8 +21,8 @@ export it at full size, turned to face the way your scene needs.
 
 - **Nebulae with form.** A thick mass of cloud lit by one cluster of young stars,
   so most of it turns from the light and its shape shows; bright ionisation rims;
-  fine lumps catching a grazing light. Or thinner, lighter veils and scattered
-  clouds, with open sky between.
+  fine lumps catching a grazing light; and distant nebulae beyond it, lit from
+  beside, dimmed by the dust between.
 - **A galaxy seen from inside.** Its band, its dark rift, and stars at real
   distances, each dimmed by exactly the gas in front of it -- some in front of the
   nebula, some inside, some behind.
@@ -78,7 +78,7 @@ ctest --test-dir build --output-on-failure
 ```
 
 A **project** is how a sky is made again: a small TOML file with the look version
-it was made with, a seed, a style (`mass` or `shell`), macros, orientation and
+it was made with, a seed, a style (`mass`, for now the only one), macros, orientation and
 outputs.
 `starcanopy new` writes one with every key commented. The same project renders
 the same sky; a project from a newer StarCanopy is refused, not rendered

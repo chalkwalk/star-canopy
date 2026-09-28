@@ -13,13 +13,19 @@ namespace starcanopy {
 // sky's pixels is a new look version; a project records the look it was made
 // with, and a StarCanopy that cannot render that look says so rather than
 // render it differently (PRINCIPLES §7).
-constexpr int kLookVersion = 1;
+//
+//   1  the lift from the labs: a mass or a thin shell, distant shells
+//   2  the shell retired: every nebula a mass, the distant ones lit from beside
+//      them (docs/studies/distant.md); a mass sky's main nebula as in look 1
+//
+// This StarCanopy renders look 2 only, and refuses look 1 with a reason.
+constexpr int kLookVersion = 2;
 
 // A project: how a sky is made again. Small, human-readable TOML:
 //
-//   look = 1                 # the look version it was made with
+//   look = 2                 # the look version it was made with
 //   seed = 7
-//   style = "mass"           # mass | shell
+//   style = "mass"           # mass; the sparse compositions are to come
 //
 //   [macros]                 # -1..1, 0 the seed's own sky: `starcanopy macros`
 //   open = 0.4
@@ -57,6 +63,6 @@ struct Project {
 bool loadProject(const std::string& path, Project& project, std::string& error);
 
 // A new project's text, for `starcanopy new`.
-std::string projectText(uint32_t seed, const std::string& style, const std::string& name);
+std::string projectText(uint32_t seed, const std::string& name);
 
 }  // namespace starcanopy

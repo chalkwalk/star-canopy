@@ -60,17 +60,11 @@ int main() {
     // debug views
     "nebula", "grade", "line-colors",
     // off by a decision
-    "spike", "spike-flux", "mass-dust", "mass-edge", "mass-edge-patch",
-    // no visible effect
-    "young", "cluster-stars", "external-galaxies",
-    // retiring with the shell (ROADMAP.md, The shell's retirement)
-    "clusters", "cavity-density", "cavity-spread", "blister", "cluster-size", "dust", "dust-style",
-    "dust-scale", "dust-opacity", "pillars", "pillar-length", "pillar-width", "pillar-density",
-    "clouds", "cloud-length", "cloud-width", "cloud-distance", "cloud-density", "grade-dust",
-    "rim-shadow", "outer-sharpness", "thickness", "distant-count", "distant-min-deg",
-    "distant-max-deg",
+    "spike", "spike-flux", "mass-edge", "mass-edge-patch",
+    // no visible effect (docs/studies/parameters.md, Points)
+    "external-galaxies",
     // the composition's own
-    "seed", "form"};
+    "seed"};
   std::set<std::string> names;
   for (int i = 0; i < count; i++) {
     CHECK(names.insert(m[i].name).second);

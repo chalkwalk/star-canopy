@@ -62,7 +62,7 @@ nebula ("bubble") is shaded in its own unit frame, so a nebula twenty times
 further away and twenty times larger looks identical; only the texel's footprint
 changes, and that decides how many octaves of detail are evaluated.
 
-### 3.1 The main nebula: a mass (the default)
+### 3.1 The main nebula: a mass
 
 A thick layer of opaque, billowing cloud from an inner surface out to the bubble's
 edge, around a clear pocket the viewer is in. Lobes of the inner surface reach in
@@ -80,7 +80,12 @@ turns from the light -- which is what gives it form.
 - **Soft shadows:** the cluster sampled from five points turned at random per
   voxel, read back as a power mean (exponent 0.3) of six taps, which keeps the
   sky's mean brightness within a few percent of a point source's.
-- **No dust.** Three kinds lost blind to none.
+- **No dust.** Three kinds lost blind to none, and look 2 removed the nebula's dust
+  altogether; darkness is to come from the mass itself (`ROADMAP.md`, *The shell's
+  retirement, and bubbles*). The galaxy's dust is another matter (§3.5).
+- **Rim shading:** points the grazing shadows skip -- almost hidden -- still take
+  one coarse sample of the gas's own shadow toward the light, which near a cluster
+  is up to 18 levels.
 
 Blind results behind this: the mass beat a thin shell 9-1 ("reads as physical and
 tangible"); fine lumps with grazing shadows beat the bare mass 9-1; one cluster
@@ -91,14 +96,21 @@ boundary 1.6 degrees wide). The cause is its two density ramps, not the lighting
 a dial that narrows them is prototyped, pending a blind test (`ROADMAP.md`,
 *Hard edges*).
 
-### 3.2 The shell (the other form)
+### 3.2 The distant nebulae
 
-A thin folded sheet: a radial profile read at a point displaced by noise, so folds
-seen edge on become filaments; holes; a lognormal column density so most sight
-lines are thin and a few thick; pillars pointing at their cluster; dark clouds in
-the cavity, backlit. Kept as a form for veils and lighter skies (`PRINCIPLES §11`)
--- for now: it is to be retired, and bubbles made anew (`ROADMAP.md`, *The shell's
-retirement, and bubbles*). The distant nebulae are shells in both styles.
+Masses too, some degrees across, seen from outside (`docs/studies/distant.md`).
+Lit from within, one glows evenly and has no form, so a distant nebula's clusters
+stand beside it, across the line of sight; its gas has no fine lumps (at a few
+degrees they are specks), its outline is lobed and squeezed, and a little glow
+fills it, rimmed at the edge where its ionisation front is seen edge on. Each
+bubble's light is dimmed by the galaxy's dust between it and the viewer
+(`Bubble::veil`), scaled up from the thin layer the galaxy's look was tuned with:
+a depth cue that applies to anything placed in the sky, the bubbles to come
+included.
+
+Look 1 had a second form, a thin folded shell with capsule pillars and dark
+clouds, which lost to the mass 9-1 blind; look 2 retired it, and the distant
+shells with it.
 
 ### 3.3 Light and emission
 
@@ -147,7 +159,7 @@ sky. Fitted from measurements only (`fence #4`).
 A faint haze in the palette's darkest colour is added *over* the gas, so no cloud
 is darker than empty space; a shoulder eases the brightest channel rather than
 clipping it. The shoulder is meant for the 8-bit derivation only, leaving HDR
-output unshouldered; look 1 still applies it in HDR, before the stars, as the
+output unshouldered; the look still applies it in HDR, before the stars, as the
 look was judged in the labs. Moving it changes the look, so it waits for a new
 look version and a blind comparison (`ROADMAP.md`, *The look*).
 
@@ -165,7 +177,7 @@ octaves, clamped to its range: the additive model Arps Euclidya's macros use, so
 one parameter can serve several macros.
 
 Macros bind only look parameters (`docs/studies/parameters.md`): never quality,
-debug, or those off by a decision or retiring with the shell; `test_macros` holds
+debug, or those off by a decision; `test_macros` holds
 the table to that. A parameter that exists only to serve one macro -- the
 palettes' chroma, vivid's; the depth of the mass's lumps, billowing's -- belongs to
 it (`Dial::owner`): it is not a raw
@@ -174,8 +186,8 @@ parameter study, is measured and scored blind in `docs/studies/macros.md`; which
 way each end should go, and how far, is iterated with blind scoring. Colour family
 and hue type stay choices of the seed, overridable.
 
-**Discrete choices are not additive.** The form (mass or shell) and the sparse
-compositions are *styles*; macros steer within a style.
+**Discrete choices are not additive.** The sparse compositions are to be
+*styles*; macros steer within a style. Today there is one, the mass.
 
 ## 6. Seeds
 
@@ -188,7 +200,10 @@ derived from the seed, so the same seed is the same sky (`PRINCIPLES §6`, §7).
 A project file (TOML) holds: the look version, the seed, the style, macro values,
 raw overrides, orientation and outputs. It is small and human-readable.
 
-The **look version** is recorded in every project. A change that alters any sky's
+The **look version** is recorded in every project. Look 1 was the lift from the
+labs; look 2 retired the shell and remade the distant nebulae, a mass sky's main
+nebula unchanged (`src/core/project.h`). This StarCanopy renders look 2, and
+refuses look 1 saying how to render it as look 2. A change that alters any sky's
 pixels is a new look version; the renderer keeps the old ones renderable, or
 refuses with a clear message, rather than silently re-rendering an old project
 differently. `test_look` holds each look version to reference statistics of a
@@ -228,7 +243,7 @@ example. Unknown keys are errors, since a typo ignored is a different sky.
 ## 9. Performance
 
 Measured in the labs on an AMD laptop integrated GPU, at 2048 per face with 2x2
-supersampling: about 59 s for the mass, 26 s for the shell. The view march is 95%
+supersampling: about 59 s for the mass. The view march is 95%
 of the GPU time. At 128 per face that pixel count is 256 times smaller; the light
 volume's fixed cost (about 4 s for a mass) then dominates, and the preview ladder
 will need a lighter light volume at small sizes that still gives the same sky -- to

@@ -9,8 +9,6 @@ namespace {
 
 constexpr float kPi = 3.14159265358979323846f;
 
-// The hue dust turns toward, the short way round.
-constexpr float kBrown = 55.0f;
 
 // The families a palette's dark end is drawn from, fitted to the paths of hue
 // and chroma against lightness in 23 reference images, with the gaps between
@@ -68,22 +66,6 @@ void oklabToLinear(float l, float a, float b, float rgb[3]) {
   rgb[0] = 4.0767416621f * l_ - 3.3077115913f * m_ + 0.2309699292f * s_;
   rgb[1] = -1.2684380046f * l_ + 2.6097574011f * m_ - 0.3413193965f * s_;
   rgb[2] = -0.0041960863f * l_ - 0.7034186147f * m_ + 1.7076147010f * s_;
-}
-
-// The dust's palette from the gas's: its hue moved toward brown by the
-// palette's dust, the short way round; its chroma kept up at the dark end,
-// where the gas's fades to grey, since dark brown is still brown -- but where
-// the dust keeps the gas's hue, as in a blue sky, less colourful than the gas,
-// dark slate rather than navy; its peak darker, the dust being the dark part of
-// the sky; and its lit edges drifting to cream like the gas's highlights.
-Palette dustPalette(const Palette& g) {
-  float turn = fmodf(kBrown - g.hue + 540.0f, 360.0f) - 180.0f;
-  Palette d = g;
-  d.hue = g.hue + g.dust * turn;
-  d.chroma = 0.6f * g.chroma + g.dust * (fmaxf(g.chroma, 0.05f) - 0.6f * g.chroma);
-  d.peak = 0.42f;
-  d.drift = fmaxf(g.drift, 0.8f * g.dust);
-  return d;
 }
 
 // A second palette, for a fan of colour across the sky or two regions of their
@@ -214,7 +196,7 @@ void buildGrade(uint32_t seed, const PaletteChoice& choice, Look& l) {
   if (!choice.grade) {
     for (int i = 0; i < kRampStops; i++) {
       for (int j = 0; j < 3; j++) {
-        l.ramp[i][j] = l.dustRamp[i][j] = 1.0f;
+        l.ramp[i][j] = 1.0f;
       }
     }
     l.grade = 0.0f;
@@ -222,13 +204,6 @@ void buildGrade(uint32_t seed, const PaletteChoice& choice, Look& l) {
     family = drawPalette(seed, choice.family, g);
     g.chroma *= choice.chroma;
     paletteRamp(g, l.ramp);
-    paletteRamp(dustPalette(g), l.dustRamp);
-    // A dust setting of 0 is the gas's ramp for the dust too.
-    for (int i = 0; i < kRampStops; i++) {
-      for (int j = 0; j < 3; j++) {
-        l.dustRamp[i][j] = l.ramp[i][j] + choice.dust * (l.dustRamp[i][j] - l.ramp[i][j]);
-      }
-    }
     l.grade = choice.strength;
   }
   buildSecond(seed, choice, g, family, l);

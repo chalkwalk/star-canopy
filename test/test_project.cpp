@@ -49,15 +49,15 @@ int main(int argc, char** argv) {
   std::string error;
 
   // A new project loads, as written.
-  CHECK(load(projectText(42, "shell", "night"), p, error));
-  CHECK(p.look == kLookVersion && p.settings.seed == 42 && p.settings.form == 0);
+  CHECK(load(projectText(42, "night"), p, error));
+  CHECK(p.look == kLookVersion && kLookVersion == 2 && p.settings.seed == 42);
   CHECK(p.size == 2048 && p.output.name == "night" && p.output.directory == dir + "/night");
   CHECK(p.output.formats.size() == 3);
   // It lists every macro, at 0: the seed's own sky.
   {
     int count = 0;
     const Macro* m = macros(count);
-    std::string text = projectText(42, "shell", "night");
+    std::string text = projectText(42, "night");
     for (int i = 0; i < count; i++) {
       CHECK(text.find(std::string("\n") + m[i].name + " ") != std::string::npos);
     }
@@ -68,8 +68,8 @@ int main(int argc, char** argv) {
   }
 
   // Everything a project can say.
-  CHECK(load("look = 1\nseed = 7\nstyle = \"mass\"\n[macros]\nopen = 0.5\nbright = -1\n"
-             "[overrides]\ndensity = 1.5\nexposure = 0.25\nline-colors = \"hoo\"\nclouds = 2\n"
+  CHECK(load("look = 2\nseed = 7\nstyle = \"mass\"\n[macros]\nopen = 0.5\nbright = -1\n"
+             "[overrides]\ndensity = 1.5\nexposure = 0.25\nline-colors = \"hoo\"\nmass-clusters = 2\n"
              "[orientation]\nyaw = 90\npitch = -10.5\n"
              "[output]\nsize = 512\ndirectory = \"/tmp/x\"\nname = \"a\"\n"
              "formats = [\"ktx2\", \"png-cross\"]\nequirect_width = 1000\n",
@@ -77,9 +77,9 @@ int main(int argc, char** argv) {
   if (!error.empty()) {
     std::printf("%s\n", error.c_str());
   }
-  CHECK(p.settings.seed == 7 && p.settings.form == 1);
+  CHECK(p.settings.seed == 7);
   CHECK(p.settings.density == 1.5f && p.settings.exposure == 0.25f);
-  CHECK(p.settings.lineColors == 2 && p.settings.clouds == 2);
+  CHECK(p.settings.lineColors == 2 && p.settings.massClusters == 2);
   // Macros are kept apart from the overrides, which are their base.
   CHECK(p.macros.size() == 2 && p.macros["open"] == 0.5f && p.macros["bright"] == -1.0f);
   CHECK(p.resolved().exposure == 0.125f && p.resolved().density == 1.5f);
@@ -89,25 +89,28 @@ int main(int argc, char** argv) {
 
   // The look version is required, and a newer one refused.
   CHECK(fails("seed = 1\n", "look"));
-  CHECK(fails("look = 2\n", "newer"));
+  CHECK(fails("look = 3\n", "newer"));
+  // Look 1 is refused, saying why and what to do.
+  CHECK(fails("look = 1\n", "look = 2"));
   CHECK(fails("look = 0\n", "not a look version"));
   // Nothing unknown passes silently.
-  CHECK(fails("look = 1\nsed = 3\n", "sed"));
-  CHECK(fails("look = 1\n[overrides]\ndensty = 1\n", "densty"));
-  CHECK(fails("look = 1\n[output]\nsise = 1\n", "sise"));
-  CHECK(fails("look = 1\n[orientation]\nturn = 1\n", "turn"));
-  CHECK(fails("look = 1\n[output]\nformats = [\"gif\"]\n", "formats"));
+  CHECK(fails("look = 2\nsed = 3\n", "sed"));
+  CHECK(fails("look = 2\n[overrides]\ndensty = 1\n", "densty"));
+  CHECK(fails("look = 2\n[output]\nsise = 1\n", "sise"));
+  CHECK(fails("look = 2\n[orientation]\nturn = 1\n", "turn"));
+  CHECK(fails("look = 2\n[output]\nformats = [\"gif\"]\n", "formats"));
   // Nor anything malformed or out of range.
-  CHECK(fails("look = 1\nstyle = \"cloud\"\n", "style"));
-  CHECK(fails("look = 1\n[overrides]\ndensity = 1000\n", "density"));
-  CHECK(fails("look = 1\n[overrides]\nseed = 3\n", "seed"));
-  CHECK(fails("look = 1\n[overrides]\nform = \"mass\"\n", "style"));
-  CHECK(fails("look = 1\n[macros]\nopne = 0.5\n", "opne"));
-  CHECK(fails("look = 1\n[macros]\nopen = 1.5\n", "open"));
-  CHECK(fails("look = 1\n[macros]\nopen = \"wide\"\n", "open"));
-  CHECK(fails("look = 1\n[macros]\ndensity = 1\n", "[overrides]"));
-  CHECK(fails("look = 1\n[output]\nsize = 0\n", "size"));
-  CHECK(fails("look = 1\n[output]\nname = \"a/b\"\n", "name"));
-  CHECK(fails("look = 1\nseed = \n", "project.toml:2"));  // a TOML error, with its line
+  CHECK(fails("look = 2\nstyle = \"cloud\"\n", "style"));
+  CHECK(fails("look = 2\n[overrides]\ndensity = 1000\n", "density"));
+  CHECK(fails("look = 2\n[overrides]\nseed = 3\n", "seed"));
+  CHECK(fails("look = 2\nstyle = \"shell\"\n", "retired"));
+  CHECK(fails("look = 2\n[overrides]\nform = \"mass\"\n", "form"));
+  CHECK(fails("look = 2\n[macros]\nopne = 0.5\n", "opne"));
+  CHECK(fails("look = 2\n[macros]\nopen = 1.5\n", "open"));
+  CHECK(fails("look = 2\n[macros]\nopen = \"wide\"\n", "open"));
+  CHECK(fails("look = 2\n[macros]\ndensity = 1\n", "[overrides]"));
+  CHECK(fails("look = 2\n[output]\nsize = 0\n", "size"));
+  CHECK(fails("look = 2\n[output]\nname = \"a/b\"\n", "name"));
+  CHECK(fails("look = 2\nseed = \n", "project.toml:2"));  // a TOML error, with its line
   return test::finish();
 }
