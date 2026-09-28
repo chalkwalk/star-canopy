@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+"""Blind pairs between two atlas renders: for each step of the galaxy work, the
+atlas as it was against the atlas as it is (PRINCIPLES §1, §2).
+
+  pairs.py BEFORE_DIR AFTER_DIR OUT_DIR
+
+For each sheet in both, one pair: the two skies side by side, which side is
+which drawn at random, each shown as its whole sky (in galactic coordinates)
+above the atlas's views toward the galaxy's centre and along its plane. The
+pairs are shuffled; the key goes to OUT_DIR/key.csv, to be opened only when the
+scores are in; OUT_DIR/scores.md is the sheet to score on.
+
+Needs Pillow. Output belongs outside the repository.
+"""
+import os
+import random
+import sys
+
+from PIL import Image
+
+GAP = 16
+
+
+def side(path):
+    sheet = Image.open(path)
+    w = sheet.width
+    sky = sheet.crop((0, 0, w, w // 2)).resize((1024, 512))
+    top = w // 2 + GAP
+    # The atlas's views are 512 across: toward the centre, then away, then along
+    # the plane.
+    centre = sheet.crop((0, top, 512, top + 512))
+    along = sheet.crop((1024, top, 1536, top + 512))
+    out = Image.new("RGB", (1024, 512 + GAP + 512), (5, 5, 5))
+    out.paste(sky, (0, 0))
+    out.paste(centre, (0, 512 + GAP))
+    out.paste(along, (512, 512 + GAP))
+    return out
+
+
+def main():
+    if len(sys.argv) != 4:
+        sys.exit(__doc__)
+    before, after, out = sys.argv[1:]
+    names = sorted(set(os.listdir(before)) & set(os.listdir(after)))
+    names = [n for n in names if n.endswith(".png")]
+    if not names:
+        sys.exit("no sheets in common")
+    os.makedirs(out, exist_ok=True)
+    # Not reproducible on purpose: a scorer who could rerun the draw could
+    # know the key.
+    rng = random.SystemRandom()
+    rng.shuffle(names)
+    with open(os.path.join(out, "key.csv"), "w") as key, \
+            open(os.path.join(out, "scores.md"), "w") as scores:
+        key.write("pair,sheet,left,right\n")
+        scores.write(
+            "# Blind pairs: the galaxy\n\n"
+            "Each sheet is one seed's galaxy, the nebula off, from one place in it, made two\n"
+            "ways, left and right: the whole sky with the galaxy's centre in the middle and\n"
+            "its plane across, and below it views 45 degrees across toward the centre and\n"
+            "along the plane. Which side is which is drawn at random. Do not open key.csv\n"
+            "until every line below is filled in.\n\n"
+            "For each pair: which you would rather have (L, R or = for no preference), and a\n"
+            "note on what differs.\n\n"
+            "| pair | rather have | note |\n|---|---|---|\n")
+        for i, name in enumerate(names, 1):
+            sides = [("before", before), ("after", after)]
+            rng.shuffle(sides)
+            left, right = side(os.path.join(sides[0][1], name)), side(os.path.join(sides[1][1], name))
+            sheet = Image.new("RGB", (left.width * 2 + 2 * GAP, left.height), (60, 60, 60))
+            sheet.paste(left, (0, 0))
+            sheet.paste(right, (left.width + 2 * GAP, 0))
+            sheet.save(os.path.join(out, f"pair{i:02d}.png"))
+            key.write(f"{i},{name[:-4]},{sides[0][0]},{sides[1][0]}\n")
+            scores.write(f"| {i} | | |\n")
+    print(f"{len(names)} pairs in {out}")
+
+
+main()
