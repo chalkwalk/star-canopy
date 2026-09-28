@@ -175,11 +175,11 @@ missing, not a target. Where look and physics disagree the look wins
 (`PRINCIPLES §3`), found by eye and settled blind (`§2`); any number fitted
 from it goes in `SOURCES.md`.
 
-- [ ] Vantage atlas in `tools/`: fixed places -- mid-disc, the rim, near the
-      centre, just past the edge, above the disc low and high, the outlier
-      margin -- over several seeds, whole sky and 45-degree views. First with
-      today's model, to see what emerges and where it breaks; then the bench
-      for every step below
+- [x] Vantage atlas (`tools/atlas`): eight places, three seeds, the whole sky in
+      galactic coordinates and four 45-degree views. Today's model, read in
+      `docs/studies/atlas.md`: no band of stars, one smooth line of dust, the
+      centre burnt out and the rim empty, no arms from above, no warp. The
+      bench for every step below
 - [ ] Dust across scales: a contrasty fractal density from about 10 pc to 1 kpc,
       mostly empty with dense clouds; a layer thick or varied enough that near
       clouds leave the plane; the glow baked at export resolution, in strips
