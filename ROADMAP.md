@@ -180,10 +180,13 @@ from it goes in `SOURCES.md`.
       `docs/studies/atlas.md`: no band of stars, one smooth line of dust, the
       centre burnt out and the rim empty, no arms from above, no warp. The
       bench for every step below
-- [ ] Dust across scales: a contrasty fractal density from about 10 pc to 1 kpc,
-      mostly empty with dense clouds; a layer thick or varied enough that near
-      clouds leave the plane; the glow baked at export resolution, in strips
-      against the watchdog; the CPU twin in step (`test_galaxy`)
+- [x] Dust across scales (look 3): a lognormal from about 0.8 kpc to 12 pc, the
+      finer octaves ridged, clumped more or less by seed; a layer varied in
+      thickness and height; the glow baked at the sky's own size in strips;
+      the CPU twin in step (`test_galaxy`). Preferred 9-0 blind on the atlas
+      (`docs/studies/atlas.md`). The observer's default height is the midplane
+- [ ] Softer still than the sky it was read off: windows, black cores and amber
+      edges are few. A later pass, judged on the atlas
 - [ ] The band made of stars: stars near enough to meet the nebula stay points
       in 3D; beyond them the march counts expected stars per solid angle in a
       few apparent-brightness bins, each reddened by the dust at its depth, and

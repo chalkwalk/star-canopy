@@ -24,6 +24,34 @@ float noise(const float p[3], int c) {
   return periodicNoise(p[0], p[1], p[2], kNoisePeriod, 7919u * static_cast<uint32_t>(c + 1));
 }
 
+// The dust's fractal, a lognormal of GAL_DUST_OCTAVES octaves; see
+// gal_dust_field() in galaxy.glsl, which this must match.
+constexpr int kDustOctaves = 7;
+constexpr float kDustGain = 0.75f, kDustNorm = 2.2448f;
+constexpr int kDustRidged = 2;
+
+float dustField(const float p[3], float footprint, float sigma) {
+  float f = 1.3f, a = 1.0f, sum = 0.0f, kept = 0.0f, scale = 1.0f / sqrtf(0.073f * kDustNorm);
+  for (int k = 0; k < kDustOctaves; k++) {
+    float w = fminf(fmaxf(1.0f / (f * 2.0f * footprint) - 1.0f, 0.0f), 1.0f);
+    if (w > 0.0f) {
+      float q[3];
+      for (int i = 0; i < 3; i++) {
+        q[i] = p[i] * f + static_cast<float>(k) * 7.31f;
+      }
+      float v = noise(q, k % 4);
+      if (k >= kDustRidged) {
+        v = (0.219f - fabsf(v)) * 1.72f;
+      }
+      sum += a * w * v;
+      kept += a * a * w * w;
+    }
+    a *= kDustGain;
+    f *= 2.07f;
+  }
+  return expf(sigma * sum * scale - 0.5f * sigma * sigma * kept / kDustNorm);
+}
+
 }  // namespace
 
 Galaxy generateGalaxy(uint32_t seed, const GalaxyParams& p) {
@@ -104,6 +132,10 @@ Galaxy generateGalaxy(uint32_t seed, const GalaxyParams& p) {
     e.axisRatio = rng.range(0.15f, 1.0f);
     e.brightness = rng.range(0.3f, 1.0f);
   }
+  // From a stream of its own, so the number of external galaxies, which
+  // decides how many draws come before, cannot change it.
+  Random dustRng(seed * 2246822519u + 3079u);
+  g.dustSigma = dustRng.range(1.2f, 2.6f);
   return g;
 }
 
@@ -118,7 +150,9 @@ float dustDepth(const Galaxy& g, const float offset[3]) {
     for (int k = 0; k < 3; k++) {
       p[k] = g.observer[k] + offset[k] * t;
     }
-    tau += galaxyDensity(g, p).dust;
+    // The dust's detail no finer than a step: finer, and a step lands in a
+    // cloud or misses it by chance.
+    tau += galaxyDensity(g, p, len / static_cast<float>(steps)).dust;
   }
   return tau * len / static_cast<float>(steps);
 }
@@ -129,7 +163,7 @@ void galaxyToFrame(const Galaxy& g, const float sky[3], float out[3]) {
   }
 }
 
-GalaxySample galaxyDensity(const Galaxy& g, const float p[3]) {
+GalaxySample galaxyDensity(const Galaxy& g, const float p[3], float footprint) {
   GalaxySample s{};
   float rDisc = sqrtf(p[0] * p[0] + p[1] * p[1]);
   float r = sqrtf(dot3(p, p));
@@ -180,20 +214,19 @@ GalaxySample galaxyDensity(const Galaxy& g, const float p[3]) {
   s.old += g.bulgeStrength * 0.6f * expf(-r / 1.0f);
   s.old += 0.0008f / powf(1.0f + r * r / 4.0f, 1.5f);
 
-  // Two octaves, the finer one strong, so the dust breaks into lanes and
-  // filaments rather than lying in soft sheets.
-  q[0] = p[0] * 1.3f;
-  q[1] = p[1] * 1.3f;
-  q[2] = p[2] * 1.3f;
-  clump = 0.3f + 1.0f * noise(q, 1);
-  q[0] = p[0] * 4.1f + 11.0f;
-  q[1] = p[1] * 4.1f + 11.0f;
-  q[2] = p[2] * 4.1f + 11.0f;
-  clump = fminf(fmaxf(clump + 0.9f * noise(q, 3), 0.0f), 2.5f);
-  float dh = g.dustHeight * h / g.scaleHeight;
-  s.dust = g.dust * expf(-rDisc / (1.5f * g.scaleLength)) *
+  // The dust layer, thin but not flat: its thickness and its middle vary by
+  // low noises, so near clouds stand out of the plane. See gal_density().
+  for (int i = 0; i < 3; i++) {
+    q[i] = p[i] * 0.9f + 5.0f;
+  }
+  float dh = g.dustHeight * h / g.scaleHeight * expf(1.2f * noise(q, 0));
+  for (int i = 0; i < 3; i++) {
+    q[i] = p[i] * 0.5f + 9.0f;
+  }
+  dz -= 0.3f * noise(q, 1);
+  s.dust = g.dust * 0.4f * expf(-rDisc / (1.5f * g.scaleLength)) *
            (1.0f - smoothstep(0.8f * g.edge, g.edge, rDisc)) * expf(-(dz * dz) / (dh * dh)) *
-           (0.3f + 1.2f * arm) * clump;
+           (0.3f + 1.2f * arm) * dustField(p, footprint, g.dustSigma);
   return s;
 }
 

@@ -52,6 +52,8 @@ int main() {
   glBindVertexArray(vertexArray);
 
   double worst[3] = {0.0, 0.0, 0.0};
+  // At full detail, and at footprints where the dust's finer octaves fade.
+  for (float footprint : {0.0f, 0.02f, 0.3f}) {
   for (uint32_t seed : {1u, 7u, 42u}) {
     for (int style = 0; style < 3; style++) {
       GalaxyParams params;
@@ -80,6 +82,7 @@ int main() {
       glUniform1i(probe.uniform("u_Noise"), 0);
       uploadGalaxy(probe, g);
       glUniform3fv(probe.uniform("u_Points"), n, points.data());
+      glUniform1f(probe.uniform("u_Footprint"), footprint);
       glViewport(0, 0, n, 1);
       glDrawArrays(GL_TRIANGLES, 0, 3);
       std::vector<float> gpu(n * 4);
@@ -90,7 +93,7 @@ int main() {
       float scale[3] = {1e-9f, 1e-9f, 1e-9f};
       std::vector<GalaxySample> cpu(n);
       for (int i = 0; i < n; i++) {
-        cpu[i] = galaxyDensity(g, &points[i * 3]);
+        cpu[i] = galaxyDensity(g, &points[i * 3], footprint);
         scale[0] = std::fmax(scale[0], cpu[i].old);
         scale[1] = std::fmax(scale[1], cpu[i].young);
         scale[2] = std::fmax(scale[2], cpu[i].dust);
@@ -103,14 +106,18 @@ int main() {
       }
     }
   }
+  }
   std::printf("worst difference, relative to each term's largest: old %.4f young %.4f dust %.4f\n",
               worst[0], worst[1], worst[2]);
   CHECK(glGetError() == GL_NO_ERROR);
   // The noise volume's 8 bits and trilinear filtering move a clump factor by a
-  // little: measured, at most 0.6% of old light, 1.5% of young and 0.9% of dust
-  // on these points. A twin that drifted apart differs by far more.
+  // little: measured, at most 0.6% of old light and 1.5% of young on these
+  // points. The dust is a lognormal of seven octaves, which sums the rounding
+  // of each and multiplies it about four times in the exponent: 5.4% at full
+  // detail, under 0.1% once the finest octaves fade. A twin that drifted apart
+  // differs by far more.
   CHECK(worst[0] < 0.05);
   CHECK(worst[1] < 0.05);
-  CHECK(worst[2] < 0.05);
+  CHECK(worst[2] < 0.08);
   return test::finish();
 }

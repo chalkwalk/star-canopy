@@ -17,13 +17,16 @@ namespace starcanopy {
 //   1  the lift from the labs: a mass or a thin shell, distant shells
 //   2  the shell retired: every nebula a mass, the distant ones lit from beside
 //      them (docs/studies/distant.md); a mass sky's main nebula as in look 1
+//   3  the galaxy's dust at every scale, by seed more or less clumped, its glow
+//      baked at the sky's own size; the observer on the midplane
+//      (docs/studies/atlas.md)
 //
-// This StarCanopy renders look 2 only, and refuses look 1 with a reason.
-constexpr int kLookVersion = 2;
+// This StarCanopy renders look 3 only, and refuses older looks with a reason.
+constexpr int kLookVersion = 3;
 
 // A project: how a sky is made again. Small, human-readable TOML:
 //
-//   look = 2                 # the look version it was made with
+//   look = 3                 # the look version it was made with
 //   seed = 7
 //   style = "mass"           # mass; the sparse compositions are to come
 //

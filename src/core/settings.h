@@ -94,13 +94,13 @@ struct Settings {
   int nebula = 1;
   int galaxyStyle = 0;  // barred spiral
   float galaxyRadius = 3.5f;
-  float galaxyHeight = 0.03f;
+  float galaxyHeight = 0.0f;
   float galaxyGlow = 1.5f;
   float galaxyDust = 1.0f;
   float galaxyWarp = 1.0f;
   float galaxyWaves = 1.0f;
   int externalGalaxies = 4;
-  int galaxyRes = 512;
+  int galaxyRes = 0;  // the sky's own size
 
   // The bake.
   float exposure = 0.18f;

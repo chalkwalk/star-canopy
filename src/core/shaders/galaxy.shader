@@ -12,9 +12,8 @@
  * and runs it right round the sky.  Leaving it out leaves a thin arc toward the centre and
  * nothing else: a galaxy seen from outside, not from within.
  *
- * Smooth enough, but for the dust, to bake small -- a few hundred texels a face -- and
- * cheap: one analytic density and two noise fetches a step.  Done once per galaxy, not per
- * nebula bake.
+ * Baked at the sky's own size, since the dust has structure down to tens of parsecs and a
+ * sky baked smaller blurs its rift.  Done once per galaxy, not per nebula bake.
  */
 
 #if defined(INCLUDE_VS)
@@ -30,7 +29,7 @@ void main()
 
 #if defined(INCLUDE_FS)
 
-#define GAL_STEPS 128
+#define GAL_STEPS 512
 #define GAL_MAX_EXTERNAL 8
 /* Where the knee begins: a few times the light along the disc from near the Sun's radius. */
 #define GAL_KNEE 1.5
@@ -65,6 +64,8 @@ void main()
 {
 	vec2 st = gl_FragCoord.xy / u_FaceSize * 2.0 - 1.0;
 	vec3 dir = normalize(face_direction(u_Face, st));
+	/* The angle one texel subtends here, shrunk toward the face's edges and corners. */
+	float pixel_angle = (2.0 / u_FaceSize) / (1.0 + dot(st, st));
 	vec3 d = u_GalRot * dir;
 	vec3 o = u_GalObserver;
 	/* Everything, halo included, lies within a few disc edges of the centre. */
@@ -84,8 +85,11 @@ void main()
 		for (i = 0; i < GAL_STEPS && t_end > t_start; i++) {
 			float ta = t_start * pow(ratio, float(i) / float(GAL_STEPS));
 			float tb = t_start * pow(ratio, float(i + 1) / float(GAL_STEPS));
-			float dt = tb - ta;
-			gal_sample s = gal_density(o + d * (0.5 * (ta + tb)));
+			float dt = tb - ta, t = 0.5 * (ta + tb);
+			/* The dust's detail as fine as the texel is wide there, and no finer than
+			 * half a step: finer than a step, a step lands in a cloud or misses it by
+			 * chance, and the texels beside it by different chances -- grain. */
+			gal_sample s = gal_density(o + d * t, max(t * pixel_angle, 0.5 * dt));
 			vec3 light = s.old * vec3(1.0, 0.86, 0.7) + s.young * vec3(0.7, 0.8, 1.0);
 
 			glow += transmit * light * dt;

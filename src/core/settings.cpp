@@ -161,7 +161,8 @@ const Dial kDials[] = {
   REAL("galaxy-waves", "the bending waves rippling the outer disc", galaxyWaves, 0.0f, 5.0f),
   INT("external-galaxies", "other galaxies, far beyond this one", externalGalaxies, 0.0f,
       static_cast<float>(kMaxExternalGalaxies)),
-  INT("galaxy-res", "texels per face of the galaxy's glow", galaxyRes, 64.0f, 2048.0f),
+  INT("galaxy-res", "texels per face of the galaxy's glow; 0 the sky's own", galaxyRes, 0.0f,
+      4096.0f),
 
   GEO("exposure", "scales the nebula before the tonemapper", exposure, 0.0001f, 100.0f),
   GEO0("denoise", "tolerance of the filter that takes out the march's grain; 0 is off", denoise, 0.05f, 4.0f),

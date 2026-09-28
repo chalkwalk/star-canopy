@@ -137,7 +137,12 @@ frame. Rules that are each the answer to an artefact:
 
 A 3D galaxy model (disc, bar, bulge, arms, warp, bending waves, dust) marched from
 where the observer sits, giving the band, its rift and a lopsided sky near the
-edge. About 30,000 field stars sampled from the same model at real distances, each
+edge. Its dust is a lognormal of seven octaves, from about 0.8 kpc to 12 pc, the
+finer ones ridged into filaments, more or less clumped by seed; octaves finer
+than a sample fade out with the mean kept, so a small sky is the same sky
+coarser. Its layer varies in thickness and height, so near clouds stand out of
+the plane. The glow is baked at the sky's own size (`docs/studies/atlas.md`).
+About 30,000 field stars sampled from the same model at real distances, each
 dimmed and reddened by exactly the gas in front of it, so stars lie in front of,
 inside and behind the nebula. Diffraction spikes are off: baked into a sky they
 read as a telescope's artefact.
@@ -202,8 +207,9 @@ raw overrides, orientation and outputs. It is small and human-readable.
 
 The **look version** is recorded in every project. Look 1 was the lift from the
 labs; look 2 retired the shell and remade the distant nebulae, a mass sky's main
-nebula unchanged (`src/core/project.h`). This StarCanopy renders look 2, and
-refuses look 1 saying how to render it as look 2. A change that alters any sky's
+nebula unchanged; look 3 remade the galaxy's dust (`src/core/project.h`). This
+StarCanopy renders the latest look, and refuses older ones saying how to render
+them with it. A change that alters any sky's
 pixels is a new look version; the renderer keeps the old ones renderable, or
 refuses with a clear message, rather than silently re-rendering an old project
 differently. `test_look` holds each look version to reference statistics of a

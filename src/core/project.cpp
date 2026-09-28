@@ -82,10 +82,11 @@ bool loadProject(const std::string& path, Project& p, std::string& error) {
   if (*look < 1) {
     return fail("look " + std::to_string(*look) + " is not a look version");
   }
-  if (*look == 1) {
-    return fail("made with look 1, which this StarCanopy no longer renders: look 2 retired the "
-                "shell style and remade the distant nebulae. A mass sky's main nebula is the "
-                "same in look 2; to render it so, set look = 2");
+  if (*look < kLookVersion) {
+    return fail("made with look " + std::to_string(*look) +
+                ", which this StarCanopy no longer renders (see project.h for what each look "
+                "changed); to render it with look " + std::to_string(kLookVersion) +
+                ", set look = " + std::to_string(kLookVersion));
   }
   p.look = static_cast<int>(*look);
 

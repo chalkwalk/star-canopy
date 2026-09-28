@@ -45,7 +45,9 @@ void bakeSky(Baker& baker, const Settings& settings, CubemapTarget& target) {
   Scene scene = generateScene(sky.scene);
   Galaxy galaxy = generateGalaxy(sky.scene.seed, sky.galaxy);
   veilDistant(scene, galaxy, sky);
-  baker.bakeGalaxy(galaxy, sky.look.reddening, sky.galaxyRes);
+  // The glow at the sky's own size unless told otherwise: its dust has detail
+  // down to the texel.
+  baker.bakeGalaxy(galaxy, sky.look.reddening, sky.galaxyRes > 0 ? sky.galaxyRes : target.size());
   // The stars come from the whole scene, clusters and all, even with the nebula
   // off: they are the same sky, seen without its gas.
   std::vector<Star> stars = generateStars(scene, galaxy, sky.stars);

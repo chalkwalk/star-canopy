@@ -11,9 +11,50 @@ uniform float u_GalEdge;
 uniform vec4 u_GalArms;		/* count, tan(pitch), phase, strength */
 uniform vec2 u_GalArmShape;	/* sharpness, flocculence */
 uniform vec4 u_GalBar;		/* angle, length, strength, bulge strength */
-uniform vec2 u_GalDust;		/* amount, height */
+uniform vec3 u_GalDust;		/* amount, height, lognormal spread */
 uniform vec3 u_GalWarp;		/* amplitude, start, phase */
 uniform vec3 u_GalWaves;	/* amplitude, wavelength, phase */
+
+/* The dust's fractal: GAL_DUST_OCTAVES octaves of noise from about 0.8 kpc down to about
+ * 12 pc, each GAL_DUST_GAIN of the last, taken as a lognormal -- the column density
+ * interstellar gas has: most of it thin, a few clouds dense -- with a spread drawn by
+ * seed (u_GalDust.z).  Octaves finer than twice the footprint fade out, as the nebula's detail
+ * does, and the lognormal's mean is corrected for the octaves kept, so a coarse sample has as
+ * much dust as a fine one, only smoother: a small sky is the same sky seen more coarsely.
+ * 0.073 is the single noise's variance, measured; GAL_DUST_NORM the octaves' amplitudes
+ * squared, summed.  The CPU twin is galaxyDust() in galaxy.cpp. */
+#define GAL_DUST_OCTAVES 7
+#define GAL_DUST_GAIN 0.75
+#define GAL_DUST_NORM 2.2448
+#define GAL_DUST_RIDGED 2
+
+float gal_dust_field(vec3 p, float footprint)
+{
+	float f = 1.3, a = 1.0, sum = 0.0, kept = 0.0, scale = 1.0 / sqrt(0.073 * GAL_DUST_NORM);
+	int k;
+
+	for (k = 0; k < GAL_DUST_OCTAVES; k++) {
+		float w = clamp(1.0 / (f * 2.0 * footprint) - 1.0, 0.0, 1.0);
+
+		if (w > 0.0) {
+			vec4 n = nsky_noise(p * f + float(k) * 7.31);
+
+			float v = n[k - 4 * (k / 4)];
+
+			/* The finer octaves ridged, folded where the noise crosses zero and
+			 * centred again (0.219 is the mean of |n|, and 1.72 scales it to the smooth
+			 * octaves' spread): dust is filaments and sheets with edges, and smooth
+			 * noise alone makes it round soft blobs. */
+			if (k >= GAL_DUST_RIDGED)
+				v = (0.219 - abs(v)) * 1.72;
+			sum += a * w * v;
+			kept += a * a * w * w;
+		}
+		a *= GAL_DUST_GAIN;
+		f *= 2.07;
+	}
+	return exp(u_GalDust.z * sum * scale - 0.5 * u_GalDust.z * u_GalDust.z * kept / GAL_DUST_NORM);
+}
 
 struct gal_sample {
 	float old;
@@ -21,7 +62,8 @@ struct gal_sample {
 	float dust;
 };
 
-gal_sample gal_density(vec3 p)
+/* footprint: the size of the sample, kpc, below which the dust's detail fades out. */
+gal_sample gal_density(vec3 p, float footprint)
 {
 	float r_disc = length(p.xy);
 	float r = length(p);
@@ -66,13 +108,14 @@ gal_sample gal_density(vec3 p)
 	s.old += u_GalBar.w * 0.6 * exp(-r / 1.0);
 	s.old += 0.0008 / pow(1.0 + r * r / 4.0, 1.5);
 
-	/* Two octaves, the finer one strong, so the dust breaks into lanes and filaments rather
-	 * than lying in soft sheets. */
-	clump = clamp(0.3 + 1.0 * nsky_noise(p * 1.3).y + 0.9 * nsky_noise(p * 4.1 + 11.0).w,
-			0.0, 2.5);
-	dh = u_GalDust.y * h / u_GalDisc.y;
-	s.dust = u_GalDust.x * exp(-r_disc / (1.5 * u_GalDisc.x)) *
+	/* The dust layer, thin, but not flat: its thickness varies by a low noise, a factor
+	 * of two or so either way, and its middle rides up and down by a second, so the clouds
+	 * near the observer stand out of the plane and are seen above and below the band. */
+	dh = u_GalDust.y * h / u_GalDisc.y * exp(1.2 * nsky_noise(p * 0.9 + 5.0).x);
+	dz -= 0.3 * nsky_noise(p * 0.5 + 9.0).y;
+	/* 0.4: the old two-octave clump's mean, so the dust's amount is as it was. */
+	s.dust = u_GalDust.x * 0.4 * exp(-r_disc / (1.5 * u_GalDisc.x)) *
 			(1.0 - smoothstep(0.8 * u_GalEdge, u_GalEdge, r_disc)) *
-			exp(-(dz * dz) / (dh * dh)) * (0.3 + 1.2 * arm) * clump;
+			exp(-(dz * dz) / (dh * dh)) * (0.3 + 1.2 * arm) * gal_dust_field(p, footprint);
 	return s;
 }

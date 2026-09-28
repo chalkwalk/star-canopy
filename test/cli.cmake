@@ -34,7 +34,7 @@ foreach(f sky_px.exr sky_nz.exr sky_equirect.exr sky.ktx2 sky_px.png sky_cross.p
   endif()
 endforeach()
 file(READ ${SCRATCH}/cli/sky/sky.json sidecar)
-foreach(key "\"look\": 2" "\"seed\": 3" "\"macros\": {\"open\": 0.5}" "\"yaw\": 30" "\"key_light\"" "\"light_travels\"")
+foreach(key "\"look\": 3" "\"seed\": 3" "\"macros\": {\"open\": 0.5}" "\"yaw\": 30" "\"key_light\"" "\"light_travels\"")
   string(FIND "${sidecar}" "${key}" at)
   if(at EQUAL -1)
     message(FATAL_ERROR "sidecar lacks ${key}")

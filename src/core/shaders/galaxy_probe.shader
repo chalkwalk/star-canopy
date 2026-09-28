@@ -19,12 +19,13 @@ void main()
 #define PROBE_POINTS 64
 
 uniform vec3 u_Points[PROBE_POINTS];
+uniform float u_Footprint;
 
 out vec4 f_FragColor;
 
 void main()
 {
-	gal_sample s = gal_density(u_Points[int(gl_FragCoord.x)]);
+	gal_sample s = gal_density(u_Points[int(gl_FragCoord.x)], u_Footprint);
 
 	f_FragColor = vec4(s.old, s.young, s.dust, 1.0);
 }

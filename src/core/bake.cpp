@@ -373,14 +373,22 @@ void Baker::bakeGalaxy(const Galaxy& g, const float reddening[3], int res) {
   glDrawBuffer(GL_COLOR_ATTACHMENT0);
   glViewport(0, 0, res, res);
   glBindVertexArray(emptyVertexArray_);
+  // A strip of a face at a time, so no one draw runs long enough to worry a
+  // watchdog: at export size a face of 256 steps with the dust's octaves is
+  // several seconds.
+  const int strip = 64;
+  glEnable(GL_SCISSOR_TEST);
   for (int i = 0; i < 6; i++) {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
                            galaxyTexture_, 0);
     glUniform1i(p.uniform("u_Face"), i);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    // A face at a time, so no one draw runs long enough to worry a watchdog.
-    glFinish();
+    for (int y = 0; y < res; y += strip) {
+      glScissor(0, y, res, std::min(strip, res - y));
+      glDrawArrays(GL_TRIANGLES, 0, 3);
+      glFinish();
+    }
   }
+  glDisable(GL_SCISSOR_TEST);
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
@@ -392,7 +400,7 @@ void uploadGalaxy(const Program& p, const Galaxy& g) {
   glUniform4f(p.uniform("u_GalArms"), g.arms, g.pitchTan, g.armPhase, g.armStrength);
   glUniform2f(p.uniform("u_GalArmShape"), g.armSharpness, g.flocculence);
   glUniform4f(p.uniform("u_GalBar"), g.barAngle, g.barLength, g.barStrength, g.bulgeStrength);
-  glUniform2f(p.uniform("u_GalDust"), g.dust, g.dustHeight);
+  glUniform3f(p.uniform("u_GalDust"), g.dust, g.dustHeight, g.dustSigma);
   glUniform3f(p.uniform("u_GalWarp"), g.warp, g.warpStart, g.warpPhase);
   glUniform3f(p.uniform("u_GalWaves"), g.waves, g.waveLength, g.wavePhase);
   float dir[kMaxExternalGalaxies][4] = {}, major[kMaxExternalGalaxies][4] = {};

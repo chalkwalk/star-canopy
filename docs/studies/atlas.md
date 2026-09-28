@@ -65,3 +65,31 @@ between *sun* and *rim*); the third in the few seeds that sit near the centre or
 the edge; the fourth only above the disc. The roadmap takes the dust before the
 band of stars, and should: the band's stars are reddened by the dust at their
 depth, so the dust comes first.
+
+## Dust across scales (look 3)
+
+The dust made again (`ROADMAP.md`): a lognormal of seven octaves from about 0.8
+kpc to 12 pc -- most of the volume thin, a few clouds dense -- whose octaves finer
+than a sample fade out with the mean kept; the finer ones ridged, so it makes
+filaments with edges rather than soft round blobs; a layer that varies in
+thickness and height, so near clouds stand out of the plane; 512 steps, and the
+glow baked at the sky's own size, in strips. A galaxy at 2048 a face takes 18 s.
+
+Two versions were seen and set aside by eye on the way: smooth noise at a spread
+of 1.6, which broke the rift into clumps but left it soft; and at 2.4, clumpier,
+still soft. Softness was the shapes, not the resolution -- at 45 degrees across a
+texel at 2 kpc is 3 pc -- and ridging the finer octaves gave the rift edges and
+wisps.
+
+**Blind, on the atlas** (`tools/atlas/pairs.py`; mid-disc, sun and above-low on
+seeds 1, 7 and 12, the nebula off): **the new dust preferred 9-0.** The scorer
+picked the more detailed on every pair but asked for the range of possibilities
+rather than always the most dramatic dust: so the lognormal's spread is drawn by
+seed, 1.2 to 2.6, from a soft haze of lanes to a dense cloud complex. And
+noticed fewer stars above the plane than below: physical, the observer being the
+default 30 pc above a disc 300 pc thick -- a fifth more stars below -- but not
+what a sky should have without anyone choosing it, so the default height is now
+the midplane. Places above and below come back with the seed's choice of place
+(*The observer's place*). The atlas and its pairs show the whole sky in the
+Equal Earth projection, at the scorer's preference.
+

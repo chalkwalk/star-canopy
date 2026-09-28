@@ -36,7 +36,11 @@ struct GalaxyParams {
   // The Sun is at about three scale lengths; 3.5 is out toward the edge, where
   // the galaxy's light is decidedly on one side of the sky.
   float observerRadius = 3.5f;  // from the centre, in disc scale lengths
-  float observerHeight = 0.03f;  // above the midplane, kpc
+  // Above the midplane, kpc. The Sun is some 0.02 above it, and so sees more
+  // of the disc below than above -- a fifth more stars, in the model -- which
+  // a sky nobody chose that for should not have; the seed's choice of place
+  // is to come (ROADMAP.md, The observer's place).
+  float observerHeight = 0.0f;
   float dust = 1.0f;             // multiplies the dust
   float warp = 1.0f;             // multiplies the warp
   float waves = 1.0f;            // multiplies the bending waves
@@ -62,6 +66,10 @@ struct Galaxy {
   float armSharpness, flocculence;
   float barAngle, barLength, barStrength, bulgeStrength;
   float dust, dustHeight;
+  // The spread of the dust's lognormal: how clumped it is, from a soft haze of
+  // lanes to dense clouds with clear windows between. By seed, so skies differ
+  // in it and the dust is not always at its most dramatic.
+  float dustSigma;
   float warp, warpStart, warpPhase;
   float waves, waveLength, wavePhase;
   int externalCount;
@@ -77,8 +85,9 @@ struct GalaxySample {
 Galaxy generateGalaxy(uint32_t seed, const GalaxyParams& p);
 
 // The density at p, kpc in the galaxy frame. Must match gal_density() in
-// galaxy.glsl.
-GalaxySample galaxyDensity(const Galaxy& g, const float p[3]);
+// galaxy.glsl. footprint: the size of the sample, kpc, below which the dust's
+// detail fades out; 0, all of it.
+GalaxySample galaxyDensity(const Galaxy& g, const float p[3], float footprint = 0.0f);
 
 // A sky direction into the galaxy frame.
 void galaxyToFrame(const Galaxy& g, const float sky[3], float out[3]);
