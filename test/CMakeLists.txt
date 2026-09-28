@@ -27,7 +27,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   add_test(NAME bake_egl COMMAND test_bake egl)
 endif()
 add_test(NAME bake_window COMMAND test_bake window)
-set_tests_properties(bake_window PROPERTIES SKIP_RETURN_CODE 77)
+# A display it cannot open can leave SDL waiting for ever; fail rather than hang.
+set_tests_properties(bake_window PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120)
 
 # The command line end to end: a new project, rendered small in every format.
 add_test(NAME cli
