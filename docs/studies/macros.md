@@ -84,7 +84,7 @@ showed three faults, fixed before the round below:
 
 ## What each macro does
 
-The set as it stands after round 3 (below): galactic and grand withdrawn, violent
+The set as it stands after round 4 (below): galactic and grand withdrawn, violent
 renamed turbulent, billowing remade; vivid, starry, luminous, hazy and billowing
 measured with their current bindings, the others as in the tuning above.
 
@@ -103,7 +103,7 @@ measured with their current bindings, the others as in the tuning above.
 | hazy | 4.4 / 24.6 | 89% / 100% | bright+(8/8) contr-(8/8) chroma+(8/8) detail-(8/8) top10-(8/8) | contr- | 8/8 in order |
 | vivid | 6.5 / 5.3 | 82% / 82% | bright+(5/8) contr-(8/8) chroma+(8/8) detail-(8/8) | chroma+ | 8/8 in order |
 | starry | 0.9 / 2.5 | 9% / 21% | bright+(8/8) contr+(8/8) detail+(8/8) top10+(8/8) | -- | by eye |
-| billowing | 13.9 / 12.9 | 82% / 76% | bright+(5/8) contr+(7/8) clear+(8/8) opaque-(6/8) detail+(7/8) top10+(6/8) | -- | by eye |
+| billowing | 11.9 / 12.4 | 79% / 75% | contr+(6/8) clear+(8/8) opaque-(4/8) detail-(6/8) top10+(6/8) | -- | by eye |
 
 The skies at the ends, over the seeds (min-median-max):
 
@@ -120,7 +120,7 @@ The skies at the ends, over the seeds (min-median-max):
 | hazy | 4%-16%-29% | 4%-16%-29% | 0.12-0.16-0.22 | 0.30-0.32-0.37 |
 | vivid | 4%-16%-29% | 4%-16%-29% | 0.16-0.20-0.23 | 0.16-0.20-0.29 |
 | starry | 4%-16%-29% | 4%-16%-29% | 0.16-0.20-0.25 | 0.17-0.21-0.26 |
-| billowing | 1%-4%-9% | 6%-21%-46% | 0.14-0.18-0.21 | 0.17-0.20-0.23 |
+| billowing | 2%-8%-13% | 7%-23%-51% | 0.15-0.21-0.24 | 0.17-0.20-0.24 |
 
 Macros that move the descriptors alike (cosine over the seven, from -1 to 1, over 0.8):
 
@@ -128,12 +128,9 @@ Macros that move the descriptors alike (cosine over the seven, from -1 to 1, ove
 - crisp and starry: +0.96
 - open and fragmented: +0.95
 - fragmented and turbulent: +0.95
-- turbulent and billowing: +0.95
 - detailed and starry: +0.94
 - open and turbulent: +0.89
-- fragmented and billowing: +0.87
 - detailed and crisp: +0.85
-- open and billowing: +0.83
 
 ## Reading it
 
@@ -143,12 +140,13 @@ Macros that move the descriptors alike (cosine over the seven, from -1 to 1, ove
   closed, enveloping has little left to close (seed 11 sits so deep in its mass
   that open takes it only from 4% clear to 9%), and fragmented saturates at its top
   on two.
-- **Billowing moves how open the sky is**, 4% clear at wispy to 21% at billowing
-  by the median: flattened lumps close the mass into a smooth sheet, deep ones
-  leave gaps between them. Less than grand did, and it may be part of what
-  billows are; the blind pairs will say whether it reads as billowing or as open.
+- **Billowing makes the sky less detailed**, on six seeds of eight, and moves
+  how open it is, 8% clear at wispy to 23% at billowing by the median: flattened
+  lumps close the mass into a sheet, deep ones leave gaps between them. That may
+  be part of what billows are; the blind sheets will say whether it reads as
+  billowing or as open.
 - **The ends are skies, not voids.** Open reaches 9-58% clear at 1 and 2-14% at
-  -1; no other macro moves the median clear share outside 4-26%; brightness stays
+  -1; no other macro moves the median clear share outside 7-26%; brightness stays
   within 0.11-0.37, where the seeds' own skies span 0.16-0.25.
 - **The ends are uneven.** Hazy reaches 25 levels at 1 and 4 at -1 -- there is
   little haze to take away -- and bright, luminous, turbulent and starry reach
@@ -275,4 +273,20 @@ gains `--three`: the sky at -1, 0 and 1 in an order drawn at random, A, B and C
 from the left, put in order from least to most by the scorer -- still blind, and
 the two ends seen against the seed's own. Round 4 is billowing that way, on seeds
 31, 37 and 41.
+
+## Round 4, blind, three ways
+
+Billowing at -1, 0 and 1 on each sheet, looking around, seeds 31, 37 and 41.
+Ranked least to most billowing, the three came out **in exactly the reverse order
+on every seed**: 1, 0, -1. The scorer would rather have 1, 0 and 0. On two sheets
+the -1 sky was far from the other two, on one the 1 sky: the steps are not even.
+
+So pushed further, the wispy end -- flattened lumps smoothed into swirled veils --
+became what reads as billowing, and the billowing end -- deep lumps with all their
+fine detail and firm edges -- read as clumps. The scorer's suggestion fits it: more
+billow wants less detail. Billowing now draws the fine detail out of its deep lumps
+and softens their edges (less detail gain, fewer fine lumps, fewer grazing
+shadows); wispy breaks flatter lumps into fine, ridged, eroded filaments and loses
+the swirl that read as billowing; and wispy's step is shorter than before, as it
+was the far one twice. Round 5 tests it three ways, on seeds 43, 47 and 53.
 

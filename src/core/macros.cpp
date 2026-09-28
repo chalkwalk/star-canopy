@@ -52,21 +52,23 @@ const Binding kDetailed[] = {
   {"graze", A, 1.0f, -1.5f},
 };
 
-// Deep rounded lumps with firm edges, like cumulus; wispy is the
-// lumps flattened and their edges eaten into ridged, swirled strands. The
-// lumps' depth is the macro's own dial (mass-billow): without it, billowing
-// could only trade billowed detail for ridged, which the scorer could barely
-// see in two rounds. Not more fine lumps, which crumple the billows rather
-// than round them; and only a little larger, since large deep lumps pull the
-// mass apart into clumps in clear sky, a second open.
+// Billowing: deep lumps, smooth -- the fine detail drawn out of them, so the
+// large forms read, and their edges soft. Wispy: flatter lumps broken into
+// fine, ridged, eroded filaments. The lumps' depth is the macro's own dial
+// (mass-billow); without it billowing could barely be seen (rounds 1-2). With
+// deep lumps and all their detail, firm-edged, it read as clumps, and the
+// smooth swirled veils of its wispy end as the billowing one, ranked so on
+// every seed (round 4): billows are large smooth forms, so the swirl is gone
+// from wispy and the detail from billowing.
 const Binding kBillowing[] = {
-  {"mass-billow", A, 1.3f, -0.8f},
-  {"filament", A, -0.5f, 0.5f},
-  {"mass-scale", O, -0.25f, 0.4f},
-  {"erosion", A, -0.35f, 0.3f},
-  {"hardness", A, 0.3f, -0.1f},
-  {"mass-warp", A, -0.1f, 0.4f},
-  {"detail-gain", A, 0.0f, 0.1f},
+  {"mass-billow", A, 1.3f, -0.6f},
+  {"mass-scale", O, -0.25f, 0.3f},
+  {"filament", A, -0.5f, 0.4f},
+  {"detail-gain", A, -0.15f, 0.1f},
+  {"mass-fine", A, -0.6f, 0.4f},
+  {"graze", A, -1.0f, 0.0f},
+  {"erosion", A, -0.2f, 0.25f},
+  {"hardness", A, -0.15f, 0.1f},
 };
 
 // Hard edges and hard shadows: crisp detail, small clusters, a sharp fill,
