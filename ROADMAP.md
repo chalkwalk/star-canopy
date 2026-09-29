@@ -114,7 +114,8 @@ testable without a window and give the A/B tools in-context sheets at once.
 - [x] Macro table (`DESIGN.md` §5) and its resolution, with tests: `[macros]` in
       projects, `render --macro`, `starcanopy macros`
 - [ ] First macro set, iterated with blind scoring (`docs/studies/macros.md`):
-      twelve now. Rounds 1 and 2 confirmed eleven names on every seed; violent
+      thirteen now, galactic confirmed after the galaxy work. Rounds 1 and 2
+      confirmed eleven names on every seed; violent
       became turbulent; galactic waits for the galaxy work (*The galaxy from any
       star*); grand was withdrawn, unreadable twice. Billowing, remade with the
       depth of the lumps as its own dial and as large smooth forms, was ranked
@@ -150,9 +151,9 @@ in look 2: those are to be found again from the mass.
 - [ ] Pick which become styles; make each reliable across seeds (the band only
       works on some)
 - [ ] A seed-chosen composition archetype, so sparse skies arrive by browsing too
-- [ ] Less nebula by default: with a galaxy worth seeing, the mass covers too
-      much of the sky. Blind A/B of today's coverage against a more open default
-      (the `open` macro's direction), a look change
+- [x] Less nebula by default (look 9): open +0.5's dials as the default,
+      preferred 4-0 with 4 ties blind (`docs/studies/macros.md`). Close on every
+      sky; further, if wanted, another round
 
 ### The shoulder in HDR
 
@@ -234,14 +235,15 @@ from it goes in `SOURCES.md`.
       *Points*). Make them worth seeing -- resolved discs, a few degrees for the
       nearest -- or drop them. Now *Neighbour galaxies*, under *Astronomical
       objects*
-- [ ] The galactic / remote macro (look 8): made, moving the observer along the
-      seed's path. The first one -- nearer the centre, more glow -- lost its name
+- [x] The galactic / remote macro (look 8, routes look 9): moving the observer
+      along the seed's path; its name confirmed on 5 of 6 seeds in each of two
+      rounds (`docs/studies/macros.md`). The first one -- nearer the centre, more glow -- lost its name
       0-3: the glow read as a brown haze over the stars. This one, blind, -1 / 0 /
       +1 ranked with the nebula on: in order on 5 of 6 seeds. The sixth reversed:
       its route rose steeply, and 1.2 kpc up the view toward the centre is the
       whole bright disc beneath, lifted by the exposure -- the most galaxy on
-      screen. Keep the routes mostly outward (0-45 degrees) or rise higher, then
-      check the name again
+      screen. The routes now keep mostly outward (0-45 degrees); in the second
+      round remote was least galactic on every seed
 - [ ] Starry to move the band too: its star budget (x2 at +1, x1/4 at -1) and
       the haze kept under it the other way, so the glow gives way to stars
       without the galaxy's light changing (the user's proposal)

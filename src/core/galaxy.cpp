@@ -77,7 +77,10 @@ void observerPlace(uint32_t seed, float place, float& radius, float& height) {
   // Above the disc only: below is the same sky mirrored, and the galaxy is
   // turned at random in the sky, so the side is no new kind of sky.
   float ownHeight = rng.range(0.0f, 0.03f);
-  float route = rng.range(0.0f, 0.5f * kPi);
+  // Mostly outward, 0 to 45 degrees: a route rising steeply put the observer
+  // over the whole bright disc, which at game field of view reads as the most
+  // galactic sky, not the least (docs/studies/atlas.md).
+  float route = rng.range(0.0f, 0.25f * kPi);
   const float far = 6.0f, high = 1.2f;
   place = fminf(fmaxf(place, -1.0f), 1.0f);
   if (place >= 0.0f) {

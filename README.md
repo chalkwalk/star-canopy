@@ -116,9 +116,8 @@ the seed's own sky. Set them in the project's `[macros]`, which `new` fills with
 every macro at 0, or with `render --macro NAME=VALUE`; `starcanopy macros` lists
 them and the dials each one moves. Every macro's name has been confirmed blind --
 picked as the side it names on every sky it was scored on -- but how far each end
-goes may still change (`ROADMAP.md`, *Macros*); `galactic`, the newest, which
-moves the observer in toward the galaxy's centre or out to where it is a distant
-object, is still to have its name confirmed.
+goes may still change (`ROADMAP.md`, *Macros*). The newest, `galactic`, moves
+the observer in toward the galaxy's centre or out to where it is a distant object.
 
 **Overrides.** `starcanopy dials` lists the raw parameters; the project's
 `[overrides]` and `render --set NAME=VALUE` set them. They are for scripting, not

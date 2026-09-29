@@ -34,9 +34,11 @@ namespace starcanopy {
 //   8  the observer placed by seed on a path through the galaxy, 2.2-3 scale
 //      lengths out by default, moved by the galactic macro; lenticulars one in
 //      eight, half with a lane of dust along the disc, their band grainier
+//   9  the default sky more open (open +0.5's dials); the galactic routes
+//      mostly outward, so remote is never over the bright disc
 //
-// This StarCanopy renders look 8 only, and refuses older looks with a reason.
-constexpr int kLookVersion = 8;
+// This StarCanopy renders look 9 only, and refuses older looks with a reason.
+constexpr int kLookVersion = 9;
 
 // A project: how a sky is made again. Small, human-readable TOML:
 //

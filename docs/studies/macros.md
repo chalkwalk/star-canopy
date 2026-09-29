@@ -299,3 +299,30 @@ having one sky far from the other two. Billowing is confirmed: the twelfth name
 of the set, which now holds every one of its names on every seed it was scored
 on.
 
+
+## Galactic, blind, three ways (look 8 and 9)
+
+Galactic came back once the galaxy was made of stars and the observer had a place
+of its own: it moves the observer along the seed's path through the galaxy, in
+toward the bulge at 1, out to where the galaxy is an object at -1
+(`docs/studies/atlas.md`). Judged from the seed's own place with the nebula on,
+the whole sky above the atlas's views toward the galaxy's centre and along its
+plane.
+
+**Round 1**, seeds 2, 5, 9, 14, 21 and 33: in order on five; the sixth exactly
+reversed. Its route to remote rose steeply, and 1.2 kpc up the view toward the
+centre was the whole bright disc beneath, lifted by the exposure -- the most
+galaxy on screen. The routes now keep mostly outward, 0 to 45 degrees.
+
+**Round 2**, seeds 26, 29, 31, 37, 41 and 44: in order on five; on the sixth
+(37) 0 and 1 swapped, -1 still least. Remote was least galactic on every sheet.
+Rather have: 1 on four, 0 on two, -1 on none. **Galactic is confirmed**, the
+thirteenth name, on five of six seeds in each round, the one miss of the second
+round within its galactic half.
+
+## The default's coverage (look 9)
+
+With a galaxy worth seeing, the mass covered too much of the sky. Today's default
+against open +0.5's dials as the default, blind, eight seeds, six views round the
+horizon: **4-0 for the more open, four ties** -- close on every sky, as the scorer
+said, but only one way. The more open default is look 9's.

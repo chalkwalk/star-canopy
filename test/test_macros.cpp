@@ -135,8 +135,8 @@ int main() {
   CHECK(near(resolveMacros(base, {{"bright", -1.0f}}).exposure, 0.09));
   CHECK(near(resolveMacros(base, {{"bright", 0.5f}}).exposure, 0.18 * std::sqrt(2.0)));
   // open moves mass-inner +0.12 at 1 but -0.2 at -1.
-  CHECK(near(resolveMacros(base, {{"open", 1.0f}}).massInner, 0.87));
-  CHECK(near(resolveMacros(base, {{"open", -0.5f}}).massInner, 0.65));
+  CHECK(near(resolveMacros(base, {{"open", 1.0f}}).massInner, base.massInner + 0.12));
+  CHECK(near(resolveMacros(base, {{"open", -0.5f}}).massInner, base.massInner - 0.1));
   // From the base, not the default: an override is what the macros move.
   Settings over = base;
   over.exposure = 1.0f;
@@ -144,7 +144,7 @@ int main() {
 
   // Two macros on one dial add: open and fragmented both take from keep.
   float keep = resolveMacros(base, {{"open", 1.0f}, {"fragmented", 1.0f}}).keep;
-  CHECK(near(keep, 0.7 - 0.15 - 0.1));
+  CHECK(near(keep, base.keep - 0.15 - 0.1));
   // Octaves add too: bright raises the stars' brightness, starry lowers it.
   CHECK(near(resolveMacros(base, {{"bright", 1.0f}, {"starry", 0.5f}}).starBrightness,
              0.55 * std::exp2(0.25)));

@@ -28,7 +28,7 @@ cannot be expressed within the principles, it is not ready for the roadmap.
 `ROADMAP.md` is the live source; update that file, not this one, when focus
 changes. As of 2026-09-27 the model is lifted and the headless core is done
 (`docs/COMPLETED.md`): `starcanopy render` turns a project file into OpenEXR, KTX2
-and PNG with a key-light sidecar, steered by twelve macros whose names were
+and PNG with a key-light sidecar, steered by thirteen macros whose names were
 confirmed blind (`docs/studies/macros.md`; `tools/blind` makes the sheets). The
 interface is not built yet.
 The model lives in Space Nerds In Space, `labs/features/nebula_sky` on the

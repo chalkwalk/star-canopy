@@ -18,13 +18,15 @@ namespace starcanopy {
 struct Settings {
   uint32_t seed = 1;
 
-  // What is where.
-  float viewerOffset = 0.55f;
+  // What is where. Look 9 opened the default sky by open +0.5's worth --
+  // viewerOffset, keep, massInner and massLobes -- preferred 4-0 with 4 ties
+  // blind once the galaxy was worth seeing (PRINCIPLES §11).
+  float viewerOffset = 0.675f;
   float clusterOffset = 0.85f;
   float luminosity = 1.0f;
   float fold = 0.18f;
   float foldScale = 1.6f;
-  float keep = 0.7f;
+  float keep = 0.625f;
   float holeScale = 1.3f;
 
   // Detail, and the distant nebulae.
@@ -38,8 +40,8 @@ struct Settings {
   float distantCavity = 0.008f;
   float distantBlister = 0.45f;
   float distantDust = 4.0f;
-  float massInner = 0.75f;
-  float massLobes = 0.4f;
+  float massInner = 0.81f;
+  float massLobes = 0.3f;
   float massScale = 1.5f;
   float massDensity = 6.0f;
   int massClusters = 1;
