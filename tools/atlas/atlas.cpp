@@ -89,9 +89,18 @@ void toSky(const Galaxy& g, const float v[3], float out[3]) {
 // centre, as the observer sees it, to +z; its north pole to +y. Rows are those
 // axes in the sky frame. From the centre itself, where the centre has no
 // direction, any direction in the plane will do.
-void galactic(const Galaxy& g, float r[9]) {
+void galactic(const Galaxy& g, float r[9], bool portrait = false) {
   float toCentre[3] = {-g.observer[0], -g.observer[1], 0.0f}, north[3] = {0.0f, 0.0f, 1.0f};
-  if (toCentre[0] * toCentre[0] + toCentre[1] * toCentre[1] < 1e-6f) {
+  // From the portrait the galaxy lies at the pole, which the whole-sky map
+  // draws as its bottom edge: there, the map is turned to put it in the middle.
+  if (portrait) {
+    toCentre[0] = 0.0f;
+    toCentre[2] = g.observer[2] > 0.0f ? -1.0f : 1.0f;
+    north[0] = 0.0f;
+    north[1] = 1.0f;
+    north[2] = 0.0f;
+  }
+  if (!portrait && toCentre[0] * toCentre[0] + toCentre[1] * toCentre[1] < 1e-6f) {
     toCentre[0] = 1.0f;
   }
   normalise(toCentre);
@@ -200,7 +209,15 @@ int main(int argc, char** argv) {
       galactic(g, r);
       Cubemap turned = rotate(target.read(), r);
 
-      Image whole = equalEarth(turned, wide);
+      bool portrait = v->height > 10.0f;
+      Image whole;
+      if (portrait) {
+        float rp[9];
+        galactic(g, rp, true);
+        whole = equalEarth(rotate(target.read(), rp), wide);
+      } else {
+        whole = equalEarth(turned, wide);
+      }
       Image sheet;
       sheet.width = wide;
       sheet.height = whole.height + gap + viewSize;
