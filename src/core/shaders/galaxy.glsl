@@ -15,8 +15,8 @@ uniform vec3 u_GalDust;		/* amount, height, lognormal spread */
 uniform vec3 u_GalWarp;		/* amplitude, start, phase */
 uniform vec3 u_GalWaves;	/* amplitude, wavelength, phase */
 
-/* The dust's fractal: GAL_DUST_OCTAVES octaves of noise from about 0.8 kpc down to about
- * 12 pc, each GAL_DUST_GAIN of the last, taken as a lognormal -- the column density
+/* The dust's fractal: GAL_DUST_OCTAVES octaves of noise from about 0.4 kpc down to about
+ * 6 pc -- the larger forms are the arms' dust lanes, not noise -- each GAL_DUST_GAIN of the last, taken as a lognormal -- the column density
  * interstellar gas has: most of it thin, a few clouds dense -- with a spread drawn by
  * seed (u_GalDust.z).  Octaves finer than twice the footprint fade out, as the nebula's detail
  * does, and the lognormal's mean is corrected for the octaves kept, so a coarse sample has as
@@ -30,7 +30,7 @@ uniform vec3 u_GalWaves;	/* amplitude, wavelength, phase */
 
 float gal_dust_field(vec3 p, float footprint)
 {
-	float f = 1.3, a = 1.0, sum = 0.0, kept = 0.0, scale = 1.0 / sqrt(0.073 * GAL_DUST_NORM);
+	float f = 2.6, a = 1.0, sum = 0.0, kept = 0.0, scale = 1.0 / sqrt(0.073 * GAL_DUST_NORM);
 	int k;
 
 	for (k = 0; k < GAL_DUST_OCTAVES; k++) {
@@ -68,7 +68,7 @@ gal_sample gal_density(vec3 p, float footprint)
 	float r_disc = length(p.xy);
 	float r = length(p);
 	float phi = atan(p.y, p.x);
-	float zmid, h, dz, radial, psi, arm, hy, dh, clump;
+	float zmid, h, dz, radial, psi, arm, lane, hy, dh, clump, knot, width, segment, outer;
 	gal_sample s;
 
 	zmid = u_GalWarp.x * pow(max(r_disc - u_GalWarp.y, 0.0), 2.0) * sin(phi - u_GalWarp.z);
@@ -79,22 +79,56 @@ gal_sample gal_density(vec3 p, float footprint)
 	dz = p.z - zmid;
 	radial = exp(-r_disc / u_GalDisc.x) * (1.0 - smoothstep(0.85 * u_GalEdge, u_GalEdge, r_disc));
 
-	psi = u_GalArms.x * (phi - log(max(r_disc, 0.5)) / u_GalArms.y) + u_GalArms.z;
-	arm = pow(0.5 + 0.5 * cos(psi), u_GalArmShape.x);
+	/* An arm is not the same all along: it meanders a little off its spiral, it widens and
+	 * narrows, and its light comes in segments a few kpc long, its star-forming complexes;
+	 * toward its outer end it breaks into fragments.  Uniform, the arms were flat painted
+	 * strips. */
+	psi = u_GalArms.x * (phi - log(max(r_disc, 0.5)) / u_GalArms.y) + u_GalArms.z +
+			0.3 * nsky_noise(p * 0.3 + 23.0).z;
+	width = u_GalArmShape.x * exp(0.5 * nsky_noise(p * 0.4 + 17.0).x);
+	arm = pow(0.5 + 0.5 * cos(psi), width);
+	/* The dust lane on the arm's inner edge, where the gas is compressed as it enters the
+	 * arm: half a radian upstream, which in a trailing spiral is toward the centre, and
+	 * narrower than the arm. */
+	lane = pow(0.5 + 0.5 * cos(psi - 0.5), 1.5 * width);
+	segment = clamp(1.0 + 1.2 * nsky_noise(p * 0.35 + 11.0).y, 0.5, 1.5);
+	outer = smoothstep(2.0 * u_GalDisc.x, 4.0 * u_GalDisc.x, r_disc);
+	segment *= 1.0 + outer * (clamp(0.3 + 2.5 * nsky_noise(p * 0.9 + 29.0).w, 0.0, 1.8) - 1.0);
+	arm *= segment;
+	lane *= 0.5 + 0.5 * segment;
 	if (u_GalArmShape.y > 0.0) {
 		clump = clamp(0.5 + 1.5 * nsky_noise(p * 0.7).x, 0.0, 1.6);
 		arm *= 1.0 + u_GalArmShape.y * (clump - 1.0);
+		lane *= 1.0 + u_GalArmShape.y * (clump - 1.0);
 	}
-	if (u_GalBar.y > 0.0)
+	if (u_GalBar.y > 0.0) {
 		arm *= smoothstep(0.8 * u_GalBar.y, 1.3 * u_GalBar.y, r_disc);
+		lane *= smoothstep(0.8 * u_GalBar.y, 1.3 * u_GalBar.y, r_disc);
+	}
 
-	/* Star clouds: the disc's light is lumpy on the scale of a kiloparsec, which is what
-	 * mottles a band seen from inside; the young stars more so. */
-	clump = clamp(0.6 + 0.9 * nsky_noise(p * 1.1 + 3.0).z, 0.2, 1.6);
-	s.old = radial * exp(-(dz * dz) / (h * h)) / h * (1.0 + 0.6 * u_GalArms.w * arm) * clump;
+	/* The old disc is smooth -- a little lumpy, a fifth either way at a kiloparsec, not
+	 * the eightfold star clouds of old, which from above laid a field of moguls over the
+	 * whole disc and hid its arms. */
+	clump = clamp(1.0 + 0.8 * nsky_noise(p * 1.1 + 3.0).z, 0.7, 1.3);
+	/* The arms: the old disc brighter along them, and the young stars -- blue, and gathered
+	 * into star clouds -- nearly all in them: strong enough to be seen, where the labs'
+	 * arms, at a sixth of the old light, showed from nowhere (docs/studies/atlas.md). */
+	/* And between them, in the outer disc, dead space: the old light there falls to a third,
+	 * so the arms stand apart as strands, as they do in every photograph of a spiral. The
+	 * inner disc keeps its light; a disc without arms, a lenticular's, keeps all of it. */
+	s.old = radial * exp(-(dz * dz) / (h * h)) / h * clump *
+			mix(1.0 + 1.2 * u_GalArms.w * arm, 0.3 + 2.4 * u_GalArms.w * arm,
+			    outer * min(u_GalArms.w, 1.0));
 	hy = 0.3 * h;
-	s.young = radial * exp(-(dz * dz) / (hy * hy)) / hy * u_GalArms.w * arm * 0.25 *
-			clump * clump;
+	/* The young stars in knots along the arms, some 250 pc across: the star-forming regions
+	 * that bead a real spiral's arms. */
+	knot = clamp(0.4 + 2.2 * nsky_noise(p * 4.0 + 7.0).w, 0.0, 2.5);
+	/* Their light, sharper than the old stars' arms, draws the spiral; and it fades more
+	 * slowly outward than the old disc, so the arms reach past the disc's glow into the
+	 * dark, as a photograph's blue arms do. */
+	s.young = exp(-r_disc / (1.6 * u_GalDisc.x)) *
+			(1.0 - smoothstep(0.85 * u_GalEdge, u_GalEdge, r_disc)) *
+			exp(-(dz * dz) / (hy * hy)) / hy * u_GalArms.w * pow(arm, 1.5) * 1.2 * knot * knot;
 
 	if (u_GalBar.z > 0.0) {
 		float c = cos(u_GalBar.x), sn = sin(u_GalBar.x);
@@ -119,6 +153,7 @@ gal_sample gal_density(vec3 p, float footprint)
 	/* 0.4: the old two-octave clump's mean, so the dust's amount is as it was. */
 	s.dust = u_GalDust.x * 0.4 * exp(-r_disc / (1.5 * u_GalDisc.x)) *
 			(1.0 - smoothstep(0.8 * u_GalEdge, u_GalEdge, r_disc)) *
-			exp(-(dz * dz) / (dh * dh)) * (0.3 + 1.2 * arm) * gal_dust_field(p, footprint);
+			exp(-(dz * dz) / (dh * dh)) * (0.25 + 1.4 * u_GalArms.w * lane) *
+			gal_dust_field(p, footprint);
 	return s;
 }

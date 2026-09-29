@@ -94,7 +94,7 @@ struct Settings {
   float spike = 0.0f;
   float spikeFlux = 5000.0f;
   int nebula = 1;
-  int galaxyStyle = 0;  // barred spiral
+  int galaxyStyle = 0;  // auto, by seed
   float galaxyRadius = 3.5f;
   float galaxyHeight = 0.0f;
   float galaxyGlow = 1.5f;

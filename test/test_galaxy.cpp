@@ -55,7 +55,7 @@ int main() {
   // At full detail, and at footprints where the dust's finer octaves fade.
   for (float footprint : {0.0f, 0.02f, 0.3f}) {
   for (uint32_t seed : {1u, 7u, 42u}) {
-    for (int style = 0; style < 3; style++) {
+    for (int style = 0; style < kGalaxyStyles; style++) {
       GalaxyParams params;
       params.style = style;
       Galaxy g = generateGalaxy(seed, params);

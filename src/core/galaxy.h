@@ -23,16 +23,26 @@ namespace starcanopy {
 // and here for the stars: one specification, two twins, tested against each
 // other (PRINCIPLES §13).
 
+// A galaxy's type. Spirals are one family of several: a lenticular is a disc
+// and a bulge with no arms and little dust -- a legitimate galaxy, and what the
+// spirals looked like while their arms were too weak to be seen. Ellipticals,
+// with no disc, and irregulars, with no plane, are still to come.
 enum GalaxyStyle {
   kBarredSpiral,  // a bar, and two or four arms off its ends
   kGrandDesign,   // two strong, continuous arms; no bar to speak of
   kFlocculent,    // many short, broken arm fragments
+  kLenticular,    // a disc and a bulge, no arms, old stars, little dust
+  kGalaxyStyles
 };
+
+// The type a seed draws, weighted as skies want them -- a spiral mostly, a
+// lenticular now and then -- from a stream of its own.
+int galaxyStyleFor(uint32_t seed);
 
 constexpr int kMaxExternalGalaxies = 8;
 
 struct GalaxyParams {
-  int style = kBarredSpiral;
+  int style = kBarredSpiral;    // a GalaxyStyle, or -1 for the seed's
   // The Sun is at about three scale lengths; 3.5 is out toward the edge, where
   // the galaxy's light is decidedly on one side of the sky.
   float observerRadius = 3.5f;  // from the centre, in disc scale lengths

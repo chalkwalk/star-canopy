@@ -125,3 +125,54 @@ any vantage, as the atlas found at the start. The far side, seen from above, is
 there but pressed toward the horizon by perspective: from 0.5 kpc up, the disc
 15 kpc away lies 2 degrees below it.
 
+
+## Arms, and the galaxy's type (look 5)
+
+The galaxy's type is now drawn by seed: a barred spiral, a grand design of two
+strong arms, or a flocculent spiral of many short ones (and a lenticular, by
+name only; below). Judged from the Sun's place and from 3 kpc above, over seeds
+1, 7, 11 and 16.
+
+**Round 1** was not scored: from above, a field of soft round bumps covered the
+disc and swamped the arms. They were not physical -- the old disc's light was
+clumped by up to a factor of two over a kiloparsec, and its dust's coarsest
+octave was 0.8 kpc. An old disc is smooth: its stars have had billions of years
+to mix. What is clumpy is the young and the dust. So the old light varies by
+30% at most, the young stars come in knots, and the dust starts at 0.4 kpc.
+
+**Round 2** had clear arms but, the scorer said, flat: even along their length.
+**Round 3** varied them -- width, strength, segments, a meander -- and was
+preferred 2-1 with five ties, but the scorer found round 2's arms much clearer:
+the variation filled the space between them.
+
+Photographs of face-on and edge-on spirals, viewed outside the repository
+(`fence #4`) for structure only, showed what was missing:
+
+1. **Dead space between the arms.** In the outer disc the arms are separate
+   strands with near-dark gaps; ours had half the arms' light between them.
+2. **The arms are drawn by young stars**, beaded with knots of clusters.
+3. **The arms outlast the old disc**, carrying on after its light has faded.
+4. **The inner disc is smooth**, with thin dust lanes along the arms.
+5. **Bulges vary with the type**, from nearly all bulge to a small core.
+6. **Arms branch** into several strands, and wind one or two turns.
+
+The first three are made: round 2's clarity back, width varying by a fifth at
+most; in the outer disc the old light between arms falls to a third; the young
+stars sharper along the arms, in knots, on a radial scale 1.6 times the old
+disc's. The last two wait (`ROADMAP.md`).
+
+**Round 4, blind:** from above, the new arms preferred 3-0; from the Sun's place
+two ties and two for look 4. The scorer judged the in-disc views all good,
+differing little, the view from above the differentiator. One of the look 4
+wins was seed 7 drawn as a lenticular -- a spiral's disc with the arms taken
+out, which read as neither -- and the other had bright young knots piling up
+into blotches along the band.
+
+**The lenticular** is a disc galaxy that has stopped making stars, not a spiral
+wound tight: its arms fade with their young stars. What it has instead is
+concentric: a bulge far larger than a spiral's; a lens, a plateau of even light
+with a sharp edge, in nearly all of them, about 1.3 times a bar's length; a bar
+in many; stellar rings at the bar's size and twice it; a spiral surviving only as
+a trace; little dust, often in lanes or rings round the centre. So it is not
+drawn by seed until it has that structure; its quarter of seeds goes to the
+spirals in proportion, every other seed keeping its type.

@@ -23,9 +23,12 @@ namespace starcanopy {
 //   4  the galaxy's band made of stars, its glow only what is too faint to
 //      draw with a haze kept; the bulge flattened; stars scaled from the
 //      midplane, so an observer out of the disc sees fewer about them
+//   5  the galaxy's type drawn by seed -- barred, grand design or flocculent
+//      spiral -- its arms clear strands with dark space between them in the
+//      outer disc, carried by knots of young stars that outreach the old disc
 //
-// This StarCanopy renders look 4 only, and refuses older looks with a reason.
-constexpr int kLookVersion = 4;
+// This StarCanopy renders look 5 only, and refuses older looks with a reason.
+constexpr int kLookVersion = 5;
 
 // A project: how a sky is made again. Small, human-readable TOML:
 //

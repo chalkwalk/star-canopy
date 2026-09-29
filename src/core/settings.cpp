@@ -18,7 +18,9 @@ const char* const kGradeNames[] = {"physical", "auto"};
 const char* const kHueTypeNames[] = {"auto", "single", "fan", "split"};
 const char* const kFamilyNames[] = {"auto", "warm", "green", "teal", "blue"};
 const char* const kOnOffNames[] = {"off", "on"};
-const char* const kGalaxyStyleNames[] = {"barred-spiral", "grand-design", "flocculent"};
+// auto: the seed's (galaxyStyleFor()); then the GalaxyStyle values in order.
+const char* const kGalaxyStyleNames[] = {"auto", "barred-spiral", "grand-design", "flocculent",
+                                         "lenticular"};
 
 // Line colours per palette: [O III], H-alpha, [S II].
 //
@@ -154,7 +156,7 @@ const Dial kDials[] = {
   REAL("spike", "fraction of the brightest stars' light in diffraction spikes", spike, 0.0f, 0.5f),
   GEO("spike-flux", "how bright a star must be to get spikes", spikeFlux, 1.0f, 100000.0f),
   CHOICE("nebula", "the nebula itself; off shows the galaxy and stars alone", nebula, kOnOffNames),
-  CHOICE("galaxy-style", "the galaxy's structure", galaxyStyle, kGalaxyStyleNames),
+  CHOICE("galaxy-style", "the galaxy's type; auto by seed", galaxyStyle, kGalaxyStyleNames),
   REAL("galaxy-radius",
        "our distance from the galaxy's centre, in disc scale lengths; the Sun is 3",
        galaxyRadius, 0.0f, 8.0f),
@@ -362,7 +364,7 @@ Sky buildSky(const Settings& s) {
   l.supersample = s.supersample;
 
   GalaxyParams& g = sky.galaxy;
-  g.style = s.galaxyStyle;
+  g.style = s.galaxyStyle - 1;
   g.observerRadius = s.galaxyRadius;
   g.observerHeight = s.galaxyHeight;
   g.dust = s.galaxyDust;

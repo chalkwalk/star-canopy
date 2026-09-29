@@ -198,8 +198,18 @@ from it goes in `SOURCES.md`.
 - [ ] Exposure that follows the vantage, in place of the fixed knee
       (`GAL_KNEE`), so the centre does not burn out and the outer sky is not
       empty
-- [ ] Arms that break into fragments, with dust along their inner edges -- if
-      the atlas shows the views from above need it
+- [x] Arms (look 5): the galaxy's type by seed -- barred, grand-design or
+      flocculent spiral; arms carried by knots of young stars that outreach the
+      old disc, dark space between them in the outer disc, dust along their
+      inner edges, breaking into fragments further out. From above preferred
+      3-0 blind, in the disc level (`docs/studies/atlas.md`)
+- [ ] Lenticulars: a bulge two or three times a spiral's, a lens (a plateau of
+      even light with a sharp edge), a bar in some, faint stellar rings at the
+      bar's size and twice it, a ghost of the spiral at a few percent, dust by
+      seed from none to a few thin rings near the centre. Named today but not
+      drawn by seed
+- [ ] The bulge's size by type, and ellipticals and irregulars
+- [ ] Arms that branch into several strands, with spurs and feathers between
 - [ ] The observer's place, cylindrical and normalised: an angle round the disc;
       a radius from 0 at the centre to 1 at the edge; a height from 0 at the
       midplane to +-1 at the disc's top and bottom; a little beyond 1 for

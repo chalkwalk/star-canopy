@@ -137,11 +137,20 @@ frame. Rules that are each the answer to an artefact:
 
 A 3D galaxy model (disc, bar, bulge, arms, warp, bending waves, dust) marched from
 where the observer sits, giving the band, its rift and a lopsided sky near the
-edge. Its dust is a lognormal of seven octaves, from about 0.8 kpc to 12 pc, the
+edge. Its dust is a lognormal of seven octaves, from about 0.4 kpc to 6 pc, the
 finer ones ridged into filaments, more or less clumped by seed; octaves finer
 than a sample fade out with the mean kept, so a small sky is the same sky
 coarser. Its layer varies in thickness and height, so near clouds stand out of
 the plane. The glow is baked at the sky's own size (`docs/studies/atlas.md`).
+
+The galaxy's type is drawn by seed (`galaxy-style`): a barred spiral, a grand
+design of two strong arms, or a flocculent spiral of many short ones. The arms
+are carried by knots of young stars on a longer radial scale than the old disc,
+so they reach out past it; in the outer disc the old light between arms falls
+to a third, leaving dark space between them, while the inner disc stays smooth
+with thin dust lanes on the arms' inner edges. The arms vary a little in width
+and break into fragments further out. A lenticular exists by name but is not
+drawn: it wants its own structure, a large bulge, a lens and rings.
 
 The band is made of stars. About 30,000 field stars within 1.5 kpc are sampled
 from the same model at real distances; beyond them, about 150,000 more are drawn
@@ -213,8 +222,8 @@ raw overrides, orientation and outputs. It is small and human-readable.
 
 The **look version** is recorded in every project. Look 1 was the lift from the
 labs; look 2 retired the shell and remade the distant nebulae, a mass sky's main
-nebula unchanged; look 3 remade the galaxy's dust; look 4 made its band of stars
-(`src/core/project.h`). This
+nebula unchanged; look 3 remade the galaxy's dust; look 4 made its band of stars;
+look 5 gave it a type by seed and spiral arms (`src/core/project.h`). This
 StarCanopy renders the latest look, and refuses older ones saying how to render
 them with it. A change that alters any sky's
 pixels is a new look version; the renderer keeps the old ones renderable, or

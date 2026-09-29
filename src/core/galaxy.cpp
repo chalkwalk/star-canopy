@@ -31,7 +31,7 @@ constexpr float kDustGain = 0.75f, kDustNorm = 2.2448f;
 constexpr int kDustRidged = 2;
 
 float dustField(const float p[3], float footprint, float sigma) {
-  float f = 1.3f, a = 1.0f, sum = 0.0f, kept = 0.0f, scale = 1.0f / sqrtf(0.073f * kDustNorm);
+  float f = 2.6f, a = 1.0f, sum = 0.0f, kept = 0.0f, scale = 1.0f / sqrtf(0.073f * kDustNorm);
   for (int k = 0; k < kDustOctaves; k++) {
     float w = fminf(fmaxf(1.0f / (f * 2.0f * footprint) - 1.0f, 0.0f), 1.0f);
     if (w > 0.0f) {
@@ -53,6 +53,19 @@ float dustField(const float p[3], float footprint, float sigma) {
 }
 
 }  // namespace
+
+int galaxyStyleFor(uint32_t seed) {
+  Random rng(seed * 3266489917u + 1231u);
+  float u = rng.uniform();
+  // Lenticulars are not drawn until they have their own structure -- a large
+  // bulge, a lens and rings -- rather than a spiral's with the arms taken out;
+  // they can be asked for by name meanwhile. Their share is spread over the
+  // spirals in proportion, so every other seed keeps its type.
+  if (u >= 0.75f) {
+    u = (u - 0.75f) / 0.25f * 0.75f;
+  }
+  return u < 0.35f ? kBarredSpiral : u < 0.5f ? kGrandDesign : kFlocculent;
+}
 
 Galaxy generateGalaxy(uint32_t seed, const GalaxyParams& p) {
   Galaxy g{};
@@ -81,7 +94,8 @@ Galaxy generateGalaxy(uint32_t seed, const GalaxyParams& p) {
 
   g.armPhase = rng.range(0.0f, 2.0f * kPi);
   g.barAngle = rng.range(0.0f, kPi);
-  switch (p.style) {
+  int style = p.style >= 0 && p.style < kGalaxyStyles ? p.style : galaxyStyleFor(seed);
+  switch (style) {
     case kGrandDesign:
       g.arms = 2.0f;
       g.pitchTan = tanf(rng.range(12.0f, 18.0f) * kPi / 180.0f);
@@ -96,6 +110,15 @@ Galaxy generateGalaxy(uint32_t seed, const GalaxyParams& p) {
       g.armSharpness = 2.0f;
       g.flocculence = 0.9f;
       g.bulgeStrength = 0.6f;
+      break;
+    case kLenticular:
+      // No arms, so no young stars and only the thin even dust the arms'
+      // lanes stand on; a larger bulge.
+      g.arms = 2.0f;
+      g.pitchTan = 0.2f;
+      g.armStrength = 0.0f;
+      g.armSharpness = 3.0f;
+      g.bulgeStrength = 1.4f;
       break;
     default:
       g.arms = rng.uniform() < 0.5f ? 2.0f : 4.0f;
@@ -179,8 +202,23 @@ GalaxySample galaxyDensity(const Galaxy& g, const float p[3], float footprint) {
   float dz = p[2] - zmid;
   float radial = expf(-rDisc / g.scaleLength) * (1.0f - smoothstep(0.85f * g.edge, g.edge, rDisc));
 
-  float psi = g.arms * (phi - logf(fmaxf(rDisc, 0.5f)) / g.pitchTan) + g.armPhase;
-  float arm = powf(0.5f + 0.5f * cosf(psi), g.armSharpness);
+  // An arm meanders, widens and narrows, comes in segments and breaks up
+  // toward its end; see gal_density().
+  auto at = [&](float scale, float offset, int channel) {
+    float r[3] = {p[0] * scale + offset, p[1] * scale + offset, p[2] * scale + offset};
+    return noise(r, channel);
+  };
+  float psi = g.arms * (phi - logf(fmaxf(rDisc, 0.5f)) / g.pitchTan) + g.armPhase +
+              0.3f * at(0.3f, 23.0f, 2);
+  float width = g.armSharpness * expf(0.5f * at(0.4f, 17.0f, 0));
+  float arm = powf(0.5f + 0.5f * cosf(psi), width);
+  // The dust lane on the arm's inner edge; see gal_density().
+  float lane = powf(0.5f + 0.5f * cosf(psi - 0.5f), 1.5f * width);
+  float segment = fminf(fmaxf(1.0f + 1.2f * at(0.35f, 11.0f, 1), 0.5f), 1.5f);
+  float outer = smoothstep(2.0f * g.scaleLength, 4.0f * g.scaleLength, rDisc);
+  segment *= 1.0f + outer * (fminf(fmaxf(0.3f + 2.5f * at(0.9f, 29.0f, 3), 0.0f), 1.8f) - 1.0f);
+  arm *= segment;
+  lane *= 0.5f + 0.5f * segment;
   float clump;
   if (g.flocculence > 0.0f) {
     q[0] = p[0] * 0.7f;
@@ -188,9 +226,12 @@ GalaxySample galaxyDensity(const Galaxy& g, const float p[3], float footprint) {
     q[2] = p[2] * 0.7f;
     clump = fminf(fmaxf(0.5f + 1.5f * noise(q, 0), 0.0f), 1.6f);
     arm *= 1.0f + g.flocculence * (clump - 1.0f);
+    lane *= 1.0f + g.flocculence * (clump - 1.0f);
   }
   if (g.barLength > 0.0f) {
-    arm *= smoothstep(0.8f * g.barLength, 1.3f * g.barLength, rDisc);
+    float inner = smoothstep(0.8f * g.barLength, 1.3f * g.barLength, rDisc);
+    arm *= inner;
+    lane *= inner;
   }
 
   // Star clouds: the disc's light is lumpy on the scale of a kiloparsec, which
@@ -198,10 +239,24 @@ GalaxySample galaxyDensity(const Galaxy& g, const float p[3], float footprint) {
   q[0] = p[0] * 1.1f + 3.0f;
   q[1] = p[1] * 1.1f + 3.0f;
   q[2] = p[2] * 1.1f + 3.0f;
-  clump = fminf(fmaxf(0.6f + 0.9f * noise(q, 2), 0.2f), 1.6f);
-  s.old = radial * expf(-(dz * dz) / (h * h)) / h * (1.0f + 0.6f * g.armStrength * arm) * clump;
+  // A smooth old disc; see gal_density().
+  clump = fminf(fmaxf(1.0f + 0.8f * noise(q, 2), 0.7f), 1.3f);
+  // The arms, strong enough to be seen; see gal_density().
+  // Dead space between the arms in the outer disc; see gal_density().
+  float between = outer * fminf(g.armStrength, 1.0f);
+  s.old = radial * expf(-(dz * dz) / (h * h)) / h * clump *
+          ((1.0f + 1.2f * g.armStrength * arm) * (1.0f - between) +
+           (0.3f + 2.4f * g.armStrength * arm) * between);
   float hy = 0.3f * h;
-  s.young = radial * expf(-(dz * dz) / (hy * hy)) / hy * g.armStrength * arm * 0.25f * clump * clump;
+  // The young stars in knots along the arms; see gal_density().
+  for (int i = 0; i < 3; i++) {
+    q[i] = p[i] * 4.0f + 7.0f;
+  }
+  float knot = fminf(fmaxf(0.4f + 2.2f * noise(q, 3), 0.0f), 2.5f);
+  // Sharper, and reaching past the old disc; see gal_density().
+  s.young = expf(-rDisc / (1.6f * g.scaleLength)) *
+            (1.0f - smoothstep(0.85f * g.edge, g.edge, rDisc)) * expf(-(dz * dz) / (hy * hy)) / hy *
+            g.armStrength * powf(arm, 1.5f) * 1.2f * knot * knot;
 
   if (g.barStrength > 0.0f) {
     float qx = p[0] * cosf(g.barAngle) + p[1] * sinf(g.barAngle);
@@ -228,7 +283,7 @@ GalaxySample galaxyDensity(const Galaxy& g, const float p[3], float footprint) {
   dz -= 0.3f * noise(q, 1);
   s.dust = g.dust * 0.4f * expf(-rDisc / (1.5f * g.scaleLength)) *
            (1.0f - smoothstep(0.8f * g.edge, g.edge, rDisc)) * expf(-(dz * dz) / (dh * dh)) *
-           (0.3f + 1.2f * arm) * dustField(p, footprint, g.dustSigma);
+           (0.25f + 1.4f * g.armStrength * lane) * dustField(p, footprint, g.dustSigma);
   return s;
 }
 
