@@ -5,7 +5,9 @@
 #include "accents.h"
 #include "check.h"
 #include "galaxy.h"
+#include "scene.h"
 #include "settings.h"
+#include "stars.h"
 
 #include <cmath>
 #include <cstdio>
@@ -99,5 +101,122 @@ int main() {
   s.accentNear = 0.7f;
   Sky sky = buildSky(s);
   CHECK(sky.accents.openClusters == 9 && sky.accents.near == 0.7f);
+  // Members: a cluster turned into stars, spread to its own angular size and
+  // never round; behind dust, dimmer; with no flux limit, every one drawn.
+  {
+    Settings cs;
+    cs.seed = 5;
+    Sky csky = buildSky(cs);
+    Scene scene = generateScene(csky.scene);
+    Galaxy cg = generateGalaxy(5, csky.galaxy);
+    StarParams sp = csky.stars;
+    sp.count = 0;      // no field stars, for a clean count
+    sp.bandCount = 0;  // no band: no limit, every member drawn
+    Accent one{};
+    one.kind = kOpenCluster;
+    one.distance = 0.3f;
+    one.radius = 0.008f;
+    one.seed = 12345u;
+    float toward[3] = {1.0f, 0.0f, 0.0f};  // galaxy frame, along the plane
+    for (int j = 0; j < 3; j++) {
+      one.offset[j] = toward[j] * one.distance;
+      one.pos[j] = cg.observer[j] + one.offset[j];
+      one.dir[j] = (cg.rot[0 + j] * one.offset[0] + cg.rot[3 + j] * one.offset[1] +
+                    cg.rot[6 + j] * one.offset[2]) / one.distance;
+    }
+    std::vector<Accent> list = {one};
+    size_t before = generateStars(scene, cg, sp).size();
+    std::vector<Star> all = generateStars(scene, cg, sp, nullptr, &list);
+    size_t members = all.size() - before;
+    std::printf("a cluster 300 pc off: %zu members drawn\n", members);
+    CHECK(members >= 200);
+    CHECK(list[0].glow[0] == 0.0f && list[0].glow[1] == 0.0f && list[0].glow[2] == 0.0f);
+
+    // Its spread, about its own direction, against radius over distance; and
+    // its shape, from the spread's two axes across the line of sight.
+    double sxx = 0.0, syy = 0.0, sxy = 0.0;
+    float u[3], v[3];
+    const float* w = list[0].dir;
+    float helper[3] = {std::fabs(w[0]) < 0.9f ? 1.0f : 0.0f, std::fabs(w[0]) < 0.9f ? 0.0f : 1.0f, 0.0f};
+    u[0] = helper[1] * w[2] - helper[2] * w[1];
+    u[1] = helper[2] * w[0] - helper[0] * w[2];
+    u[2] = helper[0] * w[1] - helper[1] * w[0];
+    float un = std::sqrt(u[0] * u[0] + u[1] * u[1] + u[2] * u[2]);
+    for (float& c : u) {
+      c /= un;
+    }
+    v[0] = w[1] * u[2] - w[2] * u[1];
+    v[1] = w[2] * u[0] - w[0] * u[2];
+    v[2] = w[0] * u[1] - w[1] * u[0];
+    bool finite = true;
+    for (size_t i = before; i < all.size(); i++) {
+      const Star& st = all[i];
+      double x = st.dir[0] * u[0] + st.dir[1] * u[1] + st.dir[2] * u[2];
+      double y = st.dir[0] * v[0] + st.dir[1] * v[1] + st.dir[2] * v[2];
+      sxx += x * x;
+      syy += y * y;
+      sxy += x * y;
+      finite = finite && std::isfinite(st.flux[0]) && std::isfinite(st.flux[1]) &&
+               std::isfinite(st.flux[2]) && st.distance > 0.0f;
+    }
+    CHECK(finite);
+    sxx /= members;
+    syy /= members;
+    sxy /= members;
+    double spread = std::sqrt(sxx + syy), expected = one.radius / one.distance;
+    double tr = sxx + syy, det = sxx * syy - sxy * sxy;
+    double l1 = tr / 2 + std::sqrt(std::fmax(tr * tr / 4 - det, 0.0));
+    double l2 = tr / 2 - std::sqrt(std::fmax(tr * tr / 4 - det, 0.0));
+    double elongation = std::sqrt(l1 / std::fmax(l2, 1e-30));
+    std::printf("spread %.4f rad against %.4f; elongated %.2f to 1\n", spread, expected, elongation);
+    CHECK(spread > 0.5 * expected && spread < 3.0 * expected);
+    CHECK(elongation > 1.25);  // never round (globulars are)
+
+    // Behind the galaxy's dust, dimmer: the same cluster, the dust turned off.
+    GalaxyParams clear = csky.galaxy;
+    clear.dust = 0.0f;
+    Galaxy clean = generateGalaxy(5, clear);
+    std::vector<Accent> list2 = {one};
+    std::vector<Star> dusty = generateStars(scene, cg, sp, nullptr, &list), bare =
+        generateStars(scene, clean, sp, nullptr, &list2);
+    double fd = 0.0, fb = 0.0;
+    for (size_t i = before; i < dusty.size(); i++) {
+      fd += dusty[i].flux[1];
+    }
+    for (size_t i = generateStars(scene, clean, sp).size(); i < bare.size(); i++) {
+      fb += bare[i].flux[1];
+    }
+    CHECK(fd < fb);
+
+    // With a limit, the faint ones become its glow, and none is lost: at 3 kpc
+    // most members are too faint.
+    // (The field stars stay: without them the band sets no limit.)
+    StarParams limited = csky.stars;
+    std::vector<Accent> far = {one};
+    for (int j = 0; j < 3; j++) {
+      far[0].offset[j] = toward[j] * 3.0f;
+      far[0].pos[j] = cg.observer[j] + far[0].offset[j];
+    }
+    far[0].distance = 3.0f;
+    float limit = 0.0f;
+    generateStars(scene, cg, limited, &limit, &far);
+    CHECK(limit > 0.0f && far[0].glow[1] > 0.0f);
+
+    // Around the observer: an association 50 pc off, 60 pc across.
+    std::vector<Accent> around = {one};
+    around[0].association = true;
+    around[0].radius = 0.06f;
+    for (int j = 0; j < 3; j++) {
+      around[0].offset[j] = toward[j] * 0.05f;
+      around[0].pos[j] = cg.observer[j] + around[0].offset[j];
+    }
+    around[0].distance = 0.05f;
+    std::vector<Star> near = generateStars(scene, cg, sp, nullptr, &around);
+    bool ok = true;
+    for (size_t i = before; i < near.size(); i++) {
+      ok = ok && std::isfinite(near[i].flux[1]) && near[i].distance > 0.0f;
+    }
+    CHECK(ok);
+  }
   return test::finish();
 }

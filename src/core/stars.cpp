@@ -425,6 +425,90 @@ float addBandStars(Random& rng, std::vector<Star>& stars, const Galaxy& g, const
   return limit;
 }
 
+// An open cluster's members (docs/superpowers/specs/2026-09-29-open-clusters-design.md):
+// a few overlapping lumps stretched along one axis, never round, since a round
+// glowing ball is a globular's; an age that has taken its most luminous, blue
+// stars and left a few red giants; each dimmed by the dust on its own line.
+// Those fainter than the band's limit, seen, are its glow instead; with no
+// limit, every one is drawn.
+void addOpenClusterStars(std::vector<Star>& stars, const Galaxy& g, const StarParams& p,
+                         float limit, std::vector<Accent>& accents) {
+  const float pi = 3.14159265f;
+  float typical = 0.7f * p.reach, typical2 = typical * typical;
+  for (Accent& a : accents) {
+    if (a.kind != kOpenCluster) {
+      continue;
+    }
+    Random rng(a.seed);
+    int members = a.association ? static_cast<int>(rng.range(30.0f, 120.0f))
+                                : static_cast<int>(expf(rng.range(logf(200.0f), logf(3000.0f))));
+    float age = a.association ? rng.range(0.0f, 0.2f) : rng.uniform();  // 0 young .. 1 old, log age
+    float brightest = powf(kMaxLum, 1.0f - 0.85f * age);
+    int giants = static_cast<int>(age * 0.02f * members + 0.5f);
+    int lumps = 2 + rng.below(3);
+    // Stretched across the line of sight: along it, a stretched cluster would
+    // be seen round, and never round is what tells it from a globular.
+    float axis[3], centre[4][3], lumpRadius[4], sight[3];
+    for (int k = 0; k < 3; k++) {
+      sight[k] = a.offset[k] / a.distance;
+    }
+    rng.perpendicular(sight, axis);
+    float stretch = rng.range(1.6f, 2.5f);
+    for (int l = 0; l < lumps; l++) {
+      rng.unitVector(centre[l]);
+      float r = a.radius * 0.6f * cbrtf(rng.uniform());
+      for (int k = 0; k < 3; k++) {
+        centre[l][k] *= r;
+      }
+      lumpRadius[l] = a.radius * rng.range(0.35f, 0.6f);
+    }
+    float rest[3] = {0.0f, 0.0f, 0.0f};
+    for (int m = 0; m < members; m++) {
+      int l = rng.below(lumps);
+      float local[3];
+      for (int k = 0; k < 3; k++) {
+        float u1 = fmaxf(rng.uniform(), 1e-7f), u2 = rng.uniform();
+        local[k] = centre[l][k] + sqrtf(-2.0f * logf(u1)) * cosf(2.0f * pi * u2) * lumpRadius[l];
+      }
+      float along = local[0] * axis[0] + local[1] * axis[1] + local[2] * axis[2];
+      float offset[3];
+      for (int k = 0; k < 3; k++) {
+        offset[k] = a.offset[k] + local[k] + axis[k] * along * (stretch - 1.0f);
+      }
+      float d = fmaxf(sqrtf(offset[0] * offset[0] + offset[1] * offset[1] + offset[2] * offset[2]),
+                      kMinDistance);
+      bool giant = m < giants;
+      float lum = giant ? rng.range(30.0f, 300.0f)
+                        : fminf(powf(fmaxf(1.0f - rng.uniform(), 1e-6f), -1.0f / kLumIndex), brightest);
+      float kelvin = giant ? rng.range(3600.0f, 4600.0f)
+                           : fminf(fmaxf(4500.0f * powf(lum, 0.2f), 3000.0f), 30000.0f);
+      float rgb[3];
+      blackbody(kelvin, rgb);
+      float flux = fminf(lum * typical2 / (d * d), kMaxFlux);
+      float tau = dustDepth(g, offset);
+      if (limit > 0.0f && flux * expf(-tau * p.reddening[1]) < limit) {
+        for (int k = 0; k < 3; k++) {
+          rest[k] += rgb[k] * flux;
+        }
+        continue;
+      }
+      Star st{};
+      for (int k = 0; k < 3; k++) {
+        st.dir[k] = g.rot[0 + k] * offset[0] + g.rot[3 + k] * offset[1] + g.rot[6 + k] * offset[2];
+      }
+      normalize3(st.dir);
+      st.distance = d / p.kpcPerSkyUnit;
+      for (int k = 0; k < 3; k++) {
+        st.flux[k] = rgb[k] * flux * expf(-tau * p.reddening[k]);
+      }
+      stars.push_back(st);
+    }
+    for (int k = 0; k < 3; k++) {
+      a.glow[k] = rest[k];
+    }
+  }
+}
+
 }  // namespace
 
 void blackbody(float kelvin, float rgb[3]) {
@@ -446,7 +530,7 @@ void blackbody(float kelvin, float rgb[3]) {
 }
 
 std::vector<Star> generateStars(const Scene& s, const Galaxy& g, const StarParams& p,
-                                float* bandFlux) {
+                                float* bandFlux, std::vector<Accent>* accents) {
   std::vector<Star> stars;
   Random rng(s.seed * 2246822519u + 101u);
   addFieldStars(rng, stars, g, p);
@@ -456,6 +540,10 @@ std::vector<Star> generateStars(const Scene& s, const Galaxy& g, const StarParam
   float limit = addBandStars(band, stars, g, p);
   if (bandFlux) {
     *bandFlux = limit;
+  }
+  // Last, each from its own seed, so every star before is as it was.
+  if (accents) {
+    addOpenClusterStars(stars, g, p, limit, *accents);
   }
   return stars;
 }

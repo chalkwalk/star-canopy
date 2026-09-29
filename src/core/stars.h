@@ -1,5 +1,6 @@
 #pragma once
 
+#include "accents.h"
 #include "galaxy.h"
 #include "scene.h"
 
@@ -50,8 +51,12 @@ struct Star {
 
 // Deterministic in the scene's seed and the params. bandFlux, if given, is set
 // to the flux below which the band's stars are left to the galaxy's glow.
+// accents, if given, have their open clusters' members added as stars -- those
+// bright enough to draw, as the band's are -- and each one's glow set to the
+// light of the rest.
 std::vector<Star> generateStars(const Scene& s, const Galaxy& g, const StarParams& p,
-                                float* bandFlux = nullptr);
+                                float* bandFlux = nullptr,
+                                std::vector<Accent>* accents = nullptr);
 
 // A black body's colour, as linear rgb normalised to unit luminance, then a
 // quarter of the way back to white.
