@@ -232,7 +232,8 @@ from it goes in `SOURCES.md`.
 - [ ] The external galaxies: implemented, but smudges a star across that change
       no patch of sky by more than two levels (`docs/studies/parameters.md`,
       *Points*). Make them worth seeing -- resolved discs, a few degrees for the
-      nearest -- or drop them
+      nearest -- or drop them. Now *Neighbour galaxies*, under *Astronomical
+      objects*
 - [ ] The galactic / remote macro (look 8): made, moving the observer along the
       seed's path. The first one -- nearer the centre, more glow -- lost its name
       0-3: the glow read as a brown haze over the stars. This one, blind, -1 / 0 /
@@ -283,10 +284,11 @@ something new, earning its place blind like anything else.
 
 ### Astronomical objects: accents and heroes
 
-Objects beyond the lit mass and the galaxy -- open clusters, supernova remnants,
-planetary nebulae, dark clouds -- agreed in a Q&A with the user (2026-09-29).
-Each family gets its own design, spec and plan, reviewed before it is built, and
-its own blind rounds.
+Objects beyond the lit mass and the galaxy -- star clusters, supernova remnants,
+planetary nebulae, reflection nebulae, dark clouds, neighbour galaxies -- agreed
+in a Q&A with the user (2026-09-29), the list checked against the standard
+classes of deep-sky object. Each family gets its own design, spec and plan,
+reviewed before it is built, and its own blind rounds.
 
 The decisions, for every family:
 
@@ -315,9 +317,13 @@ The decisions, for every family:
 In this order, each proving the ground the next builds on:
 
 - [ ] **Open clusters**, accents only: knots of young stars at one distance,
-      mostly from the star system already here. The first to use the accents'
-      ground: the galaxy-weighted draw, the near bias, the veil, the colour pull.
-      Blind: skies with them against without
+      mostly from the star system already here, with stellar associations --
+      loose young groups tens of degrees across when near -- as their loose end.
+      The first to use the accents' ground: the galaxy-weighted draw, the near
+      bias, the veil, the colour pull. Blind: skies with them against without
+- [ ] **Globular clusters**: hundreds of thousands of old yellow stars in a dense
+      ball, in the galaxy's halo -- placed about it, not along the band. Accents,
+      and a hero: a sky beside or inside one, bright stars packed on every side
 - [ ] **Glowing shells**: supernova remnants and wind-blown bubbles -- thin,
       transparent, limb-brightened, their wrinkles seen edge on as filaments;
       the old shell's geometry with a light of its own, a shock heating the
@@ -326,11 +332,28 @@ In this order, each proving the ground the next builds on:
       veiled by the dust in front as the distant nebulae are (`Bubble::veil`);
       then heroes, with the style choice and the key light from the brightest
       star. Blind each way
-- [ ] **Dark clouds**: giant molecular clouds, dark nebulae and small dense
-      globules, seen against the band and the nebula's glow, faintly lit at
-      their edges; with the galaxy's own dust and *Pillars and dark clouds*
-- [ ] **Supernovae**: folded into the stars -- in a baked sky, a supernova is one
-      extraordinarily bright star; a rare one, whenever it is convenient
+- [ ] **Reflection nebulae**: dust lit by a star near it, blue with scattered
+      starlight rather than glowing -- often about a young cluster. The mass lit
+      by scattering alone (the `reflection` dial's light, on its own). Accents
+- [ ] **Dark clouds and galactic cirrus**: giant molecular clouds, dark nebulae
+      and small dense globules, seen against the band and the nebula's glow,
+      faintly lit at their edges; and cirrus, faint dust far off the band lit by
+      the galaxy's own light, grey-brown wisps over the dark. With the galaxy's
+      own dust and *Pillars and dark clouds*
+- [ ] **Neighbour galaxies**: dwarfs and irregulars near by, and the odd large
+      neighbour -- our own galaxy model seen from outside, as the atlas's
+      portrait sees it; this becomes *The external galaxies*. A large neighbour
+      can be a hero
+- [ ] **Stars of note**, folded into the stars: a supernova -- in a baked sky, one
+      extraordinarily bright star, rare -- and colourful ones, deep red carbon
+      stars and doubles of contrasting colour. Whenever it is convenient
+
+Folded elsewhere: Wolf-Rayet bubbles and pulsar wind nebulae into the glowing
+shells; pillars, cometary globules and small jets into *Pillars and dark
+clouds*. Left out: quasars and gravitational lenses (points, unseen at a
+skybox's scale); galaxy clusters (smudges, with the neighbour galaxies if at
+all); comets, zodiacal light and planets (a star system's, fence #8); black
+holes, which the game renders itself.
 
 ### Carried over from the labs
 
