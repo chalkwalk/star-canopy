@@ -259,12 +259,15 @@ float addBandStars(Random& rng, std::vector<Star>& stars, const Galaxy& g, const
     galaxyToFrame(g, dir, d);
     // Out to where the ray leaves the galaxy's bound, as the glow's march.
     float b = dot3(g.observer, d), cc = dot3(g.observer, g.observer) - end * end;
-    float far = fmaxf(-b + sqrtf(fmaxf(b * b - cc, 0.0f)), p.reach);
+    // From where the ray enters the bound, for an observer outside it (the
+    // atlas's portrait; never a sky); see galaxy.shader.
+    float near = fmaxf(p.reach, -b - sqrtf(fmaxf(b * b - cc, 0.0f)));
+    float far = fmaxf(-b + sqrtf(fmaxf(b * b - cc, 0.0f)), near);
     float tau = 0.0f;
     for (int i = 0; i < kBandSteps; i++) {
       Step& st = steps[static_cast<size_t>(c) * kBandSteps + i];
-      float ta = p.reach * powf(far / p.reach, static_cast<float>(i) / kBandSteps);
-      float tb = p.reach * powf(far / p.reach, static_cast<float>(i + 1) / kBandSteps);
+      float ta = near * powf(far / near, static_cast<float>(i) / kBandSteps);
+      float tb = near * powf(far / near, static_cast<float>(i + 1) / kBandSteps);
       st.t = 0.5f * (ta + tb);
       st.dt = tb - ta;
       float pos[3];

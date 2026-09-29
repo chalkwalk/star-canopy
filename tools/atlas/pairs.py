@@ -22,7 +22,7 @@ from PIL import Image
 GAP = 16
 
 
-def side(path):
+def side(path, portrait):
     sheet = Image.open(path)
     w, h = sheet.width, sheet.height
     top = h - 512
@@ -31,7 +31,10 @@ def side(path):
     # The atlas's views are 512 across: toward the centre, then away, then along
     # the plane.
     centre = sheet.crop((0, top, 512, top + 512))
-    along = sheet.crop((1024, top, 1536, top + 512))
+    # From the portrait, outside the galaxy, the view down onto it is the one
+    # that shows its form.
+    x = 1536 if portrait else 1024
+    along = sheet.crop((x, top, x + 512, top + 512))
     out = Image.new("RGB", (1024, sky.height + GAP + 512), (5, 5, 5))
     out.paste(sky, (0, 0))
     out.paste(centre, (0, sky.height + GAP))
@@ -60,15 +63,17 @@ def main():
             "Each sheet is one seed's galaxy, the nebula off, from one place in it, made two\n"
             "ways, left and right: the whole sky with the galaxy's centre in the middle and\n"
             "its plane across, and below it views 45 degrees across toward the centre and\n"
-            "along the plane. Which side is which is drawn at random. Do not open key.csv\n"
-            "until every line below is filled in.\n\n"
+            "along the plane (from outside the galaxy, down onto it). Which side is which is\n"
+            "drawn at random. Do not open key.csv until every line below is filled in.\n\n"
             "For each pair: which you would rather have (L, R or = for no preference), and a\n"
             "note on what differs.\n\n"
             "| pair | rather have | note |\n|---|---|---|\n")
         for i, name in enumerate(names, 1):
             sides = [("before", before), ("after", after)]
             rng.shuffle(sides)
-            left, right = side(os.path.join(sides[0][1], name)), side(os.path.join(sides[1][1], name))
+            portrait = name.startswith("portrait")
+            left = side(os.path.join(sides[0][1], name), portrait)
+            right = side(os.path.join(sides[1][1], name), portrait)
             sheet = Image.new("RGB", (left.width * 2 + 2 * GAP, left.height), (60, 60, 60))
             sheet.paste(left, (0, 0))
             sheet.paste(right, (left.width + 2 * GAP, 0))

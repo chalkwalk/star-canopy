@@ -89,7 +89,10 @@ void main()
 
 	if (disc > 0.0) {
 		float t_end = -b + sqrt(disc);
-		float t_start = 0.01;
+		/* From where the ray enters the galaxy's bound: from outside it -- the atlas's
+		 * portrait, never a sky, whose observer is always within -- steps spread over
+		 * the empty way in were as long as the disc is thick, and drew it in rings. */
+		float t_start = max(0.01, -b - sqrt(disc));
 		float ratio = t_end / t_start;
 
 		/* Geometric steps: fine near the observer, where the disc's thickness is what

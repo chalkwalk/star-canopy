@@ -49,6 +49,10 @@ const Vantage kVantages[] = {
   {"above-low", 3.0f, 0.5f},     // out of the disc, a little
   {"above-high", 3.0f, 3.0f},    // well above it, looking down on it
   {"outlier", 6.5f, 1.5f},       // the margin a rare seed may reach
+  // Outside it, over the centre: the galaxy whole in the view down, as
+  // photographs show one -- to judge its type and its structure by. Beyond the
+  // height dial's range, so no sky has it.
+  {"portrait", 0.0f, 35.0f},
 };
 
 std::vector<std::string> split(const std::string& list) {
