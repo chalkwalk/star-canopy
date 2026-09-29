@@ -57,7 +57,38 @@ float dustField(const float p[3], float footprint, float sigma) {
 int galaxyStyleFor(uint32_t seed) {
   Random rng(seed * 3266489917u + 1231u);
   float u = rng.uniform();
+  // A lenticular one galaxy in eight: from inside, with no arms and little dust,
+  // its band is the weakest of the types (docs/studies/atlas.md). The share it
+  // gave up goes to the spirals in proportion, so every other seed keeps its
+  // type.
+  if (u >= 0.75f && u < 0.875f) {
+    u = (u - 0.75f) / 0.125f * 0.75f;
+  }
   return u < 0.35f ? kBarredSpiral : u < 0.5f ? kGrandDesign : u < 0.75f ? kFlocculent : kLenticular;
+}
+
+void observerPlace(uint32_t seed, float place, float& radius, float& height) {
+  // From a stream of its own, so nothing else a seed draws moves with it.
+  Random rng(seed * 3812015801u + 2551u);
+  // Where the seed's sky reads as in the galaxy, neither, and far out: fitted
+  // by eye from the place grid and the path's mock-up.
+  float inner = rng.range(0.5f, 1.2f);
+  float own = rng.range(2.2f, 3.0f);
+  // Above the disc only: below is the same sky mirrored, and the galaxy is
+  // turned at random in the sky, so the side is no new kind of sky.
+  float ownHeight = rng.range(0.0f, 0.03f);
+  float route = rng.range(0.0f, 0.5f * kPi);
+  const float far = 6.0f, high = 1.2f;
+  place = fminf(fmaxf(place, -1.0f), 1.0f);
+  if (place >= 0.0f) {
+    radius = own * powf(inner / own, place);
+    height = ownHeight * (1.0f - place);
+    return;
+  }
+  float t = -place;
+  float farRadius = own + (far - own) * cosf(route), farHeight = high * sinf(route);
+  radius = own + (farRadius - own) * t;
+  height = ownHeight + (farHeight - ownHeight) * t * t;
 }
 
 Galaxy generateGalaxy(uint32_t seed, const GalaxyParams& p) {
@@ -81,13 +112,22 @@ Galaxy generateGalaxy(uint32_t seed, const GalaxyParams& p) {
   g.edge = 5.5f * g.scaleLength;
 
   float azimuth = rng.range(0.0f, 2.0f * kPi);
-  g.observer[0] = p.observerRadius * g.scaleLength * cosf(azimuth);
-  g.observer[1] = p.observerRadius * g.scaleLength * sinf(azimuth);
-  g.observer[2] = p.observerHeight;
+  float radius = p.observerRadius, height = p.observerHeight;
+  if (std::isnan(radius) || std::isnan(height)) {
+    float r, h;
+    observerPlace(seed, p.place, r, h);
+    radius = std::isnan(radius) ? r : radius;
+    height = std::isnan(height) ? h : height;
+  }
+  g.observer[0] = radius * g.scaleLength * cosf(azimuth);
+  g.observer[1] = radius * g.scaleLength * sinf(azimuth);
+  g.observer[2] = height;
 
   g.armPhase = rng.range(0.0f, 2.0f * kPi);
   g.bulgeRadius = 1.0f;
   g.bulgeFlattening = 2.0f;
+  g.grain = 1.0f;
+  g.dustLane = 0.05f;
   float lenticularDust = 1.0f;
   g.barAngle = rng.range(0.0f, kPi);
   int style = p.style >= 0 && p.style < kGalaxyStyles ? p.style : galaxyStyleFor(seed);
@@ -122,6 +162,7 @@ Galaxy generateGalaxy(uint32_t seed, const GalaxyParams& p) {
       g.bulgeStrength = s0.range(1.2f, 1.8f);
       g.bulgeRadius = s0.range(1.6f, 2.4f);
       g.bulgeFlattening = 1.4f;
+      g.grain = 2.0f;
       if (s0.uniform() < 0.5f) {
         g.barLength = s0.range(3.0f, 4.5f);
         g.barStrength = s0.range(2.0f, 3.0f);
@@ -138,6 +179,13 @@ Galaxy generateGalaxy(uint32_t seed, const GalaxyParams& p) {
         g.dustRing = s0.range(0.3f, 0.9f) * g.lensRadius;
       } else {
         lenticularDust = 0.05f;
+      }
+      // And half with a lane along the whole disc, thinner than a spiral's
+      // rift: without one, a lenticular's band had nothing to break it and read
+      // as a bloom about a light, not as starlight (docs/studies/atlas.md).
+      if (s0.uniform() < 0.5f) {
+        g.dustLane = 1.0f;
+        lenticularDust = fmaxf(lenticularDust, s0.range(0.3f, 0.6f));
       }
       break;
     }
@@ -322,7 +370,7 @@ GalaxySample galaxyDensity(const Galaxy& g, const float p[3], float footprint) {
   if (g.dustRing > 0.0f) {
     float r1 = g.dustRing, r2 = 1.7f * g.dustRing;
     float d1 = (rDisc - r1) / (0.12f * r1), d2 = (rDisc - r2) / (0.1f * r2);
-    s.dust *= 0.05f + 4.0f * (expf(-d1 * d1) + 0.6f * expf(-d2 * d2));
+    s.dust *= g.dustLane + 4.0f * (expf(-d1 * d1) + 0.6f * expf(-d2 * d2));
   }
   return s;
 }

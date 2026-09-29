@@ -20,6 +20,7 @@ struct Census {
   size_t field, band;
   double nearPlane;   // the band's share within 10 degrees of the plane
   double brightest;   // the band's brightest star's flux
+  float grain;        // the galaxy's (Galaxy::grain)
 };
 
 Census census(uint32_t seed, float height, float radius = 3.5f) {
@@ -33,6 +34,7 @@ Census census(uint32_t seed, float height, float radius = 3.5f) {
   StarParams none = sky.stars;
   none.bandCount = 0;
   Census c{};
+  c.grain = g.grain;
   c.field = generateStars(scene, g, none).size();
   std::vector<Star> all = generateStars(scene, g, sky.stars);
   c.band = all.size() - c.field;
@@ -58,7 +60,7 @@ int main() {
                 seed, mid.field, mid.band, 100.0 * mid.nearPlane, mid.brightest, above.field,
                 above.band, above.brightest);
     // The budget, give or take the draw.
-    CHECK(std::fabs(static_cast<double>(mid.band) / defaults.bandCount - 1.0) < 0.1);
+    CHECK(std::fabs(static_cast<double>(mid.band) / (defaults.bandCount * mid.grain) - 1.0) < 0.1);
     // Along the plane: most of the band within ten degrees of it.
     CHECK(mid.nearPlane > 0.6);
     // Out of the disc, fewer field stars about the observer, and the band no
@@ -72,7 +74,7 @@ int main() {
   for (uint32_t seed : {7u, 12u}) {
     Census mid = census(seed, 0.03f), out = census(seed, 0.03f, 6.0f);
     std::printf("seed %u past the edge: %zu field, %zu band\n", seed, out.field, out.band);
-    CHECK(out.band <= 2 * static_cast<size_t>(defaults.bandCount));
+    CHECK(out.band <= 2 * static_cast<size_t>(defaults.bandCount * out.grain));
     CHECK(out.field < mid.field);
   }
   return test::finish();

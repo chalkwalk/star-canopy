@@ -4,7 +4,7 @@
 // and then as the bench every step of the galaxy work is judged on.
 //
 //   atlas --out DIR [--size N] [--seeds 1,7,12] [--vantages a,b] [--set NAME=VALUE]...
-//         [--context K] [--measure 1]
+//         [--context K] [--measure 1] [--macro NAME=VALUE]...
 //
 // With --measure 1, no sheets: for each vantage and seed, the galaxy's glow's
 // brightness percentiles over the sky, as its exposure measures them.
@@ -20,6 +20,7 @@
 #include "cubemap_target.h"
 #include "galaxy.h"
 #include "gl_context.h"
+#include "macros.h"
 #include "sample.h"
 #include "settings.h"
 #include "sky.h"
@@ -31,6 +32,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -58,6 +60,8 @@ const Vantage kVantages[] = {
   // photographs show one -- to judge its type and its structure by. Beyond the
   // height dial's range, so no sky has it.
   {"portrait", 0.0f, 35.0f},
+  // The seed's own place, along its path as --macro galactic puts it.
+  {"own", std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN()},
 };
 
 std::vector<std::string> split(const std::string& list) {
@@ -132,6 +136,7 @@ int main(int argc, char** argv) {
   std::vector<std::string> names, sets;
   ContextKind kind = ContextKind::Auto;
   bool measure = false;
+  MacroValues macroValues;
   for (int i = 1; i + 1 < argc; i += 2) {
     std::string arg = argv[i], v = argv[i + 1];
     if (arg == "--out") {
@@ -147,6 +152,13 @@ int main(int argc, char** argv) {
       names = split(v);
     } else if (arg == "--set") {
       sets.push_back(v);
+    } else if (arg == "--macro") {
+      size_t eq = v.find('=');
+      if (eq == std::string::npos || !setMacro(macroValues, v.substr(0, eq), v.substr(eq + 1), error)) {
+        std::fprintf(stderr, "atlas: %s\n", eq == std::string::npos ? "--macro wants NAME=VALUE"
+                                                                      : error.c_str());
+        return 2;
+      }
     } else if (arg == "--measure") {
       measure = v == "1";
     } else if (arg == "--context") {
@@ -210,13 +222,14 @@ int main(int argc, char** argv) {
           return 2;
         }
       }
+      s = resolveMacros(s, macroValues);
       // The glow's brightness from here, as the exposure measures it, instead
       // of a sheet: for setting the exposure's reference (sky.cpp).
       if (measure) {
         Sky sk = buildSky(s);
         Scene sc = generateScene(sk.scene);
         Galaxy gx = generateGalaxy(seed, sk.galaxy);
-        float band[3] = {0.0f, 0.0f, sk.galaxyHaze};
+        float band[3] = {0.0f, 0.0f, sk.galaxyHaze / gx.grain};
         generateStars(sc, gx, sk.stars, &band[0]);
         band[1] = 0.49f * sk.stars.reach * sk.stars.reach;
         float m[4];
@@ -249,7 +262,7 @@ int main(int argc, char** argv) {
       paste(sheet, whole, 0, 0);
       // In galactic coordinates: the centre +z, north +y, the plane's other
       // way +x.
-      float toDisc = v->height > 0.0f ? -1.0f : 1.0f;
+      float toDisc = g.observer[2] > 0.0f ? -1.0f : 1.0f;
       const float views[4][3] = {{0, 0, 1}, {0, 0, -1}, {1, 0, 0}, {0, toDisc, 0}};
       const float north[3] = {0, 1, 0}, plane[3] = {0, 0, 1};
       for (int k = 0; k < 4; k++) {

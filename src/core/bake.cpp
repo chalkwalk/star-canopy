@@ -441,7 +441,7 @@ void uploadGalaxy(const Program& p, const Galaxy& g) {
   glUniform4f(p.uniform("u_GalArms"), g.arms, g.pitchTan, g.armPhase, g.armStrength);
   glUniform2f(p.uniform("u_GalArmShape"), g.armSharpness, g.flocculence);
   glUniform4f(p.uniform("u_GalBar"), g.barAngle, g.barLength, g.barStrength, g.bulgeStrength);
-  glUniform2f(p.uniform("u_GalBulge"), g.bulgeRadius, g.bulgeFlattening);
+  glUniform3f(p.uniform("u_GalBulge"), g.bulgeRadius, g.bulgeFlattening, g.dustLane);
   glUniform4f(p.uniform("u_GalLens"), g.lensRadius, g.lensStrength, g.innerRing, g.outerRing);
   glUniform4f(p.uniform("u_GalDust"), g.dust, g.dustHeight, g.dustSigma, g.dustRing);
   glUniform3f(p.uniform("u_GalWarp"), g.warp, g.warpStart, g.warpPhase);

@@ -44,6 +44,9 @@ const float kLineColor[3][3][3] = {
 // Owned by a macro (see Dial::owner), stepped by amounts.
 #define OWNED(n, h, m, lo, hi, owner) \
   Dial{n, h, &Settings::m, nullptr, nullptr, lo, hi, nullptr, 0, false, 0.0f, owner}
+// May be auto, the seed's (see Dial::automatic), stepped by amounts.
+#define AUTO(n, h, m, lo, hi) \
+  Dial{n, h, &Settings::m, nullptr, nullptr, lo, hi, nullptr, 0, false, 0.0f, nullptr, true}
 #define CHOICE(n, h, m, names) \
   Dial{n, h, nullptr, &Settings::m, nullptr, 0.0f, 0.0f, names, static_cast<int>(std::size(names))}
 
@@ -159,10 +162,14 @@ const Dial kDials[] = {
   GEO("spike-flux", "how bright a star must be to get spikes", spikeFlux, 1.0f, 100000.0f),
   CHOICE("nebula", "the nebula itself; off shows the galaxy and stars alone", nebula, kOnOffNames),
   CHOICE("galaxy-style", "the galaxy's type; auto by seed", galaxyStyle, kGalaxyStyleNames),
-  REAL("galaxy-radius",
-       "our distance from the galaxy's centre, in disc scale lengths; the Sun is 3",
+  AUTO("galaxy-radius",
+       "our distance from the galaxy's centre, in disc scale lengths (the Sun is 3, the edge "
+       "5.5); auto, the seed's place",
        galaxyRadius, 0.0f, 8.0f),
-  REAL("galaxy-height", "kpc above the galaxy's midplane", galaxyHeight, -5.0f, 5.0f),
+  AUTO("galaxy-height", "kpc above the galaxy's midplane; auto, the seed's place", galaxyHeight,
+       -5.0f, 5.0f),
+  OWNED("galaxy-place", "where along the seed's path through the galaxy: -1 remote, 1 in toward "
+        "its centre", galaxyPlace, -1.0f, 1.0f, "galactic"),
   GEO0("galaxy-glow", "the unresolved light of the galaxy's distant stars", galaxyGlow, 0.0001f, 10.0f),
   GEO0("galaxy-dust", "the galaxy's dust, which makes the rift", galaxyDust, 0.01f, 20.0f),
   REAL("galaxy-warp", "how much the outer disc is warped", galaxyWarp, 0.0f, 5.0f),
@@ -217,6 +224,10 @@ bool setDial(Settings& s, const std::string& name, const std::string& value, std
       }
       return false;
     }
+    if (d.automatic && value == "auto") {
+      s.*d.real = std::numeric_limits<float>::quiet_NaN();
+      return true;
+    }
     const char* text = value.c_str();
     char* end = nullptr;
     errno = 0;
@@ -265,6 +276,9 @@ std::string dialValue(const Settings& s, const Dial& d) {
   }
   if (d.integer) {
     return std::to_string(s.*d.integer);
+  }
+  if (d.automatic && std::isnan(s.*d.real)) {
+    return "auto";
   }
   char buf[32];
   std::snprintf(buf, sizeof(buf), "%g", static_cast<double>(s.*d.real));
@@ -369,6 +383,7 @@ Sky buildSky(const Settings& s) {
   g.style = s.galaxyStyle - 1;
   g.observerRadius = s.galaxyRadius;
   g.observerHeight = s.galaxyHeight;
+  g.place = s.galaxyPlace;
   g.dust = s.galaxyDust;
   g.warp = s.galaxyWarp;
   g.waves = s.galaxyWaves;

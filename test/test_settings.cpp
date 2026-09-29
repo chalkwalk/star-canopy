@@ -4,6 +4,7 @@
 #include "check.h"
 #include "settings.h"
 
+#include <cmath>
 #include <cstdio>
 #include <set>
 #include <string>
@@ -18,7 +19,8 @@ int main() {
   for (int i = 0; i < count; i++) {
     CHECK(names.insert(d[i].name).second);
     CHECK((d[i].real != nullptr) + (d[i].integer != nullptr) + (d[i].seed != nullptr) == 1);
-    if (d[i].real) {
+    // Its default in range -- or auto, the seed's, for a dial that may be.
+    if (d[i].real && !(d[i].automatic && std::isnan(defaults.*d[i].real))) {
       float v = defaults.*d[i].real;
       if (v < d[i].lo || v > d[i].hi) {
         std::printf("%s: default %g outside %g..%g\n", d[i].name, v, d[i].lo, d[i].hi);
@@ -75,6 +77,12 @@ int main() {
   CHECK(setDial(s, "line-colors", "hoo", error) && s.lineColors == 2);
   CHECK(!setDial(s, "line-colors", "purple", error));
   CHECK(!setDial(s, "max-steps", "1.5", error));
+  // A dial that may be auto takes a number or auto; one that may not, not auto.
+  CHECK(setDial(s, "galaxy-radius", "2", error) && s.galaxyRadius == 2.0f);
+  CHECK(setDial(s, "galaxy-radius", "auto", error) && std::isnan(s.galaxyRadius));
+  CHECK(!setDial(s, "density", "auto", error));
+  // The place is the galactic macro's.
+  CHECK(!setDial(s, "galaxy-place", "0.5", error) && error.find("galactic") != std::string::npos);
 
   // The same dials make the same sky description.
   Sky a = buildSky(defaults), b = buildSky(defaults);

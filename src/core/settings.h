@@ -6,6 +6,7 @@
 #include "stars.h"
 
 #include <cstdint>
+#include <limits>
 #include <string>
 
 namespace starcanopy {
@@ -96,8 +97,11 @@ struct Settings {
   float spikeFlux = 5000.0f;
   int nebula = 1;
   int galaxyStyle = 0;  // auto, by seed
-  float galaxyRadius = 3.5f;
-  float galaxyHeight = 0.0f;
+  // Where the observer is: auto (NaN), the place along the seed's path that
+  // galaxyPlace picks; a number overrides it.
+  float galaxyRadius = std::numeric_limits<float>::quiet_NaN();
+  float galaxyHeight = std::numeric_limits<float>::quiet_NaN();
+  float galaxyPlace = 0.0f;  // along the seed's path: -1 remote, 1 in toward the centre
   float galaxyGlow = 1.5f;
   float galaxyDust = 1.0f;
   float galaxyWarp = 1.0f;
@@ -135,6 +139,9 @@ struct Dial {
   // one macro is not a raw parameter: it is set through that macro, and not
   // listed, overridden or set on its own, so the dials stay the model's.
   const char* owner = nullptr;
+  // May be auto, the seed's own choice, held as NaN: the dial's value only
+  // when a number is set.
+  bool automatic = false;
 };
 
 // Every dial, in the order the labs' panel showed them.

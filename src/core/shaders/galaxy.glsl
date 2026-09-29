@@ -11,7 +11,7 @@ uniform float u_GalEdge;
 uniform vec4 u_GalArms;		/* count, tan(pitch), phase, strength */
 uniform vec2 u_GalArmShape;	/* sharpness, flocculence */
 uniform vec4 u_GalBar;		/* angle, length, strength, bulge strength */
-uniform vec2 u_GalBulge;	/* radius, flattening */
+uniform vec3 u_GalBulge;	/* radius, flattening; with rings, the dust elsewhere */
 uniform vec4 u_GalLens;		/* radius, strength, inner ring, outer ring */
 uniform vec4 u_GalDust;		/* amount, height, lognormal spread, ring radius */
 uniform vec3 u_GalWarp;		/* amplitude, start, phase */
@@ -170,11 +170,12 @@ gal_sample gal_density(vec3 p, float footprint)
 			(1.0 - smoothstep(0.8 * u_GalEdge, u_GalEdge, r_disc)) *
 			exp(-(dz * dz) / (dh * dh)) * (0.25 + 1.4 * u_GalArms.w * lane) *
 			gal_dust_field(p, footprint);
-	/* A lenticular's dust, what there is of it, in thin rings about the centre. */
+	/* A lenticular's dust, what there is of it, in thin rings about the centre, and in half of
+	 * them a lane along the disc too. */
 	if (u_GalDust.w > 0.0) {
 		float r1 = u_GalDust.w, r2 = 1.7 * u_GalDust.w;
 
-		s.dust *= 0.05 + 4.0 * (exp(-pow((r_disc - r1) / (0.12 * r1), 2.0)) +
+		s.dust *= u_GalBulge.z + 4.0 * (exp(-pow((r_disc - r1) / (0.12 * r1), 2.0)) +
 				0.6 * exp(-pow((r_disc - r2) / (0.1 * r2), 2.0)));
 	}
 	return s;

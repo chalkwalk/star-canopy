@@ -234,3 +234,34 @@ of the halo's light worth billions of stars, and the band asked for hundreds of
 millions, ran for hours and out of memory. It is now taken no further out than
 four scale lengths; the limit's search bisects where its slope steps swing; the
 draw is capped at twice the budget (`test_stars`).
+
+## The observer's place and the galactic path (look 8)
+
+Every sky was seen from the same place, 3.5 scale lengths out on the midplane;
+only the angle round the disc was the seed's. A **place grid** -- 6 radii from 0.5
+to 7 scale lengths by 5 heights from the midplane to 3 kpc, on a barred spiral
+and a grand design, with the exposure following -- read in three bands by radius:
+in toward the centre the sky is galactic, the whole of it glowing and dusty;
+about the Sun's radius, neutral, a band with a core; past the edge, remote, the
+galaxy an object in a dark sky. Height is a shortcut to remote: 0.4 kpc up at
+the Sun's radius already darkens half the sky.
+
+So a seed has a path: at 0 its own place in the band; toward galactic +1 in along
+the plane to the bulge; toward -1 out along a route of its own to remote, from
+straight out past the edge to straight up out of the disc, the height rising as
+the square of the way along, so it hugs the plane first. A first **mock-up**
+(five seeds, five routes, by hand) read in order from remote to galactic on every
+route, but its 0 read remote on four of five: only the seed placed at 3.0 scale
+lengths read neutral, not those at 3.5 and 3.8 -- the old default, 3.5, is a
+remote sky. So the seed's own place is 2.2 to 3 scale lengths out, the galactic
+end 0.5 to 1.2, the remote end a little nearer (6 out or 1.2 kpc up; -1 scored
+"ok" where -0.5 scored "yes"). The second mock-up, the path as built, read
+right. Above and below the disc are one sky mirrored, and the galaxy is turned at
+random, so the path goes up or out, never down.
+
+The lenticulars read remote most of the way, and the scorer saw why: with no dust
+the band reads as a bloom about a light, not as stars. More grain -- twice the
+band's stars, half its haze -- barely showed close up; a lane of dust along the
+whole disc, in half of them, breaks the band as a spiral's rift does, and reads
+as starlight. A clean lenticular, one sky in about thirty, is fine as a rarity.
+Lenticulars are one galaxy in eight, not one in four.

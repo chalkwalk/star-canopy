@@ -245,7 +245,9 @@ float brighterThan(float x) {
 constexpr int kBandCells = 48, kBandSteps = 64;
 
 float addBandStars(Random& rng, std::vector<Star>& stars, const Galaxy& g, const StarParams& p) {
-  if (p.bandCount <= 0 || p.count <= 0) {
+  // A lenticular's band has more of its light drawn as stars (Galaxy::grain).
+  const float budget = p.bandCount * g.grain;
+  if (budget <= 0.0f || p.count <= 0) {
     return 0.0f;
   }
   const float pi = 3.14159265f;
@@ -326,23 +328,23 @@ float addBandStars(Random& rng, std::vector<Star>& stars, const Galaxy& g, const
     if (total <= 0.0) {
       return 0.0f;
     }
-    limit *= powf(static_cast<float>(total / p.bandCount), 1.0f / kLumIndex);
+    limit *= powf(static_cast<float>(total / budget), 1.0f / kLumIndex);
   }
   // The slope's steps assume a power law, which the luminosity function's top
   // cuts off: where few stars are bright enough to see at all, they swing
   // between a handful and hundreds of millions. Then halve the interval
   // instead -- the count only falls as the limit rises.
   double total = totalAt(limit);
-  if (total > 2.0 * p.bandCount || total < 0.5 * p.bandCount) {
+  if (total > 2.0 * budget || total < 0.5 * budget) {
     float lo = 1e-12f, hi = 1e12f;
     for (int i = 0; i < 80; i++) {
       float mid = sqrtf(lo * hi);
-      (totalAt(mid) > p.bandCount ? lo : hi) = mid;
+      (totalAt(mid) > budget ? lo : hi) = mid;
     }
     limit = hi;
   }
   // And never more than twice the budget, whatever the counts say.
-  long drawn = 0, most = 2L * p.bandCount;
+  long drawn = 0, most = 2L * static_cast<long>(budget);
 
   std::vector<float> weight(kBandSteps);
   for (int c = 0; c < cells; c++) {

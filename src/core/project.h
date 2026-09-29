@@ -31,9 +31,12 @@ namespace starcanopy {
 //   7  the galaxy's glow exposed for where it is seen from (galaxy-adapt): the
 //      centre darker, the rim a little lighter; past the disc's edge, stars
 //      counted from the disc, not from the empty midplane there
+//   8  the observer placed by seed on a path through the galaxy, 2.2-3 scale
+//      lengths out by default, moved by the galactic macro; lenticulars one in
+//      eight, half with a lane of dust along the disc, their band grainier
 //
-// This StarCanopy renders look 7 only, and refuses older looks with a reason.
-constexpr int kLookVersion = 7;
+// This StarCanopy renders look 8 only, and refuses older looks with a reason.
+constexpr int kLookVersion = 8;
 
 // A project: how a sky is made again. Small, human-readable TOML:
 //

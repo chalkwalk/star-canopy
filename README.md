@@ -14,7 +14,7 @@ export it at full size, turned to face the way your scene needs.
 > **Status: skies render from the command line.** The sky model -- developed and
 > judged blind over many rounds in the Space Nerds In Space labs -- is here, and
 > `starcanopy render` turns a project file into OpenEXR, KTX2 and PNG, steered by
-> twelve macros. The interface is to come; see `ROADMAP.md`. Nothing below marked
+> thirteen macros. The interface is to come; see `ROADMAP.md`. Nothing below marked
 > *planned* works yet.
 
 ## What it makes
@@ -116,7 +116,9 @@ the seed's own sky. Set them in the project's `[macros]`, which `new` fills with
 every macro at 0, or with `render --macro NAME=VALUE`; `starcanopy macros` lists
 them and the dials each one moves. Every macro's name has been confirmed blind --
 picked as the side it names on every sky it was scored on -- but how far each end
-goes may still change (`ROADMAP.md`, *Macros*).
+goes may still change (`ROADMAP.md`, *Macros*); `galactic`, the newest, which
+moves the observer in toward the galaxy's centre or out to where it is a distant
+object, is still to have its name confirmed.
 
 **Overrides.** `starcanopy dials` lists the raw parameters; the project's
 `[overrides]` and `render --set NAME=VALUE` set them. They are for scripting, not

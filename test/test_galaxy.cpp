@@ -119,5 +119,17 @@ int main() {
   CHECK(worst[0] < 0.05);
   CHECK(worst[1] < 0.05);
   CHECK(worst[2] < 0.08);
+
+  // The observer's path: galactic +1 nearer the centre than the seed's own
+  // place, -1 further out or higher, and the own place in the band.
+  for (uint32_t seed = 1; seed <= 50; seed++) {
+    float r0, h0, rIn, hIn, rOut, hOut;
+    observerPlace(seed, 0.0f, r0, h0);
+    observerPlace(seed, 1.0f, rIn, hIn);
+    observerPlace(seed, -1.0f, rOut, hOut);
+    CHECK(r0 >= 2.2f && r0 <= 3.0f && std::fabs(h0) <= 0.03f);
+    CHECK(rIn < r0 && std::fabs(hIn) < 1e-6f);
+    CHECK(rOut > r0 + 0.1f || hOut > h0 + 0.1f);
+  }
   return test::finish();
 }

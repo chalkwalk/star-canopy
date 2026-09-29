@@ -130,6 +130,12 @@ const Binding kTurbulent[] = {
   {"fold-scale", O, 0.7f, -0.7f},
 };
 
+// Where in the galaxy: in toward its centre, its light and dust all about; or
+// out along the seed's own route -- past the edge or up out of the disc -- to
+// where it is an object in a dark sky (galaxy.h, observerPlace()).
+const Binding kGalactic[] = {
+  {"galaxy-place", A, 1.0f, -1.0f},
+};
 
 #define MACRO(name, opposite, help, b) Macro{name, opposite, help, b, static_cast<int>(std::size(b))}
 
@@ -146,6 +152,7 @@ const Macro kMacros[] = {
   MACRO("hazy", "clear", "a glow over the sky, the dark between not black", kHazy),
   MACRO("vivid", "muted", "how colourful", kVivid),
   MACRO("starry", "sparse", "how many stars, and how bright", kStarry),
+  MACRO("galactic", "remote", "where in the galaxy: in toward its centre, or far out", kGalactic),
 };
 
 #undef MACRO

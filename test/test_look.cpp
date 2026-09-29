@@ -40,14 +40,14 @@ struct Reference {
   double stat[kStats];
 };
 
-// Look 7, recorded on the Radeon (radeonsi) at 48 a face with the default
+// Look 8, recorded on the Radeon (radeonsi) at 48 a face with the default
 // dials. A look version's table stays for as long as it is rendered; look 1's
 // went when look 2 retired the shell, and each since when the next
 // replaced it.
-const Reference kLook7[] = {
-    {3, {0.0166759, 0.0231815, 0.0206239, 0.0106666, 0.0349485, 0.272346, 0.553541}},
-    {7, {0.014288, 0.0173032, 0.018419, 0.0112357, 0.0320702, 0.101096, 0.428277}},
-    {12, {0.0150134, 0.0169565, 0.0197418, 0.0111899, 0.0293883, 0.105435, 0.394534}},
+const Reference kLook8[] = {
+    {3, {0.0166175, 0.0230581, 0.0205847, 0.0106171, 0.0338931, 0.285126, 0.551978}},
+    {7, {0.0147261, 0.017699, 0.0187506, 0.011594, 0.0332483, 0.10073, 0.428033}},
+    {12, {0.0149709, 0.0167153, 0.0192351, 0.0108973, 0.0289179, 0.108941, 0.43168}},
 };
 
 void measure(const Cubemap& c, double out[kStats]) {
@@ -82,10 +82,10 @@ int main(int argc, char** argv) {
     return 1;
   }
   std::printf("context: %s\n", context->description().c_str());
-  CHECK(kLookVersion == 7);  // a new look version needs its own table here
+  CHECK(kLookVersion == 8);  // a new look version needs its own table here
 
   double worst = 0.0;
-  for (const Reference& ref : kLook7) {
+  for (const Reference& ref : kLook8) {
     Settings s;
     s.seed = ref.seed;
     CubemapTarget target(kSize);

@@ -39,18 +39,27 @@ enum GalaxyStyle {
 // lenticular now and then -- from a stream of its own.
 int galaxyStyleFor(uint32_t seed);
 
+// The observer's place along the seed's path through its galaxy
+// (docs/studies/atlas.md, The observer's place): at 0 the seed's own place in
+// the band; toward 1 in along the plane toward the bulge; toward -1 out along
+// the seed's own route to remote, from straight out past the disc's edge to
+// straight up out of it, rising late. Radius in disc scale lengths, height in
+// kpc.
+void observerPlace(uint32_t seed, float place, float& radius, float& height);
+
 constexpr int kMaxExternalGalaxies = 8;
 
 struct GalaxyParams {
   int style = kBarredSpiral;    // a GalaxyStyle, or -1 for the seed's
-  // The Sun is at about three scale lengths; 3.5 is out toward the edge, where
-  // the galaxy's light is decidedly on one side of the sky.
+  // Where the observer is: NaN for the place along the seed's path that place
+  // picks (observerPlace()), or a number, which overrides it.
   float observerRadius = 3.5f;  // from the centre, in disc scale lengths
   // Above the midplane, kpc. The Sun is some 0.02 above it, and so sees more
   // of the disc below than above -- a fifth more stars, in the model -- which
   // a sky nobody chose that for should not have; the seed's choice of place
   // is to come (ROADMAP.md, The observer's place).
   float observerHeight = 0.0f;
+  float place = 0.0f;           // along the seed's path: -1 remote, 1 in toward the centre
   float dust = 1.0f;             // multiplies the dust
   float warp = 1.0f;             // multiplies the warp
   float waves = 1.0f;            // multiplies the bending waves
@@ -76,11 +85,17 @@ struct Galaxy {
   float armSharpness, flocculence;
   float barAngle, barLength, barStrength, bulgeStrength;
   float bulgeRadius;      // kpc: 1 in a spiral, twice that in a lenticular
+  // How much more of the band is drawn as stars, and how much less is left as
+  // haze, than in a spiral: 1 in one. A lenticular's band, with no dust to
+  // break it and no young stars to bead it, read as a bloom about a light, not
+  // as stars (docs/studies/atlas.md); what makes it starlight is grain.
+  float grain;
   float bulgeFlattening;  // its width over its depth
   // A lenticular's lens -- its radius, kpc, 0 for none, and its light -- and
   // its stellar rings at the lens's inner edge and twice that.
   float lensRadius, lensStrength, innerRing, outerRing;
   float dustRing;         // kpc: its dust in rings there and 1.7 out; 0, not
+  float dustLane;         // with rings, the dust elsewhere: 1 a lane along the disc
   float dust, dustHeight;
   // The spread of the dust's lognormal: how clumped it is, from a soft haze of
   // lanes to dense clouds with clear windows between. By seed, so skies differ

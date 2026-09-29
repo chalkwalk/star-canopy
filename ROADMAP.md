@@ -216,22 +216,24 @@ from it goes in `SOURCES.md`.
       the vantage*)
 - [ ] The bulge's size by type, and ellipticals and irregulars
 - [ ] Arms that branch into several strands, with spurs and feathers between
-- [ ] The observer's place, cylindrical and normalised: an angle round the disc;
-      a radius from 0 at the centre to 1 at the edge; a height from 0 at the
-      midplane to +-1 at the disc's top and bottom; a little beyond 1 for
-      outliers. The seed picks it, weighted toward the star density but not
-      strictly, so most seeds sit in the band and few far out. Today the seed
-      picks only the angle, and radius and height are raw dials. Raw material
-      for a macro (*Macros*)
+- [x] The observer's place (look 8): the seed's own path through the galaxy --
+      its place in the band at 0, in along the plane toward +1, out along its
+      own route to remote toward -1, from straight out past the edge to straight
+      up. Ranges read off a place grid and two mock-ups (`docs/studies/atlas.md`);
+      `galaxy-radius` and `galaxy-height` are `auto` unless set
 - [ ] The external galaxies: implemented, but smudges a star across that change
       no patch of sky by more than two levels (`docs/studies/parameters.md`,
       *Points*). Make them worth seeing -- resolved discs, a few degrees for the
       nearest -- or drop them
-- [ ] A galactic / remote macro, once the band is made of stars. The first one
-      -- nearer the centre, more glow -- lost its name 0-3 blind: the glow read
-      as a brown haze over the stars, and the remote end, black sky and sharp
-      stars, was picked as the more galactic every time (and preferred). A
-      galactic sky should be one where the galaxy's structure shows
+- [ ] The galactic / remote macro (look 8): made, moving the observer along the
+      seed's path; its name to be confirmed blind, -1 / 0 / +1 ranked. The first
+      one -- nearer the centre, more glow -- lost its name 0-3: the glow read as a
+      brown haze over the stars. The path's mock-ups read in order
+- [ ] Starry to move the band too: its star budget (x2 at +1, x1/4 at -1) and
+      the haze kept under it the other way, so the glow gives way to stars
+      without the galaxy's light changing (the user's proposal)
+- [ ] The young arms' reach: from the rim, their star clouds strew much of the
+      sky -- striking or clutter, to be judged
 - [ ] Blind A/B at game field of view for each step that moves the look, across
       the atlas's vantages, not one; `test_look` moves only with a new look
       version

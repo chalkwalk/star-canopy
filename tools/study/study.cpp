@@ -210,8 +210,9 @@ std::vector<const Dial*> chosen(const std::vector<std::string>& names, bool with
   std::vector<const Dial*> out;
   for (int i = 0; i < count; i++) {
     std::string name = all[i].name;
-    // The seed, and the dials macros own.
-    if (all[i].seed || all[i].owner ||
+    // The seed, the dials macros own, and those the seed chooses unless set:
+    // the observer's place is studied through its macro (docs/studies/atlas.md).
+    if (all[i].seed || all[i].owner || all[i].automatic ||
         (!withQuality && (kQuality.count(name) || kDebug.count(name)))) {
       continue;
     }

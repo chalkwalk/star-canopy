@@ -154,8 +154,20 @@ and break into fragments further out. A lenticular is a disc that has stopped
 making stars, its arms faded to a trace: its structure is concentric -- a bulge
 up to two and a half times a spiral's, a lens (a plateau of even light with a
 sharp edge), a bar in half, stellar rings at the lens's inner edge and twice
-that, a disc smoother than a spiral's -- and its dust, in six of ten, lies in
-thin rings about the centre. From inside, a large bulge over a thin, clean band.
+that, a disc smoother than a spiral's -- and its dust lies in thin rings about the centre
+in six of ten and, in half, in a lane along the whole disc besides. From inside, a
+large bulge over a thin band, broken by its lane; without one the band read as a
+bloom about a light rather than as stars, so a lenticular also draws twice the
+band's stars and keeps half the haze. One galaxy in eight is lenticular.
+
+The observer's place is the seed's, on a path of its own through the galaxy
+(`observerPlace()`): at 0 in the band, 2.2 to 3 scale lengths out and on the
+midplane; toward galactic +1 in along the plane to the bulge, 0.5 to 1.2 out;
+toward -1 out along the seed's own route to where the galaxy is an object -- from
+straight out past the edge to straight up out of the disc, rising late. The
+`galactic` macro moves along it; `galaxy-radius` and `galaxy-height` are `auto`
+unless set, and a number set overrides the path. The ranges were read off a grid
+of places and two mock-ups of the path (`docs/studies/atlas.md`).
 
 The glow is exposed for where it is seen from, as an eye adapts: from the
 brightness most of its sky reaches, against that at the Sun's place, followed
@@ -236,7 +248,8 @@ The **look version** is recorded in every project. Look 1 was the lift from the
 labs; look 2 retired the shell and remade the distant nebulae, a mass sky's main
 nebula unchanged; look 3 remade the galaxy's dust; look 4 made its band of stars;
 look 5 gave it a type by seed and spiral arms; look 6 made a quarter of galaxies
-lenticular; look 7 exposed its glow for the vantage (`src/core/project.h`). This
+lenticular; look 7 exposed its glow for the vantage; look 8 placed the observer by seed, moved
+by `galactic` (`src/core/project.h`). This
 StarCanopy renders the latest look, and refuses older ones saying how to render
 them with it. A change that alters any sky's
 pixels is a new look version; the renderer keeps the old ones renderable, or
