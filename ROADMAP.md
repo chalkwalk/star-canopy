@@ -12,7 +12,7 @@
 
 ## Active focus
 
-*(2026-09-27)*
+*(2026-09-29)*
 
 The model is here and renders from project files to OpenEXR, KTX2 and PNG,
 oriented as a scene needs (`docs/COMPLETED.md`); the parameters are triaged and
@@ -26,9 +26,14 @@ studied, and twelve macros steer it, every name confirmed blind
    masses (*The shell's retirement, and bubbles*). Bubbles wait.
 4. **The galaxy from any star** -- the vantage atlas first, then dust and a band
    made of stars; the galactic macro and the external galaxies come back with it.
-5. **In context** -- headless stills first, then a minimal window and
+   Done to the observer's place (look 8); the galactic macro's name and routes
+   next.
+5. **Astronomical objects** -- accents and heroes, open clusters first
+   (*Astronomical objects: accents and heroes*). Its place against 6 and 7 is
+   the user's to set.
+6. **In context** -- headless stills first, then a minimal window and
    look-around to show them in.
-6. **The preview ladder** -- a resolution-stable light volume first -- **and the
+7. **The preview ladder** -- a resolution-stable light volume first -- **and the
    rest of the interface.**
 
 ---
@@ -145,6 +150,9 @@ in look 2: those are to be found again from the mass.
 - [ ] Pick which become styles; make each reliable across seeds (the band only
       works on some)
 - [ ] A seed-chosen composition archetype, so sparse skies arrive by browsing too
+- [ ] Less nebula by default: with a galaxy worth seeing, the mass covers too
+      much of the sky. Blind A/B of today's coverage against a more open default
+      (the `open` macro's direction), a look change
 
 ### The shoulder in HDR
 
@@ -226,9 +234,13 @@ from it goes in `SOURCES.md`.
       *Points*). Make them worth seeing -- resolved discs, a few degrees for the
       nearest -- or drop them
 - [ ] The galactic / remote macro (look 8): made, moving the observer along the
-      seed's path; its name to be confirmed blind, -1 / 0 / +1 ranked. The first
-      one -- nearer the centre, more glow -- lost its name 0-3: the glow read as a
-      brown haze over the stars. The path's mock-ups read in order
+      seed's path. The first one -- nearer the centre, more glow -- lost its name
+      0-3: the glow read as a brown haze over the stars. This one, blind, -1 / 0 /
+      +1 ranked with the nebula on: in order on 5 of 6 seeds. The sixth reversed:
+      its route rose steeply, and 1.2 kpc up the view toward the centre is the
+      whole bright disc beneath, lifted by the exposure -- the most galaxy on
+      screen. Keep the routes mostly outward (0-45 degrees) or rise higher, then
+      check the name again
 - [ ] Starry to move the band too: its star budget (x2 at +1, x1/4 at -1) and
       the haze kept under it the other way, so the glow gives way to stars
       without the galaxy's light changing (the user's proposal)
@@ -262,18 +274,63 @@ something new, earning its place blind like anything else.
 - [x] Distant nebulae as masses, lit from beside, dimmed by the dust in front:
       four blind rounds against look 1's distant shells, the last two won 4-0
       (`docs/studies/distant.md`)
-- [ ] Bubbles, as their own object: a supernova remnant or wind-blown bubble --
-      thin, transparent, limb-brightened, its wrinkles seen edge on as
-      filaments. The shell's geometry is right for it and its light is not: a
-      remnant glows because a shock heats its whole skin, not because a cluster
-      inside ionises one side of it. A self-glowing skin, no light volume. Placed
-      at any depth, veiled by the dust in front as the distant nebulae are
-      (`Bubble::veil`) -- ahead of the main mass bright and unveiled, far off
-      dim. Blind: a mass sky with one against one without
+- [ ] Bubbles, as their own object: now *Glowing shells* under *Astronomical
+      objects*, below
 - [ ] Pillars and dark clouds that emerge from the mass rather than being
       placed: the light eroding the gas that faces it, leaving the shadowed
       tails behind dense knots pointing at it; dense lumps of the mass seen
       against the glow. Research first (`PRINCIPLES §4`)
+
+### Astronomical objects: accents and heroes
+
+Objects beyond the lit mass and the galaxy -- open clusters, supernova remnants,
+planetary nebulae, dark clouds -- agreed in a Q&A with the user (2026-09-29).
+Each family gets its own design, spec and plan, reviewed before it is built, and
+its own blind rounds.
+
+The decisions, for every family:
+
+- **Both accents and heroes.** An accent is a secondary object, as the distant
+  nebulae are; a hero replaces the lit mass as the sky's centrepiece. In a hero
+  sky there is no main mass -- distant masses may remain as accents -- and the
+  key light is the sky's brightest star (`PRINCIPLES §14`).
+- **Auto by seed, explicit otherwise** -- the rule for every choice of kind, as
+  `galaxy-style` is: `style = "auto"` lets the seed draw a hero sometimes, so
+  browsing turns them up; a named style pins one kind, the seed varying within
+  it. About one sky in four a hero under auto, each kind starting rarer while it
+  is new, and to be reviewed.
+- **Near by choice, adjustable.** Seen from anywhere, most such objects are small:
+  a planetary nebula arcminutes, a bright cluster a couple of degrees. Accents
+  are drawn at physical distances, sizes and brightnesses, with a bias toward
+  near ones -- someone is always near something -- set by a dial from purely
+  realistic to favouring the near. Never enlarged beyond what their distance
+  allows: that is a decal (`PRINCIPLES §4`).
+- **Where the galaxy puts them, not strictly.** Drawn from the galaxy's density,
+  so the far ones crowd along the band and are veiled by its dust; the near ones
+  lie in any direction, as near things do.
+- **Their own colours, pulled toward the sky's.** Physical colours -- a
+  planetary nebula's teal core and red rim, a young cluster's blue -- drawn part
+  way toward the sky's grade, as the stars are (`grade-stars`).
+
+In this order, each proving the ground the next builds on:
+
+- [ ] **Open clusters**, accents only: knots of young stars at one distance,
+      mostly from the star system already here. The first to use the accents'
+      ground: the galaxy-weighted draw, the near bias, the veil, the colour pull.
+      Blind: skies with them against without
+- [ ] **Glowing shells**: supernova remnants and wind-blown bubbles -- thin,
+      transparent, limb-brightened, their wrinkles seen edge on as filaments;
+      the old shell's geometry with a light of its own, a shock heating the
+      whole skin, no light volume -- and planetary nebulae, small, symmetric or
+      two-lobed, in layers of colour about a hot central star. Accents first,
+      veiled by the dust in front as the distant nebulae are (`Bubble::veil`);
+      then heroes, with the style choice and the key light from the brightest
+      star. Blind each way
+- [ ] **Dark clouds**: giant molecular clouds, dark nebulae and small dense
+      globules, seen against the band and the nebula's glow, faintly lit at
+      their edges; with the galaxy's own dust and *Pillars and dark clouds*
+- [ ] **Supernovae**: folded into the stars -- in a baked sky, a supernova is one
+      extraordinarily bright star; a rare one, whenever it is convenient
 
 ### Carried over from the labs
 
