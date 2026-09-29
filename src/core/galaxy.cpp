@@ -57,14 +57,7 @@ float dustField(const float p[3], float footprint, float sigma) {
 int galaxyStyleFor(uint32_t seed) {
   Random rng(seed * 3266489917u + 1231u);
   float u = rng.uniform();
-  // Lenticulars are not drawn until they have their own structure -- a large
-  // bulge, a lens and rings -- rather than a spiral's with the arms taken out;
-  // they can be asked for by name meanwhile. Their share is spread over the
-  // spirals in proportion, so every other seed keeps its type.
-  if (u >= 0.75f) {
-    u = (u - 0.75f) / 0.25f * 0.75f;
-  }
-  return u < 0.35f ? kBarredSpiral : u < 0.5f ? kGrandDesign : kFlocculent;
+  return u < 0.35f ? kBarredSpiral : u < 0.5f ? kGrandDesign : u < 0.75f ? kFlocculent : kLenticular;
 }
 
 Galaxy generateGalaxy(uint32_t seed, const GalaxyParams& p) {
@@ -93,6 +86,9 @@ Galaxy generateGalaxy(uint32_t seed, const GalaxyParams& p) {
   g.observer[2] = p.observerHeight;
 
   g.armPhase = rng.range(0.0f, 2.0f * kPi);
+  g.bulgeRadius = 1.0f;
+  g.bulgeFlattening = 2.0f;
+  float lenticularDust = 1.0f;
   g.barAngle = rng.range(0.0f, kPi);
   int style = p.style >= 0 && p.style < kGalaxyStyles ? p.style : galaxyStyleFor(seed);
   switch (style) {
@@ -111,15 +107,40 @@ Galaxy generateGalaxy(uint32_t seed, const GalaxyParams& p) {
       g.flocculence = 0.9f;
       g.bulgeStrength = 0.6f;
       break;
-    case kLenticular:
-      // No arms, so no young stars and only the thin even dust the arms'
-      // lanes stand on; a larger bulge.
+    case kLenticular: {
+      // A disc that has stopped making stars: its arms faded with their young
+      // stars to a trace, and what it has instead is concentric -- a large
+      // bulge, a lens with a sharp edge in nearly all, a bar in many, rings at
+      // the bar's size and twice it, and dust, when there is any, in thin
+      // rings about the centre (docs/studies/atlas.md). From a stream of its
+      // own, so the draws after are a spiral's.
+      Random s0(seed * 2891336453u + 1597u);
       g.arms = 2.0f;
-      g.pitchTan = 0.2f;
-      g.armStrength = 0.0f;
-      g.armSharpness = 3.0f;
-      g.bulgeStrength = 1.4f;
+      g.pitchTan = tanf(s0.range(8.0f, 12.0f) * kPi / 180.0f);
+      g.armStrength = s0.range(0.01f, 0.03f);
+      g.armSharpness = 2.0f;
+      g.bulgeStrength = s0.range(1.2f, 1.8f);
+      g.bulgeRadius = s0.range(1.6f, 2.4f);
+      g.bulgeFlattening = 1.4f;
+      if (s0.uniform() < 0.5f) {
+        g.barLength = s0.range(3.0f, 4.5f);
+        g.barStrength = s0.range(2.0f, 3.0f);
+        g.lensRadius = 1.3f * g.barLength;
+      } else {
+        g.lensRadius = s0.range(0.9f, 1.5f) * g.scaleLength;
+      }
+      g.lensStrength = s0.range(0.2f, 0.4f);
+      g.innerRing = s0.uniform() < 0.5f ? s0.range(0.5f, 1.5f) : 0.0f;
+      g.outerRing = s0.uniform() < 0.3f ? s0.range(0.5f, 1.5f) : 0.0f;
+      // Dust from none to a few rings: the S0 classes by dust.
+      if (s0.uniform() < 0.6f) {
+        lenticularDust = s0.range(0.3f, 1.0f);
+        g.dustRing = s0.range(0.3f, 0.9f) * g.lensRadius;
+      } else {
+        lenticularDust = 0.05f;
+      }
       break;
+    }
     default:
       g.arms = rng.uniform() < 0.5f ? 2.0f : 4.0f;
       g.pitchTan = tanf(rng.range(10.0f, 14.0f) * kPi / 180.0f);
@@ -132,7 +153,7 @@ Galaxy generateGalaxy(uint32_t seed, const GalaxyParams& p) {
       break;
   }
 
-  g.dust = 8.0f * p.dust;
+  g.dust = 8.0f * p.dust * lenticularDust;
   g.dustHeight = 0.1f;
 
   // The warp begins well out and grows as the square of the distance past
@@ -241,6 +262,8 @@ GalaxySample galaxyDensity(const Galaxy& g, const float p[3], float footprint) {
   q[2] = p[2] * 1.1f + 3.0f;
   // A smooth old disc; see gal_density().
   clump = fminf(fmaxf(1.0f + 0.8f * noise(q, 2), 0.7f), 1.3f);
+  float stirred = fminf(4.0f * g.armStrength, 1.0f);
+  clump = 1.0f * (1.0f - stirred) + clump * stirred;
   // The arms, strong enough to be seen; see gal_density().
   // Dead space between the arms in the outer disc; see gal_density().
   float between = outer * fminf(g.armStrength, 1.0f);
@@ -268,7 +291,18 @@ GalaxySample galaxyDensity(const Galaxy& g, const float p[3], float footprint) {
   }
   // The bulge, flattened; see gal_density().
   s.old += g.bulgeStrength * 0.45f *
-           expf(-sqrtf(p[0] * p[0] + p[1] * p[1] + 4.0f * p[2] * p[2]) / 1.0f);
+           expf(-sqrtf(p[0] * p[0] + p[1] * p[1] +
+                       g.bulgeFlattening * g.bulgeFlattening * p[2] * p[2]) /
+                g.bulgeRadius);
+  // A lenticular's lens and rings; see gal_density().
+  if (g.lensRadius > 0.0f) {
+    float ri = g.lensRadius / 1.3f, ro = 2.0f * ri;
+    float vert = expf(-(dz * dz) / (h * h)) / h;
+    float di = (rDisc - ri) / (0.08f * ri), dout = (rDisc - ro) / (0.1f * ro);
+    s.old += vert * (g.lensStrength * expf(-rDisc / (4.0f * g.scaleLength)) *
+                         (1.0f - smoothstep(0.92f * g.lensRadius, g.lensRadius, rDisc)) +
+                     radial * (g.innerRing * expf(-di * di) + g.outerRing * expf(-dout * dout)));
+  }
   s.old += 0.0008f / powf(1.0f + r * r / 4.0f, 1.5f);
 
   // The dust layer, thin but not flat: its thickness and its middle vary by
@@ -284,6 +318,12 @@ GalaxySample galaxyDensity(const Galaxy& g, const float p[3], float footprint) {
   s.dust = g.dust * 0.4f * expf(-rDisc / (1.5f * g.scaleLength)) *
            (1.0f - smoothstep(0.8f * g.edge, g.edge, rDisc)) * expf(-(dz * dz) / (dh * dh)) *
            (0.25f + 1.4f * g.armStrength * lane) * dustField(p, footprint, g.dustSigma);
+  // A lenticular's dust in rings; see gal_density().
+  if (g.dustRing > 0.0f) {
+    float r1 = g.dustRing, r2 = 1.7f * g.dustRing;
+    float d1 = (rDisc - r1) / (0.12f * r1), d2 = (rDisc - r2) / (0.1f * r2);
+    s.dust *= 0.05f + 4.0f * (expf(-d1 * d1) + 0.6f * expf(-d2 * d2));
+  }
   return s;
 }
 

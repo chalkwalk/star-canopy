@@ -203,11 +203,14 @@ from it goes in `SOURCES.md`.
       old disc, dark space between them in the outer disc, dust along their
       inner edges, breaking into fragments further out. From above preferred
       3-0 blind, in the disc level (`docs/studies/atlas.md`)
-- [ ] Lenticulars: a bulge two or three times a spiral's, a lens (a plateau of
-      even light with a sharp edge), a bar in some, faint stellar rings at the
-      bar's size and twice it, a ghost of the spiral at a few percent, dust by
-      seed from none to a few thin rings near the centre. Named today but not
-      drawn by seed
+- [x] Lenticulars (look 6), a quarter of galaxies: a large bulge, a lens with a
+      sharp edge, a bar in half, stellar rings, a ghost of the spiral, dust from
+      none to a few thin rings near the centre. Preferred 12-0 blind
+      (`docs/studies/atlas.md`); judged from the atlas's new portrait, 35 kpc
+      over the centre
+- [ ] Bars that show: the fixed knee burns out the centre where a bar lies, a
+      barred spiral's as much as a lenticular's (with *Exposure that follows
+      the vantage*)
 - [ ] The bulge's size by type, and ellipticals and irregulars
 - [ ] Arms that branch into several strands, with spurs and feathers between
 - [ ] The observer's place, cylindrical and normalised: an angle round the disc;

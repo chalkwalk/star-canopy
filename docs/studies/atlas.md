@@ -176,3 +176,25 @@ in many; stellar rings at the bar's size and twice it; a spiral surviving only a
 a trace; little dust, often in lanes or rings round the centre. So it is not
 drawn by seed until it has that structure; its quarter of seeds goes to the
 spirals in proportion, every other seed keeping its type.
+
+## Lenticulars (look 6)
+
+Made as the sources describe them: a bulge 1.6 to 2.4 kpc in scale, against a
+spiral's 1, and rounder; a lens, a plateau of old light ending in a sharp edge,
+1.3 times the bar where there is one; a bar, strong, in half; an inner stellar
+ring in half and an outer one at twice its radius in three of ten; the spiral a
+trace at 1 to 3%; the old disc's lumpiness scaled down with it; and dust in six
+of ten, then only in thin rings about the centre, from none in the rest.
+
+Judged from a new vantage, the *portrait*, 35 kpc over the centre: the galaxy
+whole, looking down, as photographs show one -- beyond any sky's reach. From
+there the glow's march had drawn the disc in concentric rings, its steps spread
+over the empty way in until each was as thick as the disc; it now starts where
+the ray enters the galaxy. The old lenticular's ghost spiral, wound tight, had
+shown the same rings, and that was real: it went to 1-3%.
+
+**Blind:** the new lenticular preferred **12-0** over look 5's, from the
+portrait, from 3 kpc up and from the Sun's place, on seeds 1, 3, 5 and 7. A
+lenticular is now drawn for a quarter of seeds. Two things wait: bars barely
+show, the fixed knee burning out the centre where they lie (a barred spiral's
+too); and the ring dust, seen from above, is specks rather than lanes.

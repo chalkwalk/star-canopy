@@ -75,6 +75,12 @@ struct Galaxy {
   float arms, pitchTan, armPhase, armStrength;
   float armSharpness, flocculence;
   float barAngle, barLength, barStrength, bulgeStrength;
+  float bulgeRadius;      // kpc: 1 in a spiral, twice that in a lenticular
+  float bulgeFlattening;  // its width over its depth
+  // A lenticular's lens -- its radius, kpc, 0 for none, and its light -- and
+  // its stellar rings at the lens's inner edge and twice that.
+  float lensRadius, lensStrength, innerRing, outerRing;
+  float dustRing;         // kpc: its dust in rings there and 1.7 out; 0, not
   float dust, dustHeight;
   // The spread of the dust's lognormal: how clumped it is, from a soft haze of
   // lanes to dense clouds with clear windows between. By seed, so skies differ

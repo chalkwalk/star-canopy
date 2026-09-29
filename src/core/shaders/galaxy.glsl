@@ -11,7 +11,9 @@ uniform float u_GalEdge;
 uniform vec4 u_GalArms;		/* count, tan(pitch), phase, strength */
 uniform vec2 u_GalArmShape;	/* sharpness, flocculence */
 uniform vec4 u_GalBar;		/* angle, length, strength, bulge strength */
-uniform vec3 u_GalDust;		/* amount, height, lognormal spread */
+uniform vec2 u_GalBulge;	/* radius, flattening */
+uniform vec4 u_GalLens;		/* radius, strength, inner ring, outer ring */
+uniform vec4 u_GalDust;		/* amount, height, lognormal spread, ring radius */
 uniform vec3 u_GalWarp;		/* amplitude, start, phase */
 uniform vec3 u_GalWaves;	/* amplitude, wavelength, phase */
 
@@ -110,6 +112,8 @@ gal_sample gal_density(vec3 p, float footprint)
 	 * the eightfold star clouds of old, which from above laid a field of moguls over the
 	 * whole disc and hid its arms. */
 	clump = clamp(1.0 + 0.8 * nsky_noise(p * 1.1 + 3.0).z, 0.7, 1.3);
+	/* A lenticular's smoother still: nothing has stirred it for billions of years. */
+	clump = mix(1.0, clump, min(4.0 * u_GalArms.w, 1.0));
 	/* The arms: the old disc brighter along them, and the young stars -- blue, and gathered
 	 * into star clouds -- nearly all in them: strong enough to be seen, where the labs'
 	 * arms, at a sixth of the old light, showed from nowhere (docs/studies/atlas.md). */
@@ -142,7 +146,18 @@ gal_sample gal_density(vec3 p, float footprint)
 	/* The bulge: flattened, half as deep as it is wide, as the Milky Way's boxy one is --
 	 * round, it stood above and below the band as a ball of light, which no photograph
 	 * of the Milky Way shows. */
-	s.old += u_GalBar.w * 0.45 * exp(-length(vec3(p.xy, p.z * 2.0)) / 1.0);
+	s.old += u_GalBar.w * 0.45 * exp(-length(vec3(p.xy, p.z * u_GalBulge.y)) / u_GalBulge.x);
+	/* A lenticular's lens: a plateau of old light, nearly even, ending in a sharp edge; and
+	 * its stellar rings, at the lens's inner edge and twice that (docs/studies/atlas.md). */
+	if (u_GalLens.x > 0.0) {
+		float ri = u_GalLens.x / 1.3, ro = 2.0 * ri;
+		float vert = exp(-(dz * dz) / (h * h)) / h;
+
+		s.old += vert * (u_GalLens.y * exp(-r_disc / (4.0 * u_GalDisc.x)) *
+				(1.0 - smoothstep(0.92 * u_GalLens.x, u_GalLens.x, r_disc)) +
+				radial * (u_GalLens.z * exp(-pow((r_disc - ri) / (0.08 * ri), 2.0)) +
+				u_GalLens.w * exp(-pow((r_disc - ro) / (0.1 * ro), 2.0))));
+	}
 	s.old += 0.0008 / pow(1.0 + r * r / 4.0, 1.5);
 
 	/* The dust layer, thin, but not flat: its thickness varies by a low noise, a factor
@@ -155,5 +170,12 @@ gal_sample gal_density(vec3 p, float footprint)
 			(1.0 - smoothstep(0.8 * u_GalEdge, u_GalEdge, r_disc)) *
 			exp(-(dz * dz) / (dh * dh)) * (0.25 + 1.4 * u_GalArms.w * lane) *
 			gal_dust_field(p, footprint);
+	/* A lenticular's dust, what there is of it, in thin rings about the centre. */
+	if (u_GalDust.w > 0.0) {
+		float r1 = u_GalDust.w, r2 = 1.7 * u_GalDust.w;
+
+		s.dust *= 0.05 + 4.0 * (exp(-pow((r_disc - r1) / (0.12 * r1), 2.0)) +
+				0.6 * exp(-pow((r_disc - r2) / (0.1 * r2), 2.0)));
+	}
 	return s;
 }
