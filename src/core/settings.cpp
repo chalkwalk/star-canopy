@@ -176,6 +176,10 @@ const Dial kDials[] = {
   REAL("galaxy-waves", "the bending waves rippling the outer disc", galaxyWaves, 0.0f, 5.0f),
   INT("external-galaxies", "other galaxies, far beyond this one", externalGalaxies, 0.0f,
       static_cast<float>(kMaxExternalGalaxies)),
+  INT("open-clusters", "open clusters about a sky, typically -- knots of young stars; 0 none",
+      openClusters, 0.0f, 40.0f),
+  REAL("accent-near", "how strongly the sky's objects are drawn near: 0 as physics has them, "
+       "1 mostly near", accentNear, 0.0f, 1.0f),
   INT("galaxy-res", "texels per face of the galaxy's glow; 0 the sky's own", galaxyRes, 0.0f,
       4096.0f),
 
@@ -392,6 +396,8 @@ Sky buildSky(const Settings& s) {
   sky.galaxyHaze = s.galaxyHaze;
   sky.galaxyAdapt = s.galaxyAdapt;
 
+  sky.accents.openClusters = s.openClusters;
+  sky.accents.near = s.accentNear;
   StarParams& st = sky.stars;
   st.count = s.starCount;
   st.bandCount = s.bandStars;

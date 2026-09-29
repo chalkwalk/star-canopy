@@ -26,6 +26,7 @@ add_custom_command(
   VERBATIM)
 
 add_library(starcanopy_core STATIC
+  accents.cpp
   bake.cpp
   cubemap.cpp
   cubemap_target.cpp

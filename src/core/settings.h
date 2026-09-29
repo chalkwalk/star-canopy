@@ -1,5 +1,6 @@
 #pragma once
 
+#include "accents.h"
 #include "galaxy.h"
 #include "look.h"
 #include "scene.h"
@@ -109,6 +110,8 @@ struct Settings {
   float galaxyWarp = 1.0f;
   float galaxyWaves = 1.0f;
   int externalGalaxies = 4;
+  int openClusters = 0;     // open clusters about a sky; 0 none (look 10 sets it)
+  float accentNear = 0.4f;  // how strongly accents are drawn near, 0..1
   int galaxyRes = 0;  // the sky's own size
 
   // The bake.
@@ -164,6 +167,7 @@ struct Sky {
   Look look;
   GalaxyParams galaxy;
   StarParams stars;
+  AccentParams accents;
   int galaxyRes;
   float galaxyHaze;  // the galaxy's glow kept where its stars are drawn
   float galaxyAdapt; // how far its exposure follows the vantage, 0..1
