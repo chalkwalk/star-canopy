@@ -157,6 +157,13 @@ sharp edge), a bar in half, stellar rings at the lens's inner edge and twice
 that, a disc smoother than a spiral's -- and its dust, in six of ten, lies in
 thin rings about the centre. From inside, a large bulge over a thin, clean band.
 
+The glow is exposed for where it is seen from, as an eye adapts: from the
+brightness most of its sky reaches, against that at the Sun's place, followed
+half way (`galaxy-adapt`) and bounded -- so from near the centre, where the whole
+sky glows, its structure shows instead of a grey fog, and from the rim the faint
+local disc is lifted a little. It is measured at one small size, so a preview
+has the export's exposure.
+
 The band is made of stars. About 30,000 field stars within 1.5 kpc are sampled
 from the same model at real distances; beyond them, about 150,000 more are drawn
 where the galaxy's density and luminosity law put stars bright enough to draw,
@@ -229,7 +236,7 @@ The **look version** is recorded in every project. Look 1 was the lift from the
 labs; look 2 retired the shell and remade the distant nebulae, a mass sky's main
 nebula unchanged; look 3 remade the galaxy's dust; look 4 made its band of stars;
 look 5 gave it a type by seed and spiral arms; look 6 made a quarter of galaxies
-lenticular (`src/core/project.h`). This
+lenticular; look 7 exposed its glow for the vantage (`src/core/project.h`). This
 StarCanopy renders the latest look, and refuses older ones saying how to render
 them with it. A change that alters any sky's
 pixels is a new look version; the renderer keeps the old ones renderable, or

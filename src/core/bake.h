@@ -42,7 +42,16 @@ public:
 
   // The galaxy's glow as seen from its observer, res texels a face. Every bake
   // after samples it; it need only be redone when the galaxy changes.
-  void bakeGalaxy(const Galaxy& g, const float reddening[3], int res, const float band[3]);
+  // Its light is scaled by exposure and then eased past the knee (0: none).
+  void bakeGalaxy(const Galaxy& g, const float reddening[3], int res, const float band[3],
+                  float exposure = 1.0f, float knee = 1.5f);
+
+  // The glow's luminance over the whole sky, weighed by solid angle, before
+  // any exposure or knee: at the 50th, 90th, 99th and 99.9th percentiles.
+  // Baked small, at a fixed size, so every size of sky measures the same.
+  // Leaves the glow to be baked again.
+  void measureGalaxy(const Galaxy& g, const float reddening[3], const float band[3],
+                     float out[4]);
 
   // The light volume for this scene and look. Before any begin() whose scene or
   // look differs from the last one lit.

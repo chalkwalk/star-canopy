@@ -4,7 +4,10 @@
 // and then as the bench every step of the galaxy work is judged on.
 //
 //   atlas --out DIR [--size N] [--seeds 1,7,12] [--vantages a,b] [--set NAME=VALUE]...
-//         [--context K]
+//         [--context K] [--measure 1]
+//
+// With --measure 1, no sheets: for each vantage and seed, the galaxy's glow's
+// brightness percentiles over the sky, as its exposure measures them.
 //
 // One sheet a vantage and seed, DIR/VANTAGE-seedN.png: the whole sky above, in
 // the Equal Earth projection and galactic coordinates -- the galaxy's centre in the middle, its plane across,
@@ -20,6 +23,8 @@
 #include "sample.h"
 #include "settings.h"
 #include "sky.h"
+#include "scene.h"
+#include "stars.h"
 #include "writers.h"
 
 #include <cmath>
@@ -126,6 +131,7 @@ int main(int argc, char** argv) {
   std::vector<uint32_t> seeds = {1, 7, 12};
   std::vector<std::string> names, sets;
   ContextKind kind = ContextKind::Auto;
+  bool measure = false;
   for (int i = 1; i + 1 < argc; i += 2) {
     std::string arg = argv[i], v = argv[i + 1];
     if (arg == "--out") {
@@ -141,6 +147,8 @@ int main(int argc, char** argv) {
       names = split(v);
     } else if (arg == "--set") {
       sets.push_back(v);
+    } else if (arg == "--measure") {
+      measure = v == "1";
     } else if (arg == "--context") {
       if (!parseContextKind(v, kind)) {
         std::fprintf(stderr, "atlas: unknown context %s\n", v.c_str());
@@ -152,7 +160,8 @@ int main(int argc, char** argv) {
     }
   }
   if (outDir.empty() || size < 16) {
-    std::fprintf(stderr, "usage: atlas --out DIR [--size N] [--seeds 1,7,12] [--vantages a,b]\n");
+    std::fprintf(stderr, "usage: atlas --out DIR [--size N] [--seeds 1,7,12] [--vantages a,b] "
+                         "[--set NAME=VALUE]... [--measure 1]\n");
     return 2;
   }
   std::vector<const Vantage*> list;
@@ -200,6 +209,21 @@ int main(int argc, char** argv) {
                                                                         : error.c_str());
           return 2;
         }
+      }
+      // The glow's brightness from here, as the exposure measures it, instead
+      // of a sheet: for setting the exposure's reference (sky.cpp).
+      if (measure) {
+        Sky sk = buildSky(s);
+        Scene sc = generateScene(sk.scene);
+        Galaxy gx = generateGalaxy(seed, sk.galaxy);
+        float band[3] = {0.0f, 0.0f, sk.galaxyHaze};
+        generateStars(sc, gx, sk.stars, &band[0]);
+        band[1] = 0.49f * sk.stars.reach * sk.stars.reach;
+        float m[4];
+        baker.measureGalaxy(gx, sk.look.reddening, band, m);
+        std::printf("%-11s seed %2u  p50 %.4f  p90 %.4f  p99 %.4f  p99.9 %.4f\n", v->name, seed,
+                    m[0], m[1], m[2], m[3]);
+        continue;
       }
       CubemapTarget target(size);
       bakeSky(baker, s, target);

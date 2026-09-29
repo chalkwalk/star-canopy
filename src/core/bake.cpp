@@ -2,8 +2,11 @@
 
 #include "noise.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <utility>
+#include <vector>
 
 namespace starcanopy {
 
@@ -341,7 +344,42 @@ void Baker::bakeLight(const Scene& s, const Look& look) {
   glFinish();
 }
 
-void Baker::bakeGalaxy(const Galaxy& g, const float reddening[3], int res, const float band[3]) {
+void Baker::measureGalaxy(const Galaxy& g, const float reddening[3], const float band[3],
+                          float out[4]) {
+  const int res = 32;
+  bakeGalaxy(g, reddening, res, band, 1.0f, 0.0f);
+  std::vector<std::pair<float, float>> lum;  // luminance, solid angle
+  std::vector<float> texels(static_cast<size_t>(res) * res * 4);
+  double total = 0.0;
+  glBindTexture(GL_TEXTURE_CUBE_MAP, galaxyTexture_);
+  for (int f = 0; f < 6; f++) {
+    glGetTexImage(GL_TEXTURE_CUBE_MAP_POSITIVE_X + f, 0, GL_RGBA, GL_FLOAT, texels.data());
+    for (int y = 0; y < res; y++) {
+      for (int x = 0; x < res; x++) {
+        const float* t = &texels[(static_cast<size_t>(y) * res + x) * 4];
+        float s = (x + 0.5f) / res * 2.0f - 1.0f, u = (y + 0.5f) / res * 2.0f - 1.0f;
+        float w = 1.0f / powf(1.0f + s * s + u * u, 1.5f);
+        lum.push_back({0.2126f * t[0] + 0.7152f * t[1] + 0.0722f * t[2], w});
+        total += w;
+      }
+    }
+  }
+  glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+  std::sort(lum.begin(), lum.end());
+  const double q[4] = {0.5, 0.9, 0.99, 0.999};
+  double acc = 0.0;
+  size_t i = 0;
+  for (int k = 0; k < 4; k++) {
+    while (i + 1 < lum.size() && acc + lum[i].second < q[k] * total) {
+      acc += lum[i].second;
+      i++;
+    }
+    out[k] = lum[i].first;
+  }
+}
+
+void Baker::bakeGalaxy(const Galaxy& g, const float reddening[3], int res, const float band[3],
+                       float exposure, float knee) {
   if (!galaxy_.id()) {
     return;
   }
@@ -370,6 +408,8 @@ void Baker::bakeGalaxy(const Galaxy& g, const float reddening[3], int res, const
   glUniform3fv(p.uniform("u_Reddening"), 1, reddening);
   glUniform1f(p.uniform("u_FaceSize"), static_cast<float>(res));
   glUniform3fv(p.uniform("u_Band"), 1, band);
+  glUniform1f(p.uniform("u_GalExposure"), exposure);
+  glUniform1f(p.uniform("u_GalKnee"), knee);
 
   glDrawBuffer(GL_COLOR_ATTACHMENT0);
   glViewport(0, 0, res, res);

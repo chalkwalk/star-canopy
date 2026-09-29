@@ -29,7 +29,28 @@ void veilDistant(Scene& scene, const Galaxy& galaxy, const Sky& sky) {
   }
 }
 
+// The galaxy's exposure for where it is seen from, as an eye or a camera
+// adapts: from the brightness most of the sky reaches (its 90th percentile),
+// against that at the Sun's place, followed part of the way -- so from the
+// centre, where the whole sky glows, its structure shows under the knee
+// instead of burning to grey, and from the rim the faint local disc shows
+// instead of black. Bounded: from far out, the galaxy is a small bright thing
+// in a dark sky and is not to be blown out finding light in the dark. Measured
+// at one small size, so a preview has the export's exposure (PRINCIPLES §9);
+// the numbers are in docs/studies/atlas.md.
+float galaxyExposure(Baker& baker, const Galaxy& galaxy, const Sky& sky, const float band[3]) {
+  if (sky.galaxyAdapt <= 0.0f) {
+    return 1.0f;
+  }
+  const float reference = 0.12f, least = 0.25f, most = 2.5f;
+  float m[4];
+  baker.measureGalaxy(galaxy, sky.look.reddening, band, m);
+  float e = powf(reference / fmaxf(m[1], 1e-9f), sky.galaxyAdapt);
+  return fminf(fmaxf(e, least), most);
+}
+
 }  // namespace
+
 
 bool bakeSky(const Settings& settings, CubemapTarget& target, std::string& error) {
   Baker baker;
@@ -52,9 +73,9 @@ void bakeSky(Baker& baker, const Settings& settings, CubemapTarget& target) {
   std::vector<Star> stars = generateStars(scene, galaxy, sky.stars, &band[0]);
   band[1] = 0.49f * sky.stars.reach * sky.stars.reach;  // the typical distance, squared
   // The glow at the sky's own size unless told otherwise: its dust has detail
-  // down to the texel.
+  // down to the texel. Exposed for where it is seen from.
   baker.bakeGalaxy(galaxy, sky.look.reddening, sky.galaxyRes > 0 ? sky.galaxyRes : target.size(),
-                   band);
+                   band, galaxyExposure(baker, galaxy, sky, band));
   if (!sky.nebula) {
     scene.bubbleCount = 0;
   }

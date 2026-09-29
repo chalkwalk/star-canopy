@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 #include <vector>
 
@@ -122,17 +123,34 @@ double meanLight(const Galaxy& g, const float centre[3], float reach) {
 // fewer as the galaxy's light about the observer is less than there -- above
 // the disc, the ball of reach is mostly empty. Measured against the midplane
 // under the observer, so the band's density (addBandStars) carries on from the
-// same scale wherever the observer is.
+// same scale wherever the observer is. No further out than kReferenceRadius
+// scale lengths: past the disc's edge the midplane is empty, and measured
+// there every speck of the halo's light was worth billions of stars -- the band
+// then drew hundreds of millions, for hours, until memory ran out.
+constexpr float kReferenceRadius = 4.0f;
+
+bool beyondReference(const Galaxy& g) {
+  float r2 = g.observer[0] * g.observer[0] + g.observer[1] * g.observer[1];
+  float most = kReferenceRadius * g.scaleLength;
+  return r2 > most * most;
+}
+
 double midplaneLight(const Galaxy& g, float reach) {
-  const float below[3] = {g.observer[0], g.observer[1], 0.0f};
+  float below[3] = {g.observer[0], g.observer[1], 0.0f};
+  if (beyondReference(g)) {
+    float r = sqrtf(below[0] * below[0] + below[1] * below[1]);
+    float scale = kReferenceRadius * g.scaleLength / r;
+    below[0] *= scale;
+    below[1] *= scale;
+  }
   return meanLight(g, below, reach);
 }
 
 void addFieldStars(Random& rng, std::vector<Star>& stars, const Galaxy& g, const StarParams& p) {
   float offset[3], pos[3], d, most = 0.0f;
-  // At the midplane, p.count; away from it, as many as its light allows.
+  // At the reference, p.count; away from it, as many as its light allows.
   double here = meanLight(g, g.observer, p.reach), there = midplaneLight(g, p.reach);
-  int count = g.observer[2] == 0.0f || there <= 0.0
+  int count = (g.observer[2] == 0.0f && !beyondReference(g)) || there <= 0.0
                   ? p.count
                   : static_cast<int>(p.count * std::min(here / there, 1.0));
   long attempts = 0, limit = static_cast<long>(count) * 400;
@@ -294,18 +312,37 @@ float addBandStars(Random& rng, std::vector<Star>& stars, const Galaxy& g, const
   };
   // The limit for the budget: the count at a first guess, the guess moved by
   // the power law's slope, and again.
-  float limit = 1.0f;
-  for (int pass = 0; pass < 4; pass++) {
+  auto totalAt = [&](float limit) {
     double total = 0.0;
     for (const Step& st : steps) {
       float o, y;
       total += count(st, limit, o, y);
     }
+    return total;
+  };
+  float limit = 1.0f;
+  for (int pass = 0; pass < 4; pass++) {
+    double total = totalAt(limit);
     if (total <= 0.0) {
       return 0.0f;
     }
     limit *= powf(static_cast<float>(total / p.bandCount), 1.0f / kLumIndex);
   }
+  // The slope's steps assume a power law, which the luminosity function's top
+  // cuts off: where few stars are bright enough to see at all, they swing
+  // between a handful and hundreds of millions. Then halve the interval
+  // instead -- the count only falls as the limit rises.
+  double total = totalAt(limit);
+  if (total > 2.0 * p.bandCount || total < 0.5 * p.bandCount) {
+    float lo = 1e-12f, hi = 1e12f;
+    for (int i = 0; i < 80; i++) {
+      float mid = sqrtf(lo * hi);
+      (totalAt(mid) > p.bandCount ? lo : hi) = mid;
+    }
+    limit = hi;
+  }
+  // And never more than twice the budget, whatever the counts say.
+  long drawn = 0, most = 2L * p.bandCount;
 
   std::vector<float> weight(kBandSteps);
   for (int c = 0; c < cells; c++) {
@@ -329,8 +366,11 @@ float addBandStars(Random& rng, std::vector<Star>& stars, const Galaxy& g, const
     } else {
       float u1 = fmaxf(rng.uniform(), 1e-7f), u2 = rng.uniform();
       float z = sqrtf(-2.0f * logf(u1)) * cosf(2.0f * pi * u2);
-      n = std::max(0, static_cast<int>(lambda + sqrtf(lambda) * z + 0.5f));
+      double drawnHere = std::min(lambda + sqrtf(lambda) * z + 0.5, 1e9);
+      n = std::max(0, static_cast<int>(drawnHere));
     }
+    n = static_cast<int>(std::min<long>(n, std::max(0L, most - drawn)));
+    drawn += n;
     int face = c / (kBandCells * kBandCells), cell = c % (kBandCells * kBandCells);
     for (int j = 0; j < n; j++) {
       // Where about the patch: a tent two patches wide about its middle, not

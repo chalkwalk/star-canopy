@@ -1,6 +1,7 @@
 // The stars: the band's meets its budget and lies along the galaxy's plane,
 // and neither the band nor the field stars run away when the observer is out
-// of the disc -- measured against the midplane, not the empty ball about them.
+// of the disc -- measured against the midplane, not the empty ball about them
+// -- nor past its edge, where the midplane is empty too.
 
 #include "check.h"
 #include "galaxy.h"
@@ -21,10 +22,11 @@ struct Census {
   double brightest;   // the band's brightest star's flux
 };
 
-Census census(uint32_t seed, float height) {
+Census census(uint32_t seed, float height, float radius = 3.5f) {
   Settings s;
   s.seed = seed;
   s.galaxyHeight = height;
+  s.galaxyRadius = radius;
   Sky sky = buildSky(s);
   Scene scene = generateScene(sky.scene);
   Galaxy g = generateGalaxy(seed, sky.galaxy);
@@ -63,6 +65,15 @@ int main() {
     // brighter than from within it.
     CHECK(above.field < mid.field / 2);
     CHECK(above.brightest <= mid.brightest * 2.0);
+  }
+  // Past the edge the midplane under the observer is empty: measured there,
+  // the band once asked for hundreds of millions of stars. Seed 12's disc is
+  // the smallest of these.
+  for (uint32_t seed : {7u, 12u}) {
+    Census mid = census(seed, 0.03f), out = census(seed, 0.03f, 6.0f);
+    std::printf("seed %u past the edge: %zu field, %zu band\n", seed, out.field, out.band);
+    CHECK(out.band <= 2 * static_cast<size_t>(defaults.bandCount));
+    CHECK(out.field < mid.field);
   }
   return test::finish();
 }

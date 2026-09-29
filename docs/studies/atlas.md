@@ -198,3 +198,39 @@ portrait, from 3 kpc up and from the Sun's place, on seeds 1, 3, 5 and 7. A
 lenticular is now drawn for a quarter of seeds. Two things wait: bars barely
 show, the fixed knee burning out the centre where they lie (a barred spiral's
 too); and the ring dust, seen from above, is specks rather than lanes.
+
+## Exposure that follows the vantage (look 7)
+
+The fixed knee was set at one vantage. Measured (`atlas --measure 1`), the glow's
+brightest part -- the core, its 99.9th percentile -- is about as bright from
+anywhere, surface brightness not falling with distance; what swings is how much
+of the sky the galaxy fills. Its 90th percentile over the sky, seeds 1, 7, 12:
+
+| vantage | p90 | p99.9 |
+|---|---|---|
+| centre | 1.0 - 1.9 | 2.1 - 5.5 |
+| mid-disc | 0.17 - 0.42 | 2.7 - 12 |
+| sun | 0.09 - 0.29 | 2.2 - 12 |
+| above-low | 0.11 - 0.27 | 4.1 - 11 |
+| above-high | 0.10 - 0.25 | 2.4 - 4.9 |
+| rim | 0.005 - 0.07 | 2.4 - 12 |
+| past-edge | 0.0006 - 0.026 | 1.6 - 9.6 |
+| outlier | 0.0003 - 0.012 | 3.2 - 5.9 |
+| portrait | ~0 | 0.25 - 0.71 |
+
+So the glow is exposed by (0.12 / p90) to the power `galaxy-adapt`, 0.5 by
+default, within x0.25 and x2.5, before the knee: about x0.3 at the centre, 1 at
+the Sun's place, up to x2.5 at the rim and beyond -- the cap so a small bright
+galaxy far off is not blown out finding light in the dark.
+
+**Blind:** preferred **7-2**, three ties, over the fixed knee: the centre 3-0,
+mid-disc 2-0, the rim and past the edge 1-1 each. Both losses were the
+lenticular far out, its large bulge lifted; the first thing to lower if that
+recurs is the cap.
+
+Measuring past the edge found a fault: the stars' number per unit of light was
+taken from the midplane under the observer, which there is empty -- every speck
+of the halo's light worth billions of stars, and the band asked for hundreds of
+millions, ran for hours and out of memory. It is now taken no further out than
+four scale lengths; the limit's search bisects where its slope steps swing; the
+draw is capped at twice the budget (`test_stars`).

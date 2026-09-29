@@ -83,6 +83,7 @@ struct Settings {
   int starCount = 30000;
   int bandStars = 150000;
   float galaxyHaze = 0.3f;
+  float galaxyAdapt = 0.5f;
   float starReach = 1.5f;
   float nebulaScale = 0.08f;
   float clusterStars = 1.0f;
@@ -156,6 +157,7 @@ struct Sky {
   StarParams stars;
   int galaxyRes;
   float galaxyHaze;  // the galaxy's glow kept where its stars are drawn
+  float galaxyAdapt; // how far its exposure follows the vantage, 0..1
   bool nebula;
 };
 

@@ -31,8 +31,6 @@ void main()
 
 #define GAL_STEPS 512
 #define GAL_MAX_EXTERNAL 8
-/* Where the knee begins: a few times the light along the disc from near the Sun's radius. */
-#define GAL_KNEE 1.5
 
 uniform int u_Face;
 uniform float u_FaceSize;
@@ -41,6 +39,9 @@ uniform vec3 u_Reddening;
  * the typical distance squared their luminosities are measured at, and the share of the
  * light kept as glow wherever they are drawn; 0 flux, none drawn. */
 uniform vec3 u_Band;
+/* The light scaled by the exposure, then eased past the knee: where it begins, 0 for none. */
+uniform float u_GalExposure;
+uniform float u_GalKnee;
 
 uniform int u_ExternalCount;
 uniform vec4 u_ExternalDir[GAL_MAX_EXTERNAL];	/* direction, angular radius */
@@ -157,7 +158,9 @@ void main()
 	 * level, and the rift, which should be the darkest thing in the band, comes out a pale
 	 * brown stripe where its brightest part ought to be. */
 	dimming = glow / max(bare, vec3(1e-6));
-	bare /= 1.0 + dot(bare, vec3(0.2126, 0.7152, 0.0722)) / GAL_KNEE;
+	bare *= u_GalExposure;
+	if (u_GalKnee > 0.0)
+		bare /= 1.0 + dot(bare, vec3(0.2126, 0.7152, 0.0722)) / u_GalKnee;
 	glow = bare * dimming;
 	f_FragColor = vec4(glow, transmit.g);
 }

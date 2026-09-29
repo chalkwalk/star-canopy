@@ -28,9 +28,12 @@ namespace starcanopy {
 //      outer disc, carried by knots of young stars that outreach the old disc
 //   6  a quarter of galaxies lenticular: a large bulge, a lens, a bar in half,
 //      rings, a smooth disc, dust only in rings about the centre
+//   7  the galaxy's glow exposed for where it is seen from (galaxy-adapt): the
+//      centre darker, the rim a little lighter; past the disc's edge, stars
+//      counted from the disc, not from the empty midplane there
 //
-// This StarCanopy renders look 6 only, and refuses older looks with a reason.
-constexpr int kLookVersion = 6;
+// This StarCanopy renders look 7 only, and refuses older looks with a reason.
+constexpr int kLookVersion = 7;
 
 // A project: how a sky is made again. Small, human-readable TOML:
 //

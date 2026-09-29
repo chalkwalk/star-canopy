@@ -195,9 +195,12 @@ from it goes in `SOURCES.md`.
       (`docs/studies/atlas.md`)
 - [x] Its previews: the band's stars are stars, drawn at every size alike, so a
       small sky has the export's stars, seen more coarsely (`PRINCIPLES §9`)
-- [ ] Exposure that follows the vantage, in place of the fixed knee
-      (`GAL_KNEE`), so the centre does not burn out and the outer sky is not
-      empty
+- [x] Exposure that follows the vantage (look 7): the glow's 90th percentile
+      over the sky, measured small, against the Sun's place, followed half way
+      (`galaxy-adapt`) within x0.25..x2.5, before the knee. Preferred 7-2 with 3
+      ties blind; the centre 3-0 (`docs/studies/atlas.md`). Beyond the disc, the
+      stars counted from the disc -- measured from the empty midplane there, the
+      band asked for hundreds of millions and ran out of memory
 - [x] Arms (look 5): the galaxy's type by seed -- barred, grand-design or
       flocculent spiral; arms carried by knots of young stars that outreach the
       old disc, dark space between them in the outer disc, dust along their
