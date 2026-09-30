@@ -75,6 +75,10 @@ int main() {
               mean, nearTotal / nearCount, farTotal / farCount, farInDisc, far);
   CHECK(mean > 6.0 * 0.6 && mean < 6.0 * 1.6);
   CHECK(nearCount > 0 && farCount > 0 && nearTotal / nearCount < 0.6 * (farTotal / farCount));
+  // Near enough to find at 1: a cluster stands out only as its members are
+  // among the brightest stars about it, which, a few kiloparsecs off in the
+  // band, they are not (the mock-ups at game resolution).
+  CHECK(nearTotal / nearCount < 1.0);
   CHECK(far > 0 && farInDisc >= 0.9 * far);
 
   // Far out, few: the young disc is far away, and none are made in the halo.
@@ -133,7 +137,7 @@ int main() {
     // a few tens, as the Pleiades show a handful to the eye out of a thousand --
     // and its faint majority is its haze, even with no limit. Thousands drawn
     // made a solid white ball, a globular's look, not an open cluster's.
-    CHECK(members >= 10 && members <= 200);
+    CHECK(members >= 10 && members <= 400);
     CHECK(list[0].glow[0] > 0.0f && list[0].glow[1] > 0.0f && list[0].glow[2] > 0.0f);
 
     // Its spread, about its own direction, against radius over distance; and
@@ -191,6 +195,10 @@ int main() {
       fb += bare[i].flux[1];
     }
     CHECK(fd < fb);
+    // Its haze, the faint majority, as much light as its drawn members give:
+    // half as much left it a scatter lost among the field's stars.
+    std::printf("haze %.4g against members %.4g\n", list2[0].glow[1], fb);
+    CHECK(std::fabs(list2[0].glow[1] / fb - 1.0) < 0.01);
 
     // With a limit, the faint ones become its glow, and none is lost: at 3 kpc
     // most members are too faint.

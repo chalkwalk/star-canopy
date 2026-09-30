@@ -33,12 +33,17 @@ float birthplace(const GalaxySample& s) {
 }
 
 // A direction uniformly, and a distance with density d^k -- d^2 the volume's
-// own, so k = 2 is physical and lower tilts the draw toward the near.
+// own, so k = 2 is physical and lower tilts the draw toward the near; at
+// k = -1, even in log distance, as many within 0.6 kpc as beyond.
 void propose(Random& rng, float k, float offset[3], float& d) {
   rng.unitVector(offset);
   float e = k + 1.0f;
-  float a = powf(kNearest, e), b = powf(kFarthest, e);
-  d = powf(a + rng.uniform() * (b - a), 1.0f / e);
+  if (fabsf(e) < 1e-3f) {
+    d = kNearest * powf(kFarthest / kNearest, rng.uniform());
+  } else {
+    float a = powf(kNearest, e), b = powf(kFarthest, e);
+    d = powf(a + rng.uniform() * (b - a), 1.0f / e);
+  }
   for (int i = 0; i < 3; i++) {
     offset[i] *= d;
   }
@@ -68,7 +73,11 @@ std::vector<Accent> generateAccents(uint32_t seed, const Galaxy& g, const Accent
     return out;
   }
   Random rng(seed * 2862933555u + 3037u);
-  float k = 2.0f - 2.0f * fminf(fmaxf(p.near, 0.0f), 1.0f);
+  // 0 physical (k = 2), 0.75 even in log distance (k = -1), 1 strongly near
+  // (k = -2): only near clusters stand out -- their members among the
+  // brightest stars about them -- and a draw merely even in distance still
+  // put most kiloparsecs off in the band, lost among its stars.
+  float k = 2.0f - 4.0f * fminf(fmaxf(p.near, 0.0f), 1.0f);
 
   // As many as the dial asks about a place in the band, scaled by how much
   // young disc lies within reach here: more in toward the centre, few far out,

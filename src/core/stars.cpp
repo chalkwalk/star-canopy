@@ -444,8 +444,8 @@ void addOpenClusterStars(std::vector<Star>& stars, const Galaxy& g, const StarPa
     // population: a few tens of a real cluster's hundreds or thousands, as the
     // Pleiades show a handful to the eye out of a thousand. All of them drawn,
     // a cluster was a solid white ball -- a globular's look.
-    int members = a.association ? static_cast<int>(rng.range(8.0f, 30.0f))
-                                : static_cast<int>(expf(rng.range(logf(20.0f), logf(150.0f))));
+    int members = a.association ? static_cast<int>(rng.range(10.0f, 40.0f))
+                                : static_cast<int>(expf(rng.range(logf(40.0f), logf(300.0f))));
     float age = a.association ? rng.range(0.0f, 0.2f) : rng.uniform();  // 0 young .. 1 old, log age
     float brightest = powf(kMaxLum, 1.0f - 0.85f * age);
     int giants = static_cast<int>(age * 0.02f * members + 0.5f);
@@ -484,6 +484,12 @@ void addOpenClusterStars(std::vector<Star>& stars, const Galaxy& g, const StarPa
       bool giant = m < giants;
       float lum = giant ? rng.range(30.0f, 300.0f)
                         : fminf(powf(fmaxf(1.0f - rng.uniform(), 1e-6f), -1.0f / kLumIndex), brightest);
+      // A young cluster's stars are the galaxy's most luminous, as the field's
+      // young stars are (x4): it sparkles blue-white against the yellower
+      // field, which is what finds it; the boost fades as it ages.
+      if (!giant && age < 0.3f) {
+        lum *= 1.0f + 3.0f * (1.0f - age / 0.3f);
+      }
       float kelvin = giant ? rng.range(3600.0f, 4600.0f)
                            : fminf(fmaxf(4500.0f * powf(lum, 0.2f), 3000.0f), 30000.0f);
       float rgb[3];
@@ -511,9 +517,11 @@ void addOpenClusterStars(std::vector<Star>& stars, const Galaxy& g, const StarPa
       stars.push_back(st);
     }
     // And its faint majority, below that scale, is its haze whatever the
-    // limit: about half as much light again as its bright members give.
+    // limit: as much light again as its bright members give -- a soft patch
+    // with stars in it, as a cluster is found in binoculars. At half, the
+    // clusters were a scatter lost among the field's stars.
     for (int k = 0; k < 3; k++) {
-      a.glow[k] = rest[k] + 0.5f * all[k];
+      a.glow[k] = rest[k] + all[k];
     }
   }
 }
