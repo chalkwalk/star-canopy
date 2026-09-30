@@ -91,7 +91,11 @@ std::vector<Accent> generateAccents(uint32_t seed, const Galaxy& g, const Accent
     reference[1] = g.observer[1] / r * kReferenceRadius * g.scaleLength;
   }
   double here = reach(g, g.observer, k), there = reach(g, reference, k);
-  float share = there > 0.0 ? static_cast<float>(fmin(here / there, 3.0)) : 0.0f;
+  // Held between half and double the dial wherever there is some disc in
+  // reach: between spiral arms a sky had one cluster, in a rich arm fifteen.
+  // Far outside the disc, where there is next to none, as physics has it.
+  float share = there > 0.0 ? static_cast<float>(here / there) : 0.0f;
+  share = share < 0.05f ? share : fminf(fmaxf(share, 0.5f), 2.0f);
   int n = poisson(rng, static_cast<float>(p.openClusters) * share);
   if (n == 0) {
     return out;

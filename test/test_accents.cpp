@@ -111,6 +111,19 @@ int main() {
   std::printf("far out: %.2f a sky\n", remote / 20.0);
   CHECK(remote / 20.0 < 0.5 * mean);
 
+  // Between spiral arms, where no young stars are, still a few: the count is
+  // held between half and double the dial wherever there is disc in reach.
+  // Seed 11's own place, between arms, had one cluster in the whole sky.
+  {
+    Settings s11;
+    s11.seed = 11;
+    Sky sky11 = buildSky(s11);
+    Galaxy g11 = generateGalaxy(11, sky11.galaxy);
+    size_t between = generateAccents(11, g11, p).size();
+    std::printf("between arms: %zu\n", between);
+    CHECK(between >= 2);
+  }
+
   // A lenticular, with next to no young stars, still finishes and has a few.
   GalaxyParams lp;
   lp.observerRadius = 2.6f;
