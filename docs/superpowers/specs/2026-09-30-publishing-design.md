@@ -24,9 +24,16 @@ history kept until the user is satisfied.
   each commit that lifted finished work from the model's original development
   takes the date of the **last** commit it draws on there. The mapping of lift
   commits to their source commits is in the plan.
-- **Scrub the target game's name** from the two early commit messages that
-  carry it, and from PRINCIPLES.md, NON-GOALS.md and SOURCES.md as they stood
-  before it was removed from them.
+- **Scrub the reference game's name** -- the game whose skyboxes set the look's
+  standard, which AGENTS.md's rule #4 allows only once, in the README -- from
+  the three commit messages that carry it (the kick-start, the record of where
+  the fitted numbers came from, and the dropping of licence headers, which
+  names the labs' star-field mode after it), and from PRINCIPLES.md,
+  NON-GOALS.md and SOURCES.md as they stood before it was removed from them.
+  Sentences in those messages that name the target game alongside it are
+  reworded whole. The README's one naming stays, as the rule allows.
+  *(Corrected 2026-09-30: this said "the target game"; the rule, and this pass,
+  are about the reference game.)*
 - **The current tree**, as its own commit before the rewrite:
   - the model's development "in the labs" is dropped as provenance throughout
     (AGENTS, COMPLETED, SOURCES, ROADMAP, a test comment) -- it matters to no
@@ -40,8 +47,9 @@ history kept until the user is satisfied.
   - the README says once that StarCanopy was first meant for that game, was
     made generic, and that the game -- which does not yet load HDR skyboxes --
     is the first intended user; the whole a work in progress;
-  - AGENTS.md's rule reads: the game appears once, in README.md, and in the
-    licence credit the vendored code requires.
+  - AGENTS.md gains a line beside rule #4, which stands as it is for the
+    reference game: the target game, too, is named once, in README.md, and
+    otherwise only in the licence credit the vendored code requires.
 - **Rename `master` to `main`**, GitHub's default for a new repository and the
   user's other projects' branch.
 
