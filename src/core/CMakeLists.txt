@@ -59,7 +59,15 @@ target_link_libraries(starcanopy_core
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   find_package(OpenGL COMPONENTS EGL)
   if(OpenGL_EGL_FOUND)
-    target_link_libraries(starcanopy_core PRIVATE OpenGL::EGL)
+    # FindOpenGL makes OpenGL::EGL only beside GLVND's libOpenGL, which a
+    # system can lack (libopengl-dev) while EGL itself is there; link it
+    # directly then.
+    if(TARGET OpenGL::EGL)
+      target_link_libraries(starcanopy_core PRIVATE OpenGL::EGL)
+    else()
+      target_link_libraries(starcanopy_core PRIVATE ${OPENGL_egl_LIBRARY})
+      target_include_directories(starcanopy_core PRIVATE ${OPENGL_EGL_INCLUDE_DIRS})
+    endif()
     target_compile_definitions(starcanopy_core PRIVATE STARCANOPY_HAVE_EGL=1)
   else()
     message(WARNING "EGL not found: headless bakes will need a display (hidden SDL window).")
