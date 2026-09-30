@@ -8,10 +8,9 @@
 > recorded with it. A design document that only states the outcome makes the next
 > person re-derive the argument, usually badly.
 >
-> **Status.** The model described in §3-§6 is in `src/core/`, lifted from the Space
-> Nerds In Space labs (`labs/features/nebula_sky` on its `nebula-sky` branch),
-> where it was developed and judged blind over many rounds; it renders their skies
-> to the texel. The application around it -- §2, §7 onward -- is the plan, not yet
+> **Status.** The model described in §3-§6 is in `src/core/`, lifted from its
+> first home, where it was developed and judged blind over many rounds; it renders
+> the skies it made there to the texel. The application around it -- §2, §7 onward -- is the plan, not yet
 > built, but for the headless bake of §2. §11, the in-context view, is planned.
 
 ## 1. Vision

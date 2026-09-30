@@ -68,7 +68,7 @@ Constants set by looking, recorded so nobody mistakes them for measurements.
 
 | Model | Source | Status |
 |---|---|---|
-| Deterministic generator | `mtwist.c` from Space Nerds In Space (Stephen M. Cameron), GPL-2.0-or-later | Kept so seeds match the labs (`THIRDPARTY.md`) |
+| Deterministic generator | `mtwist.c` from Space Nerds In Space (Stephen M. Cameron), GPL-2.0-or-later | Kept so a seed makes the sky it always has (`THIRDPARTY.md`) |
 | OKLab | Björn Ottosson, 2020 | Used for measuring and for palettes |
 | Emission by ionisation parameter: [O III], H-alpha, [S II] | Standard H II region physics; no specific reference recorded in the labs | *To record* in the lift |
 | Galaxy: exponential flaring disc, bar, bulge, arms, warp, bending waves, dust | Described in the labs' `nebula_sky_galaxy.h`; no literature cited for its structure or constants | *To record* in the lift |
