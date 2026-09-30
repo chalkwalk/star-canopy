@@ -117,16 +117,29 @@ void main()
 				float da = u_AccentGlow[k].w;
 
 				if (da >= ta && da < tb) {
-					/* A Plummer core: its light over its whole extent is its glow. */
-					float a = u_AccentDir[k].w;
+					/* A Plummer core: its light over its whole extent is its glow.  Never
+					 * narrower than about a texel, as a star's core is not: smaller, it was
+					 * point-sampled, and a preview kept 2-35% of the export's haze
+					 * (PRINCIPLES §9); widened, its light is the same at every size. */
+					float own = u_AccentDir[k].w;
+					float a = sqrt(own * own + pixel_angle * pixel_angle);
 					float th2 = 2.0 * (1.0 - dot(dir, u_AccentDir[k].xyz));
 					float q = 1.0 + th2 / (a * a);
+
+					/* Out to ten cores, 99% of its light: its tail had reached round the
+					 * sky to the face behind. */
+					if (q > 101.0)
+						continue;
 					/* Textured, never a round even glow: two octaves of noise in the
 					 * cluster's own frame, scaled to its core, break it into patches, as
 					 * a young cluster's birth cloud and a reflection nebula's wisps are. */
-					vec3 c = (dir - u_AccentDir[k].xyz) / a + u_AccentShape[k].xyz;
+					/* At its own scale, and fading where it is finer than a texel, which
+					 * cannot show it and whose noise would alias: its light the same at
+					 * every size. */
+					vec3 c = (dir - u_AccentDir[k].xyz) / own + u_AccentShape[k].xyz;
 					float n = 3.0 * nsky_noise(c * 0.6).x + 1.5 * nsky_noise(c * 1.5 + 3.0).y;
-					float tex = mix(1.0, clamp(1.0 + n, 0.05, 3.0), u_AccentShape[k].w);
+					float resolved = own * own / (a * a);
+					float tex = mix(1.0, clamp(1.0 + n, 0.05, 3.0), u_AccentShape[k].w * resolved);
 
 					accent += transmit * u_AccentGlow[k].rgb * tex *
 						(u_AccentScale / (3.1415927 * a * a * q * q));

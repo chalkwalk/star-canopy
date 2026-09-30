@@ -195,6 +195,45 @@ int main() {
     std::printf("haze round a ring: mean %.4g, varying %.0f%%\n", mean, 100.0 * spread / mean);
     // (Sampling a smooth halo on the texel grid alone gives some 16%.)
     CHECK(mean > 0.0 && spread > 0.4 * mean);
+
+    // The same light at every size (PRINCIPLES §9): a cluster whose core is
+    // smaller than a texel was point-sampled, a preview keeping 2-35% of the
+    // export's haze, and jumping with where it fell in a texel (the review).
+    // Its total -- each texel's value over its solid angle -- must hold.
+    Accent small = c;
+    small.radius = 0.00125f;  // a core of 0.00125 rad at 0.5 kpc
+    for (int k = 0; k < 3; k++) {
+      small.glow[k] = 1.0e3f;
+    }
+    small.dir[0] = 0.003f;  // off a texel's axis
+    float nd = std::sqrt(small.dir[0] * small.dir[0] + 1.0f);
+    small.dir[0] /= nd;
+    small.dir[2] /= nd;
+    std::vector<Accent> s1 = {small};
+    double totals[4];
+    const int sizes[4] = {32, 64, 128, 256};
+    for (int i = 0; i < 4; i++) {
+      int n = sizes[i];
+      baker.bakeGalaxy(hg, reddening, n, band, 1.0f, 1.5f, &none, 1.0e-6f);
+      Cubemap off = baker.readGalaxy();
+      baker.bakeGalaxy(hg, reddening, n, band, 1.0f, 1.5f, &s1, 1.0e-6f);
+      Cubemap on = baker.readGalaxy();
+      double total = 0.0;
+      for (int y = 0; y < n; y++) {
+        for (int x = 0; x < n; x++) {
+          float s = (x + 0.5f) / n * 2.0f - 1.0f, t = (y + 0.5f) / n * 2.0f - 1.0f;
+          double omega = (4.0 / (n * n)) / std::pow(1.0 + s * s + t * t, 1.5);
+          size_t at = (static_cast<size_t>(y) * n + x) * 3 + 1;
+          total += (on.faces[4][at] - off.faces[4][at]) * omega;
+        }
+      }
+      totals[i] = total;
+    }
+    std::printf("a small cluster's haze, total at 32/64/128/256: %.4g %.4g %.4g %.4g\n", totals[0],
+                totals[1], totals[2], totals[3]);
+    for (int i = 0; i < 3; i++) {
+      CHECK(std::fabs(totals[i] / totals[3] - 1.0) < 0.15);
+    }
   }
   return test::finish();
 }
