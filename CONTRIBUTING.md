@@ -52,8 +52,8 @@ Every push and pull request to `main` builds on Linux, Windows and macOS.
 
 - **Linux** runs the whole suite, the bake tests on Mesa's software OpenGL.
 - **Windows** runs it on Mesa's software OpenGL too.
-- **macOS** runs what the runner allows; the bake tests skip without an OpenGL
-  3.3 context.
+- **macOS** runs it too, if the runner gives an OpenGL 3.3 context; without
+  one the bake tests fail.
 
 Windows and macOS are marked *unproven*: they build, but nothing has yet shown a
 sky made on them to be right. If you can test on either, that is the help this

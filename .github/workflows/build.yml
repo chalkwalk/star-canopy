@@ -1,8 +1,8 @@
 # Build and test on Linux, Windows and macOS, and keep each one's starcanopy.
 # The bake tests need OpenGL 3.3 and CI machines have no GPU: Linux uses Mesa's
 # software renderer through EGL; Windows gets Mesa's software OpenGL installed
-# beside the tests; on macOS they run if the runner gives a context and skip if
-# not, as they do anywhere without a display.
+# beside them; on macOS they need the runner to give a context, which is
+# unproven.
 name: Build
 
 on:
@@ -31,10 +31,10 @@ jobs:
           - name: Linux
             os: ubuntu-24.04
             experimental: false
-          - name: Windows (build only, unproven)
+          - name: Windows (unproven)
             os: windows-latest
             experimental: true
-          - name: macOS (build only, unproven)
+          - name: macOS (unproven)
             os: macos-latest
             experimental: true
     steps:
@@ -68,8 +68,9 @@ jobs:
       - name: Build
         run: cmake --build build --config Release -j 4
 
-      # Mesa's software OpenGL for Windows, beside the test executables, so the
-      # bake tests have a 3.3 context on a runner with no GPU.
+      # Mesa's software OpenGL for Windows, beside every executable -- the tests and
+      # starcanopy, which the cli test runs -- so they have a 3.3 context on a runner
+      # with no GPU.
       - name: Install Mesa's software OpenGL (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -77,7 +78,7 @@ jobs:
           $url = "https://github.com/pal1000/mesa-dist-win/releases/download/26.2.3/mesa3d-26.2.3-release-msvc.7z"
           Invoke-WebRequest $url -OutFile mesa.7z
           7z x mesa.7z -omesa | Out-Null
-          Get-ChildItem build -Recurse -Filter "test_*.exe" | ForEach-Object {
+          Get-ChildItem build -Recurse -Filter "*.exe" | ForEach-Object {
             Copy-Item mesa/x64/*.dll $_.DirectoryName
           }
 

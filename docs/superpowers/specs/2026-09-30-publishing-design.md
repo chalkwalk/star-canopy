@@ -78,8 +78,9 @@ In place of the Linux-only `ci.yml`, as Antiphon's `build.yml`:
     EGL, as `ci.yml` did;
   - Windows: Mesa's software OpenGL installed in the job, so the bake tests
     have a context;
-  - macOS: what the runner allows -- the bake tests skip where there is no
-    OpenGL 3.3 context, as they do without a display.
+  - macOS: the full suite, if the runner gives an OpenGL 3.3 context; the
+    bake tests fail without one (skipping is only for the hidden window).
+    *(Corrected 2026-09-30 after the pre-push review.)*
 - Each platform's `starcanopy` binary uploaded as a workflow artifact
   (stripped on Linux). **Releases later**: tagged GitHub Releases come once
   there is something to release -- the interface, or a first stable command
