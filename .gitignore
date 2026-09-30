@@ -101,6 +101,12 @@ __pycache__/
 *.png
 *.exr
 *.ktx2
+!website/static/**/*.png
 *.hdr
 *.pfm
 !docs/**/*.png
+
+# The website: its dependencies and build products
+website/node_modules/
+website/build/
+website/.docusaurus/
