@@ -1,5 +1,8 @@
 # StarCanopy
 
+[![Build](https://github.com/chalkwalk/star-canopy/actions/workflows/build.yml/badge.svg)](https://github.com/chalkwalk/star-canopy/actions/workflows/build.yml)
+[![Manual](https://img.shields.io/badge/manual-canopy.chalkwalkmusic.com-5b45c2)](https://canopy.chalkwalkmusic.com)
+
 **The sky of a place in space, baked for your game.**
 
 StarCanopy generates skyboxes for space games: a nebula of billowing, lit cloud, the
@@ -53,18 +56,20 @@ the key light and a chrome, metal or grey probe lit by the sky. It can load your
 exports, or any HDR sky, to compare. None of it is baked: the texture is the sky
 alone, and your game adds its own sun.
 
-## Requirements (planned)
+## Requirements
 
-An OpenGL 3.3-capable GPU. Linux first; Windows and macOS as soon as they build.
+An OpenGL 3.3-capable GPU. **Tested on Linux. Builds on Windows and macOS,
+unproven:** nothing has yet shown a sky made on them to be right.
 
 ## Building
 
-Linux, for now. You need CMake 3.20+, a C++17 compiler, and the development
-packages for EGL, OpenGL and X11 or Wayland (SDL3 and Dear ImGui come with the
-source, as submodules).
+You need CMake 3.20+, a C++17 compiler, and on Linux the development packages for
+EGL, OpenGL and X11 or Wayland (SDL3 and Dear ImGui come with the source, as
+submodules). Every build on `main` also leaves each platform's `starcanopy` as a
+download on the [Actions page](https://github.com/chalkwalk/star-canopy/actions).
 
 ```bash
-git clone --recursive <this repository>
+git clone --recursive https://github.com/chalkwalk/star-canopy.git
 cmake -B build
 cmake --build build -j $(nproc)
 ctest --test-dir build --output-on-failure
@@ -126,6 +131,8 @@ is what `bright` doubles.
 
 ## Documentation
 
+- **[The manual](https://canopy.chalkwalkmusic.com)** -- getting started, the
+  macros, the outputs, and a gallery of skies with the projects that make them.
 - **`PRINCIPLES.md`** -- the stance, and the gate every proposal passes.
 - **`NON-GOALS.md`** -- what StarCanopy refuses to become, and what it offers
   instead.

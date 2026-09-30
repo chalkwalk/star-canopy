@@ -1,0 +1,37 @@
+name: Bug report
+description: Something does not work, or works wrongly -- a crash, an error, a wrong file
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a sky that renders but looks wrong, use **This sky looks wrong**
+        instead: it asks for what makes a sky again.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: The command, and its output
+      description: The `starcanopy` command you ran and everything it printed.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform and GPU
+      description: The bake runs on the GPU, so the driver matters.
+      placeholder: "e.g. Ubuntu 24.04, AMD Radeon (radeonsi, Mesa 26.0); Windows 11, NVIDIA 560"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Commit
+      description: Output of `git rev-parse --short HEAD`.

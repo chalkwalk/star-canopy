@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: The manual
+    url: https://canopy.chalkwalkmusic.com
+    about: How to build StarCanopy, render a sky and steer it.

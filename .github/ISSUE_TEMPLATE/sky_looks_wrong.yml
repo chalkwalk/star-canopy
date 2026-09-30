@@ -1,0 +1,39 @@
+name: This sky looks wrong
+description: A sky renders, but something in it looks wrong
+title: "Sky: "
+labels: ["look"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every sky renders again exactly from its project file, so with the
+        project below anyone can see the sky you saw. The look is judged at a
+        game's field of view, so a screenshot from one says the most.
+  - type: textarea
+    id: project
+    attributes:
+      label: The project file
+      description: >
+        The whole `.toml`, or at least its `look`, `seed`, `[macros]` and
+        `[overrides]`, and any `--macro` or `--set` you gave on the command
+        line.
+      render: toml
+    validations:
+      required: true
+  - type: textarea
+    id: wrong
+    attributes:
+      label: What looks wrong
+      description: Where in the sky, and what you expected to see instead.
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: A screenshot
+      description: At a game's field of view if you can -- drag an image in.
+  - type: input
+    id: platform
+    attributes:
+      label: Platform and GPU
+      placeholder: "e.g. Ubuntu 24.04, AMD Radeon (radeonsi, Mesa 26.0)"

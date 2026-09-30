@@ -1,0 +1,53 @@
+name: Feature request
+description: Something StarCanopy should do
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every proposal passes the gate at the top of
+        [PRINCIPLES.md](https://github.com/chalkwalk/star-canopy/blob/main/PRINCIPLES.md),
+        and some things are refused on purpose, with what is offered instead,
+        in [NON-GOALS.md](https://github.com/chalkwalk/star-canopy/blob/main/NON-GOALS.md).
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What you are trying to make, and what stops you.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you propose
+    validations:
+      required: true
+  - type: dropdown
+    id: principle
+    attributes:
+      label: Which principle it serves
+      options:
+        - "§1 A sky is judged where it is seen"
+        - "§2 Judged by eye, blind; measured to explain"
+        - "§3 Physics when it earns the look"
+        - "§4 Form and light, not decals"
+        - "§5 Controls a user can understand"
+        - "§6 The seed is the starting point; the controls are the power"
+        - "§7 The texture is the product, and it can be made again"
+        - "§8 HDR first"
+        - "§9 Previews are honest"
+        - "§10 First-party or compatibly licensed, with provenance recorded"
+        - "§11 Open sky is part of the sky"
+        - "§12 Accessible where it can be, honest where it cannot"
+        - "§13 One definition, shared"
+        - "§14 The game decides where the sky points"
+        - "Not sure"
+    validations:
+      required: true
+  - type: checkboxes
+    id: non-goals
+    attributes:
+      label: Non-goals
+      options:
+        - label: I have read NON-GOALS.md, and this is not one of them
+          required: true
