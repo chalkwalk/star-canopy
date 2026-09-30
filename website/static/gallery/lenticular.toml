@@ -1,0 +1,34 @@
+# A StarCanopy project: how a sky is made again.
+
+look = 10        # the look version it was made with; do not change it by hand
+seed = 25
+style = "mass"
+
+[macros]        # -1..1; 0 is the seed's own sky
+open         = 0.0   # -1 enveloping .. 1 open: how much of the sky the gas covers
+dense        = 0.0   # -1 tenuous .. 1 dense: how much the gas hides where it is
+fragmented   = 0.0   # -1 whole .. 1 fragmented: gas broken into pieces with clear sky between
+detailed     = 0.0   # -1 smooth .. 1 detailed: fine structure in the gas
+billowing    = 0.0   # -1 wispy .. 1 billowing: rounded billows, or ridged filaments
+crisp        = 0.0   # -1 soft .. 1 crisp: hard edges and hard shadows
+turbulent    = 0.0   # -1 calm .. 1 turbulent: gas buckled, swirled and blown out
+luminous     = 0.0   # -1 brooding .. 1 luminous: light from within the nebula
+bright       = 0.0   # -1 dim .. 1 bright: the whole sky, as an exposure
+hazy         = 0.0   # -1 clear .. 1 hazy: a glow over the sky, the dark between not black
+vivid        = 0.0   # -1 muted .. 1 vivid: how colourful
+starry       = 0.0   # -1 sparse .. 1 starry: how many stars, and how bright
+galactic     = 0.0   # -1 remote .. 1 galactic: where in the galaxy: in toward its centre, or far out
+
+[overrides]     # raw dials, for scripting: `starcanopy dials` lists them
+
+[orientation]   # degrees: yaw about +y, pitch about +x, roll about +z
+yaw = 0.0
+pitch = 0.0
+roll = 0.0
+
+[output]
+size = 2048     # texels per face
+directory = "lenticular"
+name = "lenticular"
+# exr-faces exr-equirect ktx2 png-faces png-cross png-equirect
+formats = ["exr-faces", "ktx2", "png-faces"]

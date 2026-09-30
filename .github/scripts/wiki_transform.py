@@ -18,7 +18,7 @@ import sys
 # The site's own files -- the gallery's images and project files -- are served
 # from the site, and the wiki has none of them: their paths become the site's.
 SITE = "https://canopy.chalkwalkmusic.com"
-SITE_PATH = re.compile(r"""(\]\(|src=["'])/(img|gallery)/""")
+SITE_PATH = re.compile(r"""(\]\(|src=["'])(?:pathname://)?/(img|gallery)/""")
 
 # Docusaurus admonitions (:::note ... :::) render as literal colons on the
 # wiki. Blockquote them instead, keeping the kind as a bold lead-in.
