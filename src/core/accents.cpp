@@ -122,6 +122,12 @@ std::vector<Accent> generateAccents(uint32_t seed, const Galaxy& g, const Accent
     if (rng.uniform() * most > w) {
       continue;
     }
+    // In clear sight, mostly: a cluster behind thick dust adds nothing to a
+    // sky -- at game resolution a buried one could not be found -- so the
+    // seed keeps those its light reaches, buried ones rare, not common.
+    if (rng.uniform() > expf(-2.0f * dustDepth(g, offset))) {
+      continue;
+    }
     Accent a{};
     a.kind = kOpenCluster;
     // Associations -- loose young groups tens of parsecs across -- are parked:

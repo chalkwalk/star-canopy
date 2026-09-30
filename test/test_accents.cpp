@@ -78,6 +78,19 @@ int main() {
       farCount++;
     }
   }
+  // Mostly in clear sight: a cluster behind thick dust adds nothing to a sky,
+  // so the placer favours clear lines -- buried clusters rare, not common.
+  double seen = 0.0;
+  int placed = 0;
+  for (uint32_t seed = 1; seed <= 40; seed++) {
+    Galaxy gs = galaxyAt(seed, 2.6f, 0.0f);
+    for (const Accent& x : generateAccents(seed, gs, p)) {
+      seen += std::exp(-dustDepth(gs, x.offset));
+      placed++;
+    }
+  }
+  std::printf("light through the dust to the clusters: %.0f%% on average\n", 100.0 * seen / placed);
+  CHECK(placed > 0 && seen / placed >= 0.75);  // it was 58%
   double mean = total / 40.0;
   std::printf("in the band: %.2f a sky; mean distance near %.2f kpc, physical %.2f kpc; "
               "%d of %d far ones in the disc\n",
@@ -239,6 +252,15 @@ int main() {
       float typical = 0.7f * sp.reach, unit = typical * typical / (one.distance * one.distance);
       std::printf("median member %.3g against a unit star's %.3g\n", median, unit);
       CHECK(median <= 1.2f * unit);
+      // Yet a handful of luminaries always: with members down to a tenth of the
+      // field's faintest, a star fifty times the faintest was rare, and most
+      // clusters had nothing to catch the eye ("too faint").
+      int luminaries = 0;
+      for (float f : fluxes) {
+        luminaries += f > 50.0f * unit;
+      }
+      std::printf("luminaries: %d\n", luminaries);
+      CHECK(luminaries >= 2);
       CHECK(core >= 0.5 * n && halo >= 0.1 * n);
     }
     // Its haze, the faint majority, about 30% of the light its drawn members
