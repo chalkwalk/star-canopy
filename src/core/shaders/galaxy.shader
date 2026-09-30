@@ -31,6 +31,7 @@ void main()
 
 #define GAL_STEPS 512
 #define GAL_MAX_EXTERNAL 8
+#define GAL_MAX_ACCENTS 16
 
 uniform int u_Face;
 uniform float u_FaceSize;
@@ -47,6 +48,14 @@ uniform int u_ExternalCount;
 uniform vec4 u_ExternalDir[GAL_MAX_EXTERNAL];	/* direction, angular radius */
 uniform vec4 u_ExternalMajor[GAL_MAX_EXTERNAL];	/* long axis, minor over major */
 uniform float u_ExternalBrightness[GAL_MAX_EXTERNAL];
+/* Accents' unresolved light -- an open cluster's members too faint to draw -- added where the
+ * march passes each one's distance, so the dust in front dims it exactly; in star-flux units,
+ * turned into this glow's by u_AccentScale.  Added after the exposure and the knee, as the
+ * stars are: it is their light. */
+uniform int u_AccentCount;
+uniform vec4 u_AccentDir[GAL_MAX_ACCENTS];	/* sky direction, core angle (radians) */
+uniform vec4 u_AccentGlow[GAL_MAX_ACCENTS];	/* light per channel, distance (kpc) */
+uniform float u_AccentScale;
 
 out vec4 f_FragColor;
 
@@ -85,7 +94,7 @@ void main()
 	/* Everything, halo included, lies within a few disc edges of the centre. */
 	float bound = 1.5 * u_GalEdge;
 	float b = dot(o, d), c = dot(o, o) - bound * bound, disc = b * b - c;
-	vec3 transmit = vec3(1.0), glow = vec3(0.0), bare = vec3(0.0), dimming;
+	vec3 transmit = vec3(1.0), glow = vec3(0.0), bare = vec3(0.0), dimming, accent = vec3(0.0);
 	int i, k;
 
 	if (disc > 0.0) {
@@ -103,6 +112,19 @@ void main()
 			float ta = t_start * pow(ratio, float(i) / float(GAL_STEPS));
 			float tb = t_start * pow(ratio, float(i + 1) / float(GAL_STEPS));
 			float dt = tb - ta, t = 0.5 * (ta + tb);
+			for (k = 0; k < u_AccentCount; k++) {
+				float da = u_AccentGlow[k].w;
+
+				if (da >= ta && da < tb) {
+					/* A Plummer core: its light over its whole extent is its glow. */
+					float a = u_AccentDir[k].w;
+					float th2 = 2.0 * (1.0 - dot(dir, u_AccentDir[k].xyz));
+					float q = 1.0 + th2 / (a * a);
+
+					accent += transmit * u_AccentGlow[k].rgb *
+						(u_AccentScale / (3.1415927 * a * a * q * q));
+				}
+			}
 			/* The dust's detail as fine as the texel is wide there, and no finer than
 			 * half a step: finer than a step, a step lands in a cloud or misses it by
 			 * chance, and the texels beside it by different chances -- grain. */
@@ -161,7 +183,7 @@ void main()
 	bare *= u_GalExposure;
 	if (u_GalKnee > 0.0)
 		bare /= 1.0 + dot(bare, vec3(0.2126, 0.7152, 0.0722)) / u_GalKnee;
-	glow = bare * dimming;
+	glow = bare * dimming + accent;
 	f_FragColor = vec4(glow, transmit.g);
 }
 

@@ -25,10 +25,6 @@ constexpr float kTauSpacing = 2.8f;
 
 // A star vertex: direction, distance, flux.
 constexpr int kStarFloats = 7;
-// Star flux in the units the look's star brightness of 1 means. The faintest
-// field star has flux 1, and at this scale it lands as a dim but plain point
-// on a 2048 face at the default exposure.
-constexpr float kStarFluxUnit = 1.0e-6f;
 
 void tauDepths(float depth[kTauLayers - 1]) {
   for (int i = 0; i < kTauLayers - 1; i++) {
@@ -344,6 +340,19 @@ void Baker::bakeLight(const Scene& s, const Look& look) {
   glFinish();
 }
 
+Cubemap Baker::readGalaxy() const {
+  Cubemap out;
+  out.size = galaxyRes_;
+  glBindTexture(GL_TEXTURE_CUBE_MAP, galaxyTexture_);
+  glPixelStorei(GL_PACK_ALIGNMENT, 4);
+  for (int f = 0; f < 6; f++) {
+    out.faces[f].resize(static_cast<size_t>(galaxyRes_) * galaxyRes_ * 3);
+    glGetTexImage(GL_TEXTURE_CUBE_MAP_POSITIVE_X + f, 0, GL_RGB, GL_FLOAT, out.faces[f].data());
+  }
+  glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+  return out;
+}
+
 void Baker::measureGalaxy(const Galaxy& g, const float reddening[3], const float band[3],
                           float out[4]) {
   const int res = 32;
@@ -379,7 +388,9 @@ void Baker::measureGalaxy(const Galaxy& g, const float reddening[3], const float
 }
 
 void Baker::bakeGalaxy(const Galaxy& g, const float reddening[3], int res, const float band[3],
-                       float exposure, float knee) {
+                       float exposure, float knee, const std::vector<Accent>* accents,
+                       float accentScale) {
+  galaxyRes_ = res;
   if (!galaxy_.id()) {
     return;
   }
@@ -410,6 +421,34 @@ void Baker::bakeGalaxy(const Galaxy& g, const float reddening[3], int res, const
   glUniform3fv(p.uniform("u_Band"), 1, band);
   glUniform1f(p.uniform("u_GalExposure"), exposure);
   glUniform1f(p.uniform("u_GalKnee"), knee);
+  // The brightest few accents' haze; the rest are points only.
+  float dir[kMaxAccentGlows][4] = {}, glow[kMaxAccentGlows][4] = {};
+  int count = 0;
+  if (accents) {
+    std::vector<const Accent*> order;
+    for (const Accent& a : *accents) {
+      if (a.glow[0] + a.glow[1] + a.glow[2] > 0.0f) {
+        order.push_back(&a);
+      }
+    }
+    std::sort(order.begin(), order.end(), [](const Accent* x, const Accent* y) {
+      return x->glow[1] > y->glow[1];
+    });
+    for (const Accent* a : order) {
+      if (count == kMaxAccentGlows) {
+        break;
+      }
+      std::memcpy(dir[count], a->dir, sizeof(a->dir));
+      dir[count][3] = fmaxf(0.5f * a->radius / a->distance, 1e-4f);  // the core, half its extent
+      std::memcpy(glow[count], a->glow, sizeof(a->glow));
+      glow[count][3] = a->distance;
+      count++;
+    }
+  }
+  glUniform1i(p.uniform("u_AccentCount"), count);
+  glUniform4fv(p.uniform("u_AccentDir"), kMaxAccentGlows, &dir[0][0]);
+  glUniform4fv(p.uniform("u_AccentGlow"), kMaxAccentGlows, &glow[0][0]);
+  glUniform1f(p.uniform("u_AccentScale"), accentScale);
 
   glDrawBuffer(GL_COLOR_ATTACHMENT0);
   glViewport(0, 0, res, res);

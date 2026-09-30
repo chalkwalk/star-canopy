@@ -1,5 +1,6 @@
 #include "sky.h"
 
+#include "accents.h"
 #include "bake.h"
 
 #include <cmath>
@@ -70,12 +71,19 @@ void bakeSky(Baker& baker, const Settings& settings, CubemapTarget& target) {
   // off: they are the same sky, seen without its gas. First, since the glow is
   // only the stars too faint to be drawn.
   float band[3] = {0.0f, 0.0f, sky.galaxyHaze / galaxy.grain};
-  std::vector<Star> stars = generateStars(scene, galaxy, sky.stars, &band[0]);
+  // The accents from a stream of their own, so the stars before are as they
+  // were; their members join the stars, their faint rest the glow.
+  std::vector<Accent> accents = generateAccents(sky.scene.seed, galaxy, sky.accents);
+  std::vector<Star> stars = generateStars(scene, galaxy, sky.stars, &band[0], &accents);
   band[1] = 0.49f * sky.stars.reach * sky.stars.reach;  // the typical distance, squared
   // The glow at the sky's own size unless told otherwise: its dust has detail
-  // down to the texel. Exposed for where it is seen from.
+  // down to the texel. Exposed for where it is seen from. The accents' haze
+  // in star-flux units, as the stars are drawn, into the glow's.
+  float accentScale = sky.look.galaxyGlow > 0.0f
+                          ? kStarFluxUnit * sky.look.starBrightness / sky.look.galaxyGlow
+                          : 0.0f;
   baker.bakeGalaxy(galaxy, sky.look.reddening, sky.galaxyRes > 0 ? sky.galaxyRes : target.size(),
-                   band, galaxyExposure(baker, galaxy, sky, band));
+                   band, galaxyExposure(baker, galaxy, sky, band), 1.5f, &accents, accentScale);
   if (!sky.nebula) {
     scene.bubbleCount = 0;
   }

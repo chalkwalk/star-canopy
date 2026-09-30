@@ -4,7 +4,9 @@
 // observer and across the disc. They differ by the noise alone: the shader
 // reads it from the 8-bit volume, trilinear, and the CPU computes it exactly.
 
+#include "accents.h"
 #include "bake.h"
+#include "cubemap.h"
 #include "check.h"
 #include "galaxy.h"
 #include "gl_context.h"
@@ -13,6 +15,7 @@
 
 #include <cmath>
 #include <cstdio>
+#include <string>
 #include <vector>
 
 using namespace starcanopy;
@@ -130,6 +133,40 @@ int main() {
     CHECK(r0 >= 2.2f && r0 <= 3.0f && std::fabs(h0) <= 0.03f);
     CHECK(rIn < r0 && std::fabs(hIn) < 1e-6f);
     CHECK(rOut > r0 + 1.0f);  // mostly outward: 0 to 45 degrees
+  }
+  // An open cluster's haze lies where it is, and nowhere else: one cluster
+  // straight along the sky's +z, 0.5 kpc off, against none.
+  {
+    Baker baker;
+    std::string why;
+    CHECK(baker.ok(why));
+    GalaxyParams gp;
+    gp.observerRadius = 2.6f;
+    gp.observerHeight = 0.0f;
+    Galaxy hg = generateGalaxy(1, gp);
+    const float reddening[3] = {0.8f, 1.0f, 1.3f}, band[3] = {0.0f, 0.0f, 0.3f};
+    Accent c{};
+    c.kind = kOpenCluster;
+    c.dir[2] = 1.0f;
+    c.distance = 0.5f;
+    c.radius = 0.01f;
+    c.glow[0] = c.glow[1] = c.glow[2] = 1.0e6f;
+    std::vector<Accent> one = {c}, none;
+    const int res = 32;
+    baker.bakeGalaxy(hg, reddening, res, band, 1.0f, 1.5f, &none, 1.0e-6f);
+    Cubemap without = baker.readGalaxy();
+    baker.bakeGalaxy(hg, reddening, res, band, 1.0f, 1.5f, &one, 1.0e-6f);
+    Cubemap with = baker.readGalaxy();
+    // Face +z is GL face 4; its middle texel looks along +z; a corner far off.
+    auto at = [&](const Cubemap& m, int face, int x, int y) {
+      return m.faces[face][(static_cast<size_t>(y) * res + x) * 3 + 1];
+    };
+    float centre = at(with, 4, res / 2, res / 2) - at(without, 4, res / 2, res / 2);
+    float corner = at(with, 4, 0, 0) - at(without, 4, 0, 0);
+    float behind = at(with, 5, res / 2, res / 2) - at(without, 5, res / 2, res / 2);
+    std::printf("haze: %.4g at the cluster, %.4g off it, %.4g behind\n", centre, corner, behind);
+    CHECK(centre > 0.0f);
+    CHECK(std::fabs(corner) < 0.01f * centre && std::fabs(behind) < 1e-6f);
   }
   return test::finish();
 }

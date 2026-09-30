@@ -1,5 +1,7 @@
 #pragma once
 
+#include "accents.h"
+#include "cubemap.h"
 #include "cubemap_target.h"
 #include "galaxy.h"
 #include "look.h"
@@ -30,6 +32,11 @@ void uploadGalaxy(const Program& p, const Galaxy& g);
 // it.
 //
 // Needs a current GL context for its whole life.
+// Star flux in the units the look's star brightness of 1 means. The faintest
+// field star has flux 1, and at this scale it lands as a dim but plain point
+// on a 2048 face at the default exposure.
+constexpr float kStarFluxUnit = 1.0e-6f;
+
 class Baker {
 public:
   Baker();
@@ -43,8 +50,14 @@ public:
   // The galaxy's glow as seen from its observer, res texels a face. Every bake
   // after samples it; it need only be redone when the galaxy changes.
   // Its light is scaled by exposure and then eased past the knee (0: none).
+  // accents' unresolved light, scaled by accentScale into the glow's units,
+  // is added after both, as the stars' own light is.
   void bakeGalaxy(const Galaxy& g, const float reddening[3], int res, const float band[3],
-                  float exposure = 1.0f, float knee = 1.5f);
+                  float exposure = 1.0f, float knee = 1.5f,
+                  const std::vector<Accent>* accents = nullptr, float accentScale = 0.0f);
+
+  // The glow as last baked, for tests.
+  Cubemap readGalaxy() const;
 
   // The glow's luminance over the whole sky, weighed by solid angle, before
   // any exposure or knee: at the 50th, 90th, 99th and 99.9th percentiles.
@@ -88,6 +101,7 @@ private:
   // a bake. See bakeLight().
   std::vector<unsigned char> lightKey_;
   GLuint galaxyTexture_ = 0;
+  int galaxyRes_ = 0;
   GLuint tau_[2] = {0, 0};
   GLuint starBuffer_ = 0, starVertexArray_ = 0;
   int starVertices_ = 0;
