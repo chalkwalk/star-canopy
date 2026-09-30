@@ -108,3 +108,29 @@ Written as a general placer, not for clusters alone.
 
 Globular clusters (next, sharing this placer); reflection nebulosity about young
 clusters (*Reflection nebulae*); clusters as part of any macro, until seen.
+
+## Addendum, 2026-09-30: after the mock-ups at a game's resolution
+
+The mock-ups (`open-clusters-mock-1` to `-8`, outside the repository) and
+photographs of open clusters, looked at for structure only, changed four things:
+
+- **Drawn members on the field stars' scale**: a few tens, not a real cluster's
+  hundreds or thousands -- all drawn, a cluster was a solid white ball.
+- **Size**: a dense core of 2.5-8 pc, never nearer than its stars spread to
+  about 3 degrees, 1/15 of a 75-degree view's height -- a sixth of it read as a
+  pasted patch. `accent-near` reaches strongly near (even in log distance at
+  0.75). Associations are parked: from near by they dissolve into the field.
+- **Stars with structure**: a brightness hierarchy -- a few luminous members, the
+  rest small and faint, as a handful of bright stars carry the Pleiades -- and a
+  concentrated core thinning into a sparse halo, emerging from the field rather
+  than sitting on it as a disc.
+- **A textured haze, not a smooth one** (the user's choice over a real small
+  nebula, which remains the fallback): the haze broken by noise, following the
+  cluster's shape; strong and coloured when young -- reddish for the youngest,
+  still in their birth cloud, blue for those whose dust scatters their stars'
+  light -- and faint and plain when old. Photographs show young clusters' haze
+  as patchy glow cut by dust and the Pleiades' as wisps about its bright stars,
+  never a round halo.
+
+A Pleiades-like **hero** -- a near young cluster in a reflection nebula filling
+the view -- is on the roadmap, after the accent.

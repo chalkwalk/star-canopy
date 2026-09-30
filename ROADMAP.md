@@ -323,6 +323,11 @@ In this order, each proving the ground the next builds on:
       loose young groups tens of degrees across when near -- as their loose end.
       The first to use the accents' ground: the galaxy-weighted draw, the near
       bias, the veil, the colour pull. Blind: skies with them against without
+- [ ] **A Pleiades-like hero**: a near young cluster in a reflection nebula that
+      fills the view -- the main nebula's pipeline with its light turned to
+      scattering (blue, no glowing gas) and its dust streaked into wisps, lit by
+      several bright stars. After the open-cluster accent; its textured haze, or
+      the small real nebula that is its fallback, is the start of it
 - [ ] **Globular clusters**: hundreds of thousands of old yellow stars in a dense
       ball, in the galaxy's halo -- placed about it, not along the band. Accents,
       and a hero: a sky beside or inside one, bright stars packed on every side
