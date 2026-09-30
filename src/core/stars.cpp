@@ -447,6 +447,11 @@ void addOpenClusterStars(std::vector<Star>& stars, const Galaxy& g, const StarPa
     int members = a.association ? static_cast<int>(rng.range(10.0f, 40.0f))
                                 : static_cast<int>(expf(rng.range(logf(40.0f), logf(300.0f))));
     float age = a.association ? rng.range(0.0f, 0.2f) : rng.uniform();  // 0 young .. 1 old, log age
+    // Old, mostly, in a galaxy that has stopped making stars: a lenticular's
+    // clusters were as young as a spiral's (the review). A spiral's arms are at
+    // full strength, and its clusters' ages are as they were.
+    float youth = fminf(g.armStrength, 1.0f);
+    age = age * youth + (0.4f + 0.6f * age) * (1.0f - youth);
     float brightest = powf(kMaxLum, 1.0f - 0.85f * age);
     int giants = static_cast<int>(age * 0.02f * members + 0.5f);
     int lumps = 2 + rng.below(3);

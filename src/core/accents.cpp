@@ -96,6 +96,10 @@ std::vector<Accent> generateAccents(uint32_t seed, const Galaxy& g, const Accent
   // Far outside the disc, where there is next to none, as physics has it.
   float share = there > 0.0 ? static_cast<float>(here / there) : 0.0f;
   share = share < 0.05f ? share : fminf(fmaxf(share, 0.5f), 2.0f);
+  // And a galaxy that has stopped making stars -- a lenticular, its arms a
+  // trace -- has fewer: it had as many as a spiral. A spiral's arms are at
+  // full strength, and its count is as it was.
+  share *= 0.3f + 0.7f * fminf(g.armStrength, 1.0f);
   int n = poisson(rng, static_cast<float>(p.openClusters) * share);
   if (n == 0) {
     return out;

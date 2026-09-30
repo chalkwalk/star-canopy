@@ -124,6 +124,33 @@ int main() {
     CHECK(between >= 2);
   }
 
+  // A lenticular, which has stopped making stars, has fewer clusters than a
+  // spiral, and old ones: it had as many, and young, against its nature
+  // (the review).
+  {
+    double count = 0.0, ages = 0.0;
+    int aged = 0;
+    for (uint32_t seed = 1; seed <= 20; seed++) {
+      Settings ls;
+      ls.seed = seed;
+      ls.galaxyStyle = 4;  // lenticular
+      Sky lsky = buildSky(ls);
+      Galaxy lg = generateGalaxy(seed, lsky.galaxy);
+      std::vector<Accent> list = generateAccents(seed, lg, p);
+      count += list.size();
+      Scene lscene = generateScene(lsky.scene);
+      generateStars(lscene, lg, lsky.stars, nullptr, &list);
+      for (const Accent& x : list) {
+        ages += x.age;
+        aged++;
+      }
+    }
+    std::printf("lenticulars: %.2f clusters a sky, mean age %.2f\n", count / 20.0,
+                aged ? ages / aged : 0.0);
+    CHECK(count / 20.0 <= 0.5 * mean);
+    CHECK(aged > 0 && ages / aged >= 0.6);
+  }
+
   // A lenticular, with next to no young stars, still finishes and has a few.
   GalaxyParams lp;
   lp.observerRadius = 2.6f;
