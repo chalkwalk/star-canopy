@@ -234,6 +234,31 @@ int main() {
     for (int i = 0; i < 3; i++) {
       CHECK(std::fabs(totals[i] / totals[3] - 1.0) < 0.15);
     }
+
+    // Its haze follows its shape: a cluster stretched along the sky's x has a
+    // haze stretched with it -- round under an elongated scatter, it worked
+    // against "never round" (the review). Old, so its texture is faint.
+    Accent long_ = wide;
+    long_.age = 1.0f;
+    long_.axis[0] = 1.0f;
+    long_.stretch = 2.0f;
+    std::vector<Accent> l1 = {long_};
+    baker.bakeGalaxy(hg, reddening, big, band, 1.0f, 1.5f, &none, 1.0e-6f);
+    Cubemap flat = baker.readGalaxy();
+    baker.bakeGalaxy(hg, reddening, big, band, 1.0f, 1.5f, &l1, 1.0e-6f);
+    Cubemap stretched = baker.readGalaxy();
+    double mxx = 0.0, myy = 0.0;
+    for (int y = 0; y < big; y++) {
+      for (int x = 0; x < big; x++) {
+        float s = (x + 0.5f) / big * 2.0f - 1.0f, t = (y + 0.5f) / big * 2.0f - 1.0f;
+        size_t at = (static_cast<size_t>(y) * big + x) * 3 + 1;
+        double v = stretched.faces[4][at] - flat.faces[4][at];
+        mxx += v * s * s;  // face +z: sky x is s, sky y is -t
+        myy += v * t * t;
+      }
+    }
+    std::printf("a stretched cluster's haze: %.2f to 1\n", std::sqrt(mxx / myy));
+    CHECK(std::sqrt(mxx / myy) > 1.5);
   }
   return test::finish();
 }

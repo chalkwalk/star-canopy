@@ -56,6 +56,7 @@ uniform int u_AccentCount;
 uniform vec4 u_AccentDir[GAL_MAX_ACCENTS];	/* sky direction, core angle (radians) */
 uniform vec4 u_AccentGlow[GAL_MAX_ACCENTS];	/* light per channel, distance (kpc) */
 uniform vec4 u_AccentShape[GAL_MAX_ACCENTS];	/* its texture's place in the noise, strength */
+uniform vec4 u_AccentAxis[GAL_MAX_ACCENTS];	/* its stretch's direction, and how far (1 round) */
 uniform float u_AccentScale;
 
 out vec4 f_FragColor;
@@ -123,7 +124,13 @@ void main()
 					 * (PRINCIPLES §9); widened, its light is the same at every size. */
 					float own = u_AccentDir[k].w;
 					float a = sqrt(own * own + pixel_angle * pixel_angle);
+					/* Stretched as its members are, along their axis: round under an
+					 * elongated scatter, it worked against "never round".  The area it
+					 * covers grows with the stretch, so its light is divided by it. */
+					float stretch = u_AccentAxis[k].w;
+					float along = dot(dir - u_AccentDir[k].xyz, u_AccentAxis[k].xyz);
 					float th2 = 2.0 * (1.0 - dot(dir, u_AccentDir[k].xyz));
+					th2 = max(th2 - along * along, 0.0) + along * along / (stretch * stretch);
 					float q = 1.0 + th2 / (a * a);
 
 					/* Out to ten cores, 99% of its light: its tail had reached round the
@@ -142,7 +149,7 @@ void main()
 					float tex = mix(1.0, clamp(1.0 + n, 0.05, 3.0), u_AccentShape[k].w * resolved);
 
 					accent += transmit * u_AccentGlow[k].rgb * tex *
-						(u_AccentScale / (3.1415927 * a * a * q * q));
+						(u_AccentScale / (3.1415927 * a * a * stretch * q * q));
 				}
 			}
 			/* The dust's detail as fine as the texel is wide there, and no finer than

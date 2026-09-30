@@ -423,6 +423,7 @@ void Baker::bakeGalaxy(const Galaxy& g, const float reddening[3], int res, const
   glUniform1f(p.uniform("u_GalKnee"), knee);
   // The brightest few accents' haze; the rest are points only.
   float dir[kMaxAccentGlows][4] = {}, glow[kMaxAccentGlows][4] = {}, shape[kMaxAccentGlows][4] = {};
+  float axis[kMaxAccentGlows][4] = {};
   int count = 0;
   if (accents) {
     std::vector<const Accent*> order;
@@ -448,6 +449,9 @@ void Baker::bakeGalaxy(const Galaxy& g, const float reddening[3], int res, const
       shape[count][1] = static_cast<float>(a->seed % 991u) * 0.53f;
       shape[count][2] = static_cast<float>(a->seed % 983u) * 0.29f;
       shape[count][3] = 1.0f - 0.6f * fminf(fmaxf(a->age, 0.0f), 1.0f);
+      // Its shape, as its members' (1, round, where none was set).
+      std::memcpy(axis[count], a->axis, sizeof(a->axis));
+      axis[count][3] = fmaxf(a->stretch, 1.0f);
       count++;
     }
   }
@@ -455,6 +459,7 @@ void Baker::bakeGalaxy(const Galaxy& g, const float reddening[3], int res, const
   glUniform4fv(p.uniform("u_AccentDir"), kMaxAccentGlows, &dir[0][0]);
   glUniform4fv(p.uniform("u_AccentGlow"), kMaxAccentGlows, &glow[0][0]);
   glUniform4fv(p.uniform("u_AccentShape"), kMaxAccentGlows, &shape[0][0]);
+  glUniform4fv(p.uniform("u_AccentAxis"), kMaxAccentGlows, &axis[0][0]);
   glUniform1f(p.uniform("u_AccentScale"), accentScale);
 
   glDrawBuffer(GL_COLOR_ATTACHMENT0);

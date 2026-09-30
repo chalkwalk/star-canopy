@@ -463,6 +463,11 @@ void addOpenClusterStars(std::vector<Star>& stars, const Galaxy& g, const StarPa
     }
     rng.perpendicular(sight, axis);
     float stretch = rng.range(1.6f, 2.1f);
+    // Its haze follows the same shape (galaxy.shader): the axis into the sky.
+    for (int k = 0; k < 3; k++) {
+      a.axis[k] = g.rot[0 + k] * axis[0] + g.rot[3 + k] * axis[1] + g.rot[6 + k] * axis[2];
+    }
+    a.stretch = stretch;
     for (int l = 0; l < lumps; l++) {
       rng.unitVector(centre[l]);
       float r = a.radius * 0.6f * cbrtf(rng.uniform());
