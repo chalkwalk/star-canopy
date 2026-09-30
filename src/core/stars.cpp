@@ -534,10 +534,23 @@ void addOpenClusterStars(std::vector<Star>& stars, const Galaxy& g, const StarPa
     }
     // And its faint majority, below that scale, is its haze whatever the
     // limit: 30% of the light its bright members give, enough to bind them
-    // into a patch -- as much again was a fog over them.
-    for (int k = 0; k < 3; k++) {
-      a.glow[k] = rest[k] + 0.3f * all[k];
+    // into a patch -- as much again was a fog over them. Young, it is still
+    // in its birth cloud's light: reddish at first, then blue as the dust
+    // scatters its stars' light; old, faint and its stars' own colour.
+    // Textured in the galaxy's march (galaxy.shader), never a round even glow.
+    float tint[3] = {1.0f, 1.0f, 1.0f}, share = 0.3f;
+    if (age < 0.1f) {
+      tint[0] = 1.0f, tint[1] = 0.5f, tint[2] = 0.45f;
+    } else if (age < 0.3f) {
+      tint[0] = 0.6f, tint[1] = 0.78f, tint[2] = 1.0f;
+    } else {
+      share *= 0.4f;
     }
+    float lum = 0.2126f * tint[0] + 0.7152f * tint[1] + 0.0722f * tint[2];
+    for (int k = 0; k < 3; k++) {
+      a.glow[k] = rest[k] + share * all[k] * tint[k] / lum;
+    }
+    a.age = age;
   }
 }
 

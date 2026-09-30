@@ -34,6 +34,7 @@ struct Accent {
   float distance;     // kpc
   float radius;       // kpc: how far its lumps spread
   uint32_t seed;      // for its details, from a stream of its own
+  float age;          // filled by generateStars(): 0 young .. 1 old, in log age
   // Filled by generateStars(): the light of the members too faint to draw,
   // before the dust in front, per channel, in star-flux units.
   float glow[3];

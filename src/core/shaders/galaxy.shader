@@ -55,6 +55,7 @@ uniform float u_ExternalBrightness[GAL_MAX_EXTERNAL];
 uniform int u_AccentCount;
 uniform vec4 u_AccentDir[GAL_MAX_ACCENTS];	/* sky direction, core angle (radians) */
 uniform vec4 u_AccentGlow[GAL_MAX_ACCENTS];	/* light per channel, distance (kpc) */
+uniform vec4 u_AccentShape[GAL_MAX_ACCENTS];	/* its texture's place in the noise, strength */
 uniform float u_AccentScale;
 
 out vec4 f_FragColor;
@@ -120,8 +121,14 @@ void main()
 					float a = u_AccentDir[k].w;
 					float th2 = 2.0 * (1.0 - dot(dir, u_AccentDir[k].xyz));
 					float q = 1.0 + th2 / (a * a);
+					/* Textured, never a round even glow: two octaves of noise in the
+					 * cluster's own frame, scaled to its core, break it into patches, as
+					 * a young cluster's birth cloud and a reflection nebula's wisps are. */
+					vec3 c = (dir - u_AccentDir[k].xyz) / a + u_AccentShape[k].xyz;
+					float n = 3.0 * nsky_noise(c * 0.6).x + 1.5 * nsky_noise(c * 1.5 + 3.0).y;
+					float tex = mix(1.0, clamp(1.0 + n, 0.05, 3.0), u_AccentShape[k].w);
 
-					accent += transmit * u_AccentGlow[k].rgb *
+					accent += transmit * u_AccentGlow[k].rgb * tex *
 						(u_AccentScale / (3.1415927 * a * a * q * q));
 				}
 			}

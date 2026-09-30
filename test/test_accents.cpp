@@ -241,10 +241,11 @@ int main() {
       CHECK(median <= 1.2f * unit);
       CHECK(core >= 0.5 * n && halo >= 0.1 * n);
     }
-    // Its haze, the faint majority, 30% of the light its drawn members give:
-    // enough to bind them into a patch; as much again was a fog over them.
+    // Its haze, the faint majority, about 30% of the light its drawn members
+    // give -- less when old, tinted by its age: enough to bind them into a
+    // patch; as much again was a fog over them.
     std::printf("haze %.4g against members %.4g\n", list2[0].glow[1], fb);
-    CHECK(std::fabs(list2[0].glow[1] / fb - 0.3) < 0.01);
+    CHECK(list2[0].glow[1] > 0.05 * fb && list2[0].glow[1] < 0.4 * fb);
 
     // With a limit, the faint ones become its glow, and none is lost: at 3 kpc
     // most members are too faint.

@@ -167,6 +167,34 @@ int main() {
     std::printf("haze: %.4g at the cluster, %.4g off it, %.4g behind\n", centre, corner, behind);
     CHECK(centre > 0.0f);
     CHECK(std::fabs(corner) < 0.01f * centre && std::fabs(behind) < 1e-6f);
+
+    // Textured, not a smooth halo: round a ring about a large cluster its haze
+    // varies, as a young cluster's birth cloud and a reflection nebula's wisps
+    // do in photographs -- never a round even glow (the design's addendum).
+    const int big = 128;
+    Accent wide = c;
+    wide.radius = 0.05f;  // a core of 0.05 rad at 0.5 kpc
+    std::vector<Accent> w = {wide};
+    baker.bakeGalaxy(hg, reddening, big, band, 1.0f, 1.5f, &none, 1.0e-6f);
+    Cubemap plain = baker.readGalaxy();
+    baker.bakeGalaxy(hg, reddening, big, band, 1.0f, 1.5f, &w, 1.0e-6f);
+    Cubemap hazy = baker.readGalaxy();
+    double sum = 0.0, sum2 = 0.0;
+    const int points = 16;
+    for (int i = 0; i < points; i++) {
+      float phi = 6.2831853f * i / points;
+      // Face +z looks along (s, -t, 1): a direction (x, y, 1) is at s = x, t = -y.
+      float x = 0.08f * std::cos(phi), y = 0.08f * std::sin(phi);
+      int px = static_cast<int>((x + 1.0f) / 2.0f * big), py = static_cast<int>((-y + 1.0f) / 2.0f * big);
+      size_t at = (static_cast<size_t>(py) * big + px) * 3 + 1;
+      double v = hazy.faces[4][at] - plain.faces[4][at];
+      sum += v;
+      sum2 += v * v;
+    }
+    double mean = sum / points, spread = std::sqrt(std::fmax(sum2 / points - mean * mean, 0.0));
+    std::printf("haze round a ring: mean %.4g, varying %.0f%%\n", mean, 100.0 * spread / mean);
+    // (Sampling a smooth halo on the texel grid alone gives some 16%.)
+    CHECK(mean > 0.0 && spread > 0.4 * mean);
   }
   return test::finish();
 }
