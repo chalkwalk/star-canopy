@@ -5,11 +5,15 @@
 //
 //   atlas --out DIR [--size N] [--seeds 1,7,12] [--vantages a,b] [--set NAME=VALUE]...
 //         [--context K] [--measure 1] [--macro NAME=VALUE]... [--toward accents]
+//         [--game 1]
 //
 // With --measure 1, no sheets: for each vantage and seed, the galaxy's glow's
 // brightness percentiles over the sky, as its exposure measures them.
 // With --toward accents, the first two views look at the sky's two largest
 // accents -- open clusters and the rest -- instead of the centre and away.
+// With --game 1, beside each sheet the first view as a game shows it, 1920 by
+// 1080 and 75 degrees across (DIR/VANTAGE-seedN-game.png); bake at --size 2048
+// for a game's skybox.
 //
 // One sheet a vantage and seed, DIR/VANTAGE-seedN.png: the whole sky above, in
 // the Equal Earth projection and galactic coordinates -- the galaxy's centre in the middle, its plane across,
@@ -139,7 +143,7 @@ int main(int argc, char** argv) {
   std::vector<uint32_t> seeds = {1, 7, 12};
   std::vector<std::string> names, sets;
   ContextKind kind = ContextKind::Auto;
-  bool measure = false, towardAccents = false;
+  bool measure = false, towardAccents = false, game = false;
   MacroValues macroValues;
   for (int i = 1; i + 1 < argc; i += 2) {
     std::string arg = argv[i], v = argv[i + 1];
@@ -169,6 +173,8 @@ int main(int argc, char** argv) {
         return 2;
       }
       towardAccents = true;
+    } else if (arg == "--game") {
+      game = v == "1";
     } else if (arg == "--measure") {
       measure = v == "1";
     } else if (arg == "--context") {
@@ -292,9 +298,18 @@ int main(int argc, char** argv) {
         paste(sheet, perspective(turned, views[k], k == 3 ? plane : north, 45.0f, viewSize, viewSize),
               k * viewSize, whole.height + gap);
       }
-      char name[128];
-      std::snprintf(name, sizeof(name), "%s/%s-seed%u.png", outDir.c_str(), v->name, seed);
-      if (!writePng(name, sheet, error)) {
+      // Built as strings: a fixed buffer cut a long output path's name short.
+      std::string stem = outDir + "/" + v->name + "-seed" + std::to_string(seed);
+      // And, beside it, the first view as a game shows it: 1920 by 1080, 75
+      // degrees across -- the sheet's views are half a game's resolution.
+      if (game) {
+        if (!writePng(stem + "-game.png", perspective(turned, views[0], north, 75.0f, 1920, 1080),
+                      error)) {
+          std::fprintf(stderr, "atlas: %s\n", error.c_str());
+          return 1;
+        }
+      }
+      if (!writePng(stem + ".png", sheet, error)) {
         std::fprintf(stderr, "atlas: %s\n", error.c_str());
         return 1;
       }
