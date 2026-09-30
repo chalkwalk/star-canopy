@@ -40,13 +40,13 @@ struct Reference {
   double stat[kStats];
 };
 
-// Look 9, recorded on the Radeon (radeonsi) at 48 a face with the default
+// Look 10, recorded on the Radeon (radeonsi) at 48 a face with the default
 // dials. A look version's table stays for as long as it is rendered; look 1's
 // went when look 2 retired the shell, and each since when the next
 // replaced it.
-const Reference kLook9[] = {
-    {3, {0.0169003, 0.0262274, 0.0235216, 0.0146845, 0.0435694, 0.164821, 0.474421}},
-    {7, {0.0216133, 0.0248954, 0.0255073, 0.0155798, 0.0463166, 0.146598, 0.412637}},
+const Reference kLook10[] = {
+    {3, {0.0169018, 0.0262293, 0.023523, 0.0146845, 0.0435694, 0.164821, 0.474421}},
+    {7, {0.0216155, 0.0248979, 0.0255096, 0.0155798, 0.0463166, 0.146598, 0.412637}},
     {12, {0.017994, 0.0201082, 0.0232233, 0.0134354, 0.0351794, 0.128677, 0.381494}},
 };
 
@@ -82,10 +82,10 @@ int main(int argc, char** argv) {
     return 1;
   }
   std::printf("context: %s\n", context->description().c_str());
-  CHECK(kLookVersion == 9);  // a new look version needs its own table here
+  CHECK(kLookVersion == 10);  // a new look version needs its own table here
 
   double worst = 0.0;
-  for (const Reference& ref : kLook9) {
+  for (const Reference& ref : kLook10) {
     Settings s;
     s.seed = ref.seed;
     CubemapTarget target(kSize);

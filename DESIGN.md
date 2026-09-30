@@ -176,6 +176,17 @@ sky glows, its structure shows instead of a grey fog, and from the rim the faint
 local disc is lifted a little. It is measured at one small size, so a preview
 has the export's exposure.
 
+The sky's **accents** are objects beyond the lit mass and the galaxy (`accents.h`),
+open clusters first: about six a sky (`open-clusters`), drawn where the galaxy's
+young stars are born, at physical distances tilted toward the near
+(`accent-near`), mostly in clear sight of the galaxy's dust, and never so near a
+cluster spans more than about 3 degrees -- a sixth of a game view read as a
+pasted patch. A cluster is real stars: a few tens on the field stars' scale, a
+handful luminous over many faint, in a core thinning into a halo and a few
+sub-clumps stretched across the line of sight, never round (a globular's look);
+its faint majority is a haze added in the galaxy's march behind exactly the dust
+in front, textured by noise and tinted by age -- reddish, then blue, then faint.
+
 The band is made of stars. About 30,000 field stars within 1.5 kpc are sampled
 from the same model at real distances; beyond them, about 150,000 more are drawn
 where the galaxy's density and luminosity law put stars bright enough to draw,
@@ -249,7 +260,8 @@ labs; look 2 retired the shell and remade the distant nebulae, a mass sky's main
 nebula unchanged; look 3 remade the galaxy's dust; look 4 made its band of stars;
 look 5 gave it a type by seed and spiral arms; look 6 made a quarter of galaxies
 lenticular; look 7 exposed its glow for the vantage; look 8 placed the observer by seed, moved
-by `galactic` (`src/core/project.h`). This
+by `galactic`; look 9 opened the default sky; look 10 added open clusters
+(`src/core/project.h`). This
 StarCanopy renders the latest look, and refuses older ones saying how to render
 them with it. A change that alters any sky's
 pixels is a new look version; the renderer keeps the old ones renderable, or

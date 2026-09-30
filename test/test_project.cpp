@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 
   // A new project loads, as written.
   CHECK(load(projectText(42, "night"), p, error));
-  CHECK(p.look == kLookVersion && kLookVersion == 9 && p.settings.seed == 42);
+  CHECK(p.look == kLookVersion && kLookVersion == 10 && p.settings.seed == 42);
   CHECK(p.size == 2048 && p.output.name == "night" && p.output.directory == dir + "/night");
   CHECK(p.output.formats.size() == 3);
   // It lists every macro, at 0: the seed's own sky.
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
   }
 
   // Everything a project can say.
-  CHECK(load("look = 9\nseed = 7\nstyle = \"mass\"\n[macros]\nopen = 0.5\nbright = -1\n"
+  CHECK(load("look = 10\nseed = 7\nstyle = \"mass\"\n[macros]\nopen = 0.5\nbright = -1\n"
              "[overrides]\ndensity = 1.5\nexposure = 0.25\nline-colors = \"hoo\"\nmass-clusters = 2\n"
              "[orientation]\nyaw = 90\npitch = -10.5\n"
              "[output]\nsize = 512\ndirectory = \"/tmp/x\"\nname = \"a\"\n"
@@ -89,34 +89,35 @@ int main(int argc, char** argv) {
 
   // The look version is required, and a newer one refused.
   CHECK(fails("seed = 1\n", "look"));
-  CHECK(fails("look = 10\n", "newer"));
+  CHECK(fails("look = 11\n", "newer"));
   // Look 1 is refused, saying why and what to do.
-  CHECK(fails("look = 1\n", "look = 9"));
-  CHECK(fails("look = 3\n", "look = 9"));
-  CHECK(fails("look = 4\n", "look = 9"));
-  CHECK(fails("look = 5\n", "look = 9"));
-  CHECK(fails("look = 6\n", "look = 9"));
-  CHECK(fails("look = 7\n", "look = 9"));
-  CHECK(fails("look = 8\n", "look = 9"));
+  CHECK(fails("look = 1\n", "look = 10"));
+  CHECK(fails("look = 3\n", "look = 10"));
+  CHECK(fails("look = 4\n", "look = 10"));
+  CHECK(fails("look = 5\n", "look = 10"));
+  CHECK(fails("look = 6\n", "look = 10"));
+  CHECK(fails("look = 7\n", "look = 10"));
+  CHECK(fails("look = 8\n", "look = 10"));
+  CHECK(fails("look = 9\n", "look = 10"));
   CHECK(fails("look = 0\n", "not a look version"));
   // Nothing unknown passes silently.
-  CHECK(fails("look = 9\nsed = 3\n", "sed"));
-  CHECK(fails("look = 9\n[overrides]\ndensty = 1\n", "densty"));
-  CHECK(fails("look = 9\n[output]\nsise = 1\n", "sise"));
-  CHECK(fails("look = 9\n[orientation]\nturn = 1\n", "turn"));
-  CHECK(fails("look = 9\n[output]\nformats = [\"gif\"]\n", "formats"));
+  CHECK(fails("look = 10\nsed = 3\n", "sed"));
+  CHECK(fails("look = 10\n[overrides]\ndensty = 1\n", "densty"));
+  CHECK(fails("look = 10\n[output]\nsise = 1\n", "sise"));
+  CHECK(fails("look = 10\n[orientation]\nturn = 1\n", "turn"));
+  CHECK(fails("look = 10\n[output]\nformats = [\"gif\"]\n", "formats"));
   // Nor anything malformed or out of range.
-  CHECK(fails("look = 9\nstyle = \"cloud\"\n", "style"));
-  CHECK(fails("look = 9\n[overrides]\ndensity = 1000\n", "density"));
-  CHECK(fails("look = 9\n[overrides]\nseed = 3\n", "seed"));
-  CHECK(fails("look = 9\nstyle = \"shell\"\n", "retired"));
-  CHECK(fails("look = 9\n[overrides]\nform = \"mass\"\n", "form"));
-  CHECK(fails("look = 9\n[macros]\nopne = 0.5\n", "opne"));
-  CHECK(fails("look = 9\n[macros]\nopen = 1.5\n", "open"));
-  CHECK(fails("look = 9\n[macros]\nopen = \"wide\"\n", "open"));
-  CHECK(fails("look = 9\n[macros]\ndensity = 1\n", "[overrides]"));
-  CHECK(fails("look = 9\n[output]\nsize = 0\n", "size"));
-  CHECK(fails("look = 9\n[output]\nname = \"a/b\"\n", "name"));
-  CHECK(fails("look = 9\nseed = \n", "project.toml:2"));  // a TOML error, with its line
+  CHECK(fails("look = 10\nstyle = \"cloud\"\n", "style"));
+  CHECK(fails("look = 10\n[overrides]\ndensity = 1000\n", "density"));
+  CHECK(fails("look = 10\n[overrides]\nseed = 3\n", "seed"));
+  CHECK(fails("look = 10\nstyle = \"shell\"\n", "retired"));
+  CHECK(fails("look = 10\n[overrides]\nform = \"mass\"\n", "form"));
+  CHECK(fails("look = 10\n[macros]\nopne = 0.5\n", "opne"));
+  CHECK(fails("look = 10\n[macros]\nopen = 1.5\n", "open"));
+  CHECK(fails("look = 10\n[macros]\nopen = \"wide\"\n", "open"));
+  CHECK(fails("look = 10\n[macros]\ndensity = 1\n", "[overrides]"));
+  CHECK(fails("look = 10\n[output]\nsize = 0\n", "size"));
+  CHECK(fails("look = 10\n[output]\nname = \"a/b\"\n", "name"));
+  CHECK(fails("look = 10\nseed = \n", "project.toml:2"));  // a TOML error, with its line
   return test::finish();
 }

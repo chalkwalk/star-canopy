@@ -135,7 +135,7 @@ int main() {
 
   // The dials reach the sky.
   Settings s;
-  CHECK(s.openClusters == 0);
+  CHECK(s.openClusters == 6 && s.accentNear == 0.75f);
   s.openClusters = 9;
   s.accentNear = 0.7f;
   Sky sky = buildSky(s);

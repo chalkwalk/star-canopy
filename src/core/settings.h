@@ -110,8 +110,8 @@ struct Settings {
   float galaxyWarp = 1.0f;
   float galaxyWaves = 1.0f;
   int externalGalaxies = 4;
-  int openClusters = 0;     // open clusters about a sky; 0 none (look 10 sets it)
-  float accentNear = 0.4f;  // how strongly accents are drawn near, 0..1
+  int openClusters = 6;      // open clusters about a sky; 0 none
+  float accentNear = 0.75f; // how strongly accents are drawn near, 0..1
   int galaxyRes = 0;  // the sky's own size
 
   // The bake.

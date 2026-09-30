@@ -318,11 +318,14 @@ The decisions, for every family:
 
 In this order, each proving the ground the next builds on:
 
-- [ ] **Open clusters**, accents only: knots of young stars at one distance,
-      mostly from the star system already here, with stellar associations --
-      loose young groups tens of degrees across when near -- as their loose end.
-      The first to use the accents' ground: the galaxy-weighted draw, the near
-      bias, the veil, the colour pull. Blind: skies with them against without
+- [x] **Open clusters** (look 10), accents: knots of young stars where the
+      galaxy's are, near by `accent-near`, in clear sight, at most 3 degrees
+      across, with a textured haze by age. Ten rounds of mock-ups at a game's
+      resolution scored by the user; no blind A/B, at the user's direction
+      (`docs/studies/accents.md`)
+- [ ] Stellar associations, parked: loose young groups tens of parsecs across,
+      which from near by dissolve into the field. Back only with a look of
+      their own that reads
 - [ ] **A Pleiades-like hero**: a near young cluster in a reflection nebula that
       fills the view -- the main nebula's pipeline with its light turned to
       scattering (blue, no glowing gas) and its dust streaked into wisps, lit by

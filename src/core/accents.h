@@ -21,8 +21,8 @@ enum AccentKind { kOpenCluster };
 constexpr int kMaxAccentGlows = 16;
 
 struct AccentParams {
-  int openClusters = 0;  // typical count about a place in the band; 0 none
-  float near = 0.4f;     // 0 as physics has them, 1 strongly favouring the near
+  int openClusters = 0;  // typical count about a place in the band; 0 none (Settings: 6)
+  float near = 0.75f;    // 0 as physics has them, 0.75 even in log distance, 1 strongly near
 };
 
 struct Accent {

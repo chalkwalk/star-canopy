@@ -36,9 +36,11 @@ namespace starcanopy {
 //      eight, half with a lane of dust along the disc, their band grainier
 //   9  the default sky more open (open +0.5's dials); the galactic routes
 //      mostly outward, so remote is never over the bright disc
+//  10  open clusters, about six a sky: knots of young stars where the galaxy's
+//      are, near by accent-near, in clear sight, with a textured haze by age
 //
-// This StarCanopy renders look 9 only, and refuses older looks with a reason.
-constexpr int kLookVersion = 9;
+// This StarCanopy renders look 10 only, and refuses older looks with a reason.
+constexpr int kLookVersion = 10;
 
 // A project: how a sky is made again. Small, human-readable TOML:
 //
