@@ -129,8 +129,12 @@ int main() {
     std::vector<Star> all = generateStars(scene, cg, sp, nullptr, &list);
     size_t members = all.size() - before;
     std::printf("a cluster 300 pc off: %zu members drawn\n", members);
-    CHECK(members >= 200);
-    CHECK(list[0].glow[0] == 0.0f && list[0].glow[1] == 0.0f && list[0].glow[2] == 0.0f);
+    // On the field stars' scale: only a cluster's brightest members are drawn --
+    // a few tens, as the Pleiades show a handful to the eye out of a thousand --
+    // and its faint majority is its haze, even with no limit. Thousands drawn
+    // made a solid white ball, a globular's look, not an open cluster's.
+    CHECK(members >= 10 && members <= 200);
+    CHECK(list[0].glow[0] > 0.0f && list[0].glow[1] > 0.0f && list[0].glow[2] > 0.0f);
 
     // Its spread, about its own direction, against radius over distance; and
     // its shape, from the spread's two axes across the line of sight.

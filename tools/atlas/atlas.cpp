@@ -4,10 +4,12 @@
 // and then as the bench every step of the galaxy work is judged on.
 //
 //   atlas --out DIR [--size N] [--seeds 1,7,12] [--vantages a,b] [--set NAME=VALUE]...
-//         [--context K] [--measure 1] [--macro NAME=VALUE]...
+//         [--context K] [--measure 1] [--macro NAME=VALUE]... [--toward accents]
 //
 // With --measure 1, no sheets: for each vantage and seed, the galaxy's glow's
 // brightness percentiles over the sky, as its exposure measures them.
+// With --toward accents, the first two views look at the sky's two largest
+// accents -- open clusters and the rest -- instead of the centre and away.
 //
 // One sheet a vantage and seed, DIR/VANTAGE-seedN.png: the whole sky above, in
 // the Equal Earth projection and galactic coordinates -- the galaxy's centre in the middle, its plane across,
@@ -16,6 +18,7 @@
 // plane, and toward the pole on the disc's side -- down onto it from above. Output belongs outside the repository, as every
 // render does.
 
+#include "accents.h"
 #include "bake.h"
 #include "cubemap_target.h"
 #include "galaxy.h"
@@ -28,6 +31,7 @@
 #include "stars.h"
 #include "writers.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -135,7 +139,7 @@ int main(int argc, char** argv) {
   std::vector<uint32_t> seeds = {1, 7, 12};
   std::vector<std::string> names, sets;
   ContextKind kind = ContextKind::Auto;
-  bool measure = false;
+  bool measure = false, towardAccents = false;
   MacroValues macroValues;
   for (int i = 1; i + 1 < argc; i += 2) {
     std::string arg = argv[i], v = argv[i + 1];
@@ -159,6 +163,12 @@ int main(int argc, char** argv) {
                                                                       : error.c_str());
         return 2;
       }
+    } else if (arg == "--toward") {
+      if (v != "accents") {
+        std::fprintf(stderr, "atlas: --toward takes accents\n");
+        return 2;
+      }
+      towardAccents = true;
     } else if (arg == "--measure") {
       measure = v == "1";
     } else if (arg == "--context") {
@@ -263,7 +273,20 @@ int main(int argc, char** argv) {
       // In galactic coordinates: the centre +z, north +y, the plane's other
       // way +x.
       float toDisc = g.observer[2] > 0.0f ? -1.0f : 1.0f;
-      const float views[4][3] = {{0, 0, 1}, {0, 0, -1}, {1, 0, 0}, {0, toDisc, 0}};
+      float views[4][3] = {{0, 0, 1}, {0, 0, -1}, {1, 0, 0}, {0, toDisc, 0}};
+      // Or the first two toward the sky's two largest accents, to judge them by.
+      if (towardAccents) {
+        std::vector<Accent> accents = generateAccents(seed, g, sky.accents);
+        std::sort(accents.begin(), accents.end(), [](const Accent& a, const Accent& b) {
+          return a.radius / a.distance > b.radius / b.distance;
+        });
+        for (size_t k = 0; k < 2 && k < accents.size(); k++) {
+          for (int i = 0; i < 3; i++) {
+            views[k][i] = r[3 * i + 0] * accents[k].dir[0] + r[3 * i + 1] * accents[k].dir[1] +
+                          r[3 * i + 2] * accents[k].dir[2];
+          }
+        }
+      }
       const float north[3] = {0, 1, 0}, plane[3] = {0, 0, 1};
       for (int k = 0; k < 4; k++) {
         paste(sheet, perspective(turned, views[k], k == 3 ? plane : north, 45.0f, viewSize, viewSize),

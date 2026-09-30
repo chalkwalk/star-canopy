@@ -440,8 +440,12 @@ void addOpenClusterStars(std::vector<Star>& stars, const Galaxy& g, const StarPa
       continue;
     }
     Random rng(a.seed);
-    int members = a.association ? static_cast<int>(rng.range(30.0f, 120.0f))
-                                : static_cast<int>(expf(rng.range(logf(200.0f), logf(3000.0f))));
+    // Its members on the field stars' scale, which is only the brightest of any
+    // population: a few tens of a real cluster's hundreds or thousands, as the
+    // Pleiades show a handful to the eye out of a thousand. All of them drawn,
+    // a cluster was a solid white ball -- a globular's look.
+    int members = a.association ? static_cast<int>(rng.range(8.0f, 30.0f))
+                                : static_cast<int>(expf(rng.range(logf(20.0f), logf(150.0f))));
     float age = a.association ? rng.range(0.0f, 0.2f) : rng.uniform();  // 0 young .. 1 old, log age
     float brightest = powf(kMaxLum, 1.0f - 0.85f * age);
     int giants = static_cast<int>(age * 0.02f * members + 0.5f);
@@ -462,7 +466,7 @@ void addOpenClusterStars(std::vector<Star>& stars, const Galaxy& g, const StarPa
       }
       lumpRadius[l] = a.radius * rng.range(0.35f, 0.6f);
     }
-    float rest[3] = {0.0f, 0.0f, 0.0f};
+    float rest[3] = {0.0f, 0.0f, 0.0f}, all[3] = {0.0f, 0.0f, 0.0f};
     for (int m = 0; m < members; m++) {
       int l = rng.below(lumps);
       float local[3];
@@ -485,6 +489,9 @@ void addOpenClusterStars(std::vector<Star>& stars, const Galaxy& g, const StarPa
       float rgb[3];
       blackbody(kelvin, rgb);
       float flux = fminf(lum * typical2 / (d * d), kMaxFlux);
+      for (int k = 0; k < 3; k++) {
+        all[k] += rgb[k] * flux;
+      }
       float tau = dustDepth(g, offset);
       if (limit > 0.0f && flux * expf(-tau * p.reddening[1]) < limit) {
         for (int k = 0; k < 3; k++) {
@@ -503,8 +510,10 @@ void addOpenClusterStars(std::vector<Star>& stars, const Galaxy& g, const StarPa
       }
       stars.push_back(st);
     }
+    // And its faint majority, below that scale, is its haze whatever the
+    // limit: about half as much light again as its bright members give.
     for (int k = 0; k < 3; k++) {
-      a.glow[k] = rest[k];
+      a.glow[k] = rest[k] + 0.5f * all[k];
     }
   }
 }
