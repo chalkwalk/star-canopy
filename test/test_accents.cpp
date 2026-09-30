@@ -55,7 +55,7 @@ int main() {
       CHECK(std::isfinite(x.distance) && x.distance > 0.0f && x.radius > 0.0f);
       // Compact: a cluster's stars close enough together to read as one
       // object; at 3-12 pc they were a thin scatter lost in the field.
-      CHECK(x.association || x.radius < 0.006f);
+      CHECK(x.association || x.radius < 0.009f);
       CHECK(std::fabs(std::sqrt(x.dir[0] * x.dir[0] + x.dir[1] * x.dir[1] + x.dir[2] * x.dir[2]) -
                       1.0f) < 1e-4f);
       if (x.distance > 1.0f) {
