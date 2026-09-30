@@ -9,6 +9,7 @@
 #include "settings.h"
 #include "stars.h"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 
@@ -203,6 +204,43 @@ int main() {
       fb += bare[i].flux[1];
     }
     CHECK(fd < fb);
+
+    // A brightness hierarchy: a few luminous members carry it, the rest small
+    // and faint -- as a handful of bright stars carry the Pleiades. Many equal
+    // medium-bright members were all fat points of a size.
+    // And a concentrated core thinning into a sparse halo, emerging from the
+    // field rather than sitting on it as a disc.
+    {
+      size_t start = generateStars(scene, clean, sp).size();
+      std::vector<float> fluxes;
+      int core = 0, halo = 0;
+      float size = one.radius / one.distance;
+      for (size_t i = start; i < bare.size(); i++) {
+        fluxes.push_back(bare[i].flux[1]);
+        float c = bare[i].dir[0] * one.dir[0] + bare[i].dir[1] * one.dir[1] + bare[i].dir[2] * one.dir[2];
+        float angle = std::acos(std::fmin(c, 1.0f));
+        core += angle < size;
+        halo += angle > 1.5f * size;
+      }
+      std::sort(fluxes.begin(), fluxes.end());
+      float top = fluxes.back(), median = fluxes[fluxes.size() / 2];
+      int bright = 0;
+      for (float f : fluxes) {
+        bright += f > 0.25f * top;
+      }
+      double n = static_cast<double>(fluxes.size());
+      std::printf("hierarchy: %d bright of %zu, median %.3g of the brightest; core %.0f%%, halo %.0f%%\n",
+                  bright, fluxes.size(), median / top, 100.0 * core / n, 100.0 * halo / n);
+      CHECK(bright >= 1 && bright <= 10);
+      CHECK(median < 0.05f * top);
+      // Most small and faint: the median member no brighter than a star of the
+      // field's faintest luminosity at the cluster's distance. Every member at
+      // least that bright, and the young ones four times it, made fat points.
+      float typical = 0.7f * sp.reach, unit = typical * typical / (one.distance * one.distance);
+      std::printf("median member %.3g against a unit star's %.3g\n", median, unit);
+      CHECK(median <= 1.2f * unit);
+      CHECK(core >= 0.5 * n && halo >= 0.1 * n);
+    }
     // Its haze, the faint majority, 30% of the light its drawn members give:
     // enough to bind them into a patch; as much again was a fog over them.
     std::printf("haze %.4g against members %.4g\n", list2[0].glow[1], fb);

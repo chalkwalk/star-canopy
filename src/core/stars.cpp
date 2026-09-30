@@ -468,11 +468,23 @@ void addOpenClusterStars(std::vector<Star>& stars, const Galaxy& g, const StarPa
     }
     float rest[3] = {0.0f, 0.0f, 0.0f}, all[3] = {0.0f, 0.0f, 0.0f};
     for (int m = 0; m < members; m++) {
-      int l = rng.below(lumps);
+      // Two thirds in a concentrated core thinning into a sparse halo -- a
+      // Plummer sphere, out to three and a half radii -- so the cluster emerges
+      // from the field; the rest in its sub-clumps, which keep it irregular.
       float local[3];
-      for (int k = 0; k < 3; k++) {
-        float u1 = fmaxf(rng.uniform(), 1e-7f), u2 = rng.uniform();
-        local[k] = centre[l][k] + sqrtf(-2.0f * logf(u1)) * cosf(2.0f * pi * u2) * lumpRadius[l];
+      if (rng.uniform() < 0.65f) {
+        float u = fmaxf(rng.uniform(), 1e-4f);
+        float r = fminf(0.55f * a.radius / sqrtf(powf(u, -2.0f / 3.0f) - 1.0f), 3.5f * a.radius);
+        rng.unitVector(local);
+        for (int k = 0; k < 3; k++) {
+          local[k] *= r;
+        }
+      } else {
+        int l = rng.below(lumps);
+        for (int k = 0; k < 3; k++) {
+          float u1 = fmaxf(rng.uniform(), 1e-7f), u2 = rng.uniform();
+          local[k] = centre[l][k] + sqrtf(-2.0f * logf(u1)) * cosf(2.0f * pi * u2) * lumpRadius[l];
+        }
       }
       float along = local[0] * axis[0] + local[1] * axis[1] + local[2] * axis[2];
       float offset[3];
@@ -482,12 +494,16 @@ void addOpenClusterStars(std::vector<Star>& stars, const Galaxy& g, const StarPa
       float d = fmaxf(sqrtf(offset[0] * offset[0] + offset[1] * offset[1] + offset[2] * offset[2]),
                       kMinDistance);
       bool giant = m < giants;
+      // Down to a tenth of the field's faintest: most members small and faint,
+      // a few luminous -- every one at least a field star's brightness made
+      // them all fat points of a size.
       float lum = giant ? rng.range(30.0f, 300.0f)
-                        : fminf(powf(fmaxf(1.0f - rng.uniform(), 1e-6f), -1.0f / kLumIndex), brightest);
-      // A young cluster's stars are the galaxy's most luminous, as the field's
-      // young stars are (x4): it sparkles blue-white against the yellower
-      // field, which is what finds it; the boost fades as it ages.
-      if (!giant && age < 0.3f) {
+                        : fminf(0.1f * powf(fmaxf(1.0f - rng.uniform(), 1e-6f), -1.0f / kLumIndex),
+                                brightest);
+      // A young cluster's massive few are the galaxy's most luminous, as the
+      // field's young stars are (x4): they sparkle blue-white against the
+      // yellower field, which is what finds it; the boost fades as it ages.
+      if (!giant && age < 0.3f && lum > 5.0f) {
         lum *= 1.0f + 3.0f * (1.0f - age / 0.3f);
       }
       float kelvin = giant ? rng.range(3600.0f, 4600.0f)
