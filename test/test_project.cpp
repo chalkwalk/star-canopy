@@ -6,6 +6,7 @@
 #include "project.h"
 
 #include <cstdio>
+#include <filesystem>
 #include <fstream>
 #include <string>
 
@@ -14,6 +15,11 @@ using namespace starcanopy;
 namespace {
 
 std::string dir;
+
+// Paths compare as paths: Windows joins with a backslash.
+bool samePath(const std::string& a, const std::string& b) {
+  return std::filesystem::path(a) == std::filesystem::path(b);
+}
 
 bool load(const std::string& text, Project& p, std::string& error) {
   std::string path = dir + "/project.toml";
@@ -51,7 +57,7 @@ int main(int argc, char** argv) {
   // A new project loads, as written.
   CHECK(load(projectText(42, "night"), p, error));
   CHECK(p.look == kLookVersion && kLookVersion == 10 && p.settings.seed == 42);
-  CHECK(p.size == 2048 && p.output.name == "night" && p.output.directory == dir + "/night");
+  CHECK(p.size == 2048 && p.output.name == "night" && samePath(p.output.directory, dir + "/night"));
   CHECK(p.output.formats.size() == 3);
   // It lists every macro, at 0: the seed's own sky.
   {
@@ -71,7 +77,7 @@ int main(int argc, char** argv) {
   CHECK(load("look = 10\nseed = 7\nstyle = \"mass\"\n[macros]\nopen = 0.5\nbright = -1\n"
              "[overrides]\ndensity = 1.5\nexposure = 0.25\nline-colors = \"hoo\"\nmass-clusters = 2\n"
              "[orientation]\nyaw = 90\npitch = -10.5\n"
-             "[output]\nsize = 512\ndirectory = \"/tmp/x\"\nname = \"a\"\n"
+             "[output]\nsize = 512\ndirectory = \"" + dir + "/x\"\nname = \"a\"\n"
              "formats = [\"ktx2\", \"png-cross\"]\nequirect_width = 1000\n",
              p, error));
   if (!error.empty()) {
@@ -84,7 +90,9 @@ int main(int argc, char** argv) {
   CHECK(p.macros.size() == 2 && p.macros["open"] == 0.5f && p.macros["bright"] == -1.0f);
   CHECK(p.resolved().exposure == 0.125f && p.resolved().density == 1.5f);
   CHECK(p.yaw == 90.0f && p.pitch == -10.5f && p.roll == 0.0f);
-  CHECK(p.size == 512 && p.output.directory == "/tmp/x" && p.output.name == "a");
+  // An absolute directory is kept as it is. (The scratch directory is
+  // absolute everywhere; "/tmp/x" is not, on Windows, having no drive.)
+  CHECK(p.size == 512 && samePath(p.output.directory, dir + "/x") && p.output.name == "a");
   CHECK(p.output.formats.size() == 2 && p.output.equirectWidth == 1000);
 
   // The look version is required, and a newer one refused.

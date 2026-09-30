@@ -6,6 +6,12 @@
 // 2 matching them is what says the shell's retirement moved no draw of the
 // seed's. (Look 2 moves the distant bubbles' clusters out and lights them from
 // beside; see the tests below.)
+//
+// Float for float holds where the maths library is glibc's, as the labs' was.
+// Another library's sin or pow may differ in a last bit, which moves no draw
+// and no pixel (test_look agrees) but would move an exact hash; so everywhere
+// the fields are also hashed rounded to 12 bits of mantissa, about 1 part in
+// 4000 -- far finer than any change to what a seed draws.
 
 #include "check.h"
 #include "scene.h"
@@ -19,10 +25,14 @@ using namespace starcanopy;
 namespace {
 
 uint32_t h;
+bool coarse;
 
 void f(float v) {
   uint32_t u;
   std::memcpy(&u, &v, 4);
+  if (coarse) {
+    u = (u + 0x400u) & ~0x7ffu;
+  }
   for (int i = 0; i < 4; i++) {
     h ^= (u >> (8 * i)) & 255u;
     h *= 16777619u;
@@ -35,7 +45,8 @@ void fv(const float* v, int n) {
   }
 }
 
-uint32_t sceneHash(const Scene& s) {
+uint32_t sceneHash(const Scene& s, bool rounded = false) {
+  coarse = rounded;
   h = 2166136261u;
   f(static_cast<float>(s.bubbleCount));
   for (int b = 0; b < s.bubbleCount; b++) {
@@ -74,22 +85,30 @@ int main() {
     uint32_t seed;
     int bubbles;
     uint32_t hash;
+    uint32_t rounded;
   } expected[] = {
-    {1, 4, 4256231499u},
-    {7, 4, 847006508u},
-    {12345, 4, 3017844379u},
+    {1, 4, 4256231499u, 2316976348u},
+    {7, 4, 847006508u, 2652156954u},
+    {12345, 4, 3017844379u, 3705940563u},
   };
   for (const auto& e : expected) {
     SceneParams p;
     p.seed = e.seed;
     p.clusters = 2;
     Scene s = generateScene(p);
-    uint32_t got = sceneHash(s);
+    uint32_t got = sceneHash(s, false);
+    uint32_t rounded = sceneHash(s, true);
+    if (rounded != e.rounded) {
+      std::printf("seed %u: rounded hash %u, want %u\n", e.seed, rounded, e.rounded);
+    }
+    CHECK(s.bubbleCount == e.bubbles);
+    CHECK(rounded == e.rounded);
+#ifdef __GLIBC__
     if (got != e.hash) {
       std::printf("seed %u: hash %u, want %u\n", e.seed, got, e.hash);
     }
-    CHECK(s.bubbleCount == e.bubbles);
     CHECK(got == e.hash);
+#endif
   }
 
   // A distant bubble is lit from beside it: its clusters outside it, 1.4 of
