@@ -122,7 +122,11 @@ std::vector<Accent> generateAccents(uint32_t seed, const Galaxy& g, const Accent
     }
     Accent a{};
     a.kind = kOpenCluster;
-    a.association = rng.uniform() < 0.15f;
+    // Associations -- loose young groups tens of parsecs across -- are parked:
+    // seen from near by they dissolve into the field, and an accent not seen
+    // is not worth having (docs/studies/accents.md). The draw stays, so the
+    // clusters after are as they were.
+    a.association = rng.uniform() < 0.0f;
     // A dense core of a few parsecs, as real open clusters have: at 3-12 pc
     // their stars were too thinly spread to read as one object.
     a.radius = a.association ? rng.range(0.02f, 0.06f) : rng.range(0.0015f, 0.005f);
