@@ -53,6 +53,9 @@ int main() {
     for (const Accent& x : list) {
       CHECK(x.kind == kOpenCluster);
       CHECK(std::isfinite(x.distance) && x.distance > 0.0f && x.radius > 0.0f);
+      // Compact: a cluster's stars close enough together to read as one
+      // object; at 3-12 pc they were a thin scatter lost in the field.
+      CHECK(x.association || x.radius < 0.006f);
       CHECK(std::fabs(std::sqrt(x.dir[0] * x.dir[0] + x.dir[1] * x.dir[1] + x.dir[2] * x.dir[2]) -
                       1.0f) < 1e-4f);
       if (x.distance > 1.0f) {
@@ -195,10 +198,10 @@ int main() {
       fb += bare[i].flux[1];
     }
     CHECK(fd < fb);
-    // Its haze, the faint majority, as much light as its drawn members give:
-    // half as much left it a scatter lost among the field's stars.
+    // Its haze, the faint majority, 30% of the light its drawn members give:
+    // enough to bind them into a patch; as much again was a fog over them.
     std::printf("haze %.4g against members %.4g\n", list2[0].glow[1], fb);
-    CHECK(std::fabs(list2[0].glow[1] / fb - 1.0) < 0.01);
+    CHECK(std::fabs(list2[0].glow[1] / fb - 0.3) < 0.01);
 
     // With a limit, the faint ones become its glow, and none is lost: at 3 kpc
     // most members are too faint.

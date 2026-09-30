@@ -457,14 +457,14 @@ void addOpenClusterStars(std::vector<Star>& stars, const Galaxy& g, const StarPa
       sight[k] = a.offset[k] / a.distance;
     }
     rng.perpendicular(sight, axis);
-    float stretch = rng.range(1.6f, 2.5f);
+    float stretch = rng.range(1.6f, 2.1f);
     for (int l = 0; l < lumps; l++) {
       rng.unitVector(centre[l]);
       float r = a.radius * 0.6f * cbrtf(rng.uniform());
       for (int k = 0; k < 3; k++) {
         centre[l][k] *= r;
       }
-      lumpRadius[l] = a.radius * rng.range(0.35f, 0.6f);
+      lumpRadius[l] = a.radius * rng.range(0.3f, 0.5f);
     }
     float rest[3] = {0.0f, 0.0f, 0.0f}, all[3] = {0.0f, 0.0f, 0.0f};
     for (int m = 0; m < members; m++) {
@@ -517,11 +517,10 @@ void addOpenClusterStars(std::vector<Star>& stars, const Galaxy& g, const StarPa
       stars.push_back(st);
     }
     // And its faint majority, below that scale, is its haze whatever the
-    // limit: as much light again as its bright members give -- a soft patch
-    // with stars in it, as a cluster is found in binoculars. At half, the
-    // clusters were a scatter lost among the field's stars.
+    // limit: 30% of the light its bright members give, enough to bind them
+    // into a patch -- as much again was a fog over them.
     for (int k = 0; k < 3; k++) {
-      a.glow[k] = rest[k] + all[k];
+      a.glow[k] = rest[k] + 0.3f * all[k];
     }
   }
 }

@@ -123,7 +123,9 @@ std::vector<Accent> generateAccents(uint32_t seed, const Galaxy& g, const Accent
     Accent a{};
     a.kind = kOpenCluster;
     a.association = rng.uniform() < 0.15f;
-    a.radius = a.association ? rng.range(0.02f, 0.06f) : rng.range(0.003f, 0.012f);
+    // A dense core of a few parsecs, as real open clusters have: at 3-12 pc
+    // their stars were too thinly spread to read as one object.
+    a.radius = a.association ? rng.range(0.02f, 0.06f) : rng.range(0.0015f, 0.005f);
     a.seed = static_cast<uint32_t>(rng.below(0x7fffffff));
     a.distance = d;
     for (int j = 0; j < 3; j++) {
