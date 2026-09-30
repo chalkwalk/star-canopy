@@ -81,8 +81,8 @@ float luma(vec3 c)
 	return dot(c, vec3(0.2126, 0.7152, 0.0722));
 }
 
-/* Lightness as displayed, 0..1: the filmic curve the look was judged through -- Space Nerds
- * In Space's, where the sky was first made, at its gain of 1.18.  See look.h. */
+/* Lightness as displayed, 0..1: the filmic curve the look was judged through where the sky
+ * was first made, at its gain of 1.18.  See look.h. */
 float displayed(float y)
 {
 	float x = max(y - 0.004, 0.0);

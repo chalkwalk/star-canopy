@@ -6,8 +6,8 @@ namespace starcanopy {
 constexpr int kRampStops = 8;
 
 // The gain of the display curve the grade places its ramp by: the filmic curve
-// the look was judged through, Space Nerds In Space's, where the sky was first
-// made, at that game's default tonemapping gain. The grade colours each texel
+// the look was judged through where the sky was first made, at its default
+// tonemapping gain. The grade colours each texel
 // by its lightness AS DISPLAYED, so this is part of the look, not of the
 // output: an 8-bit derivation may use any tonemap it states (PRINCIPLES §8).
 constexpr float kDisplayGain = 1.18f;

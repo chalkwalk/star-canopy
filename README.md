@@ -12,7 +12,7 @@ more open or more enveloping, brighter or more brooding. When it looks right you
 export it at full size, turned to face the way your scene needs.
 
 > **Status: skies render from the command line.** The sky model -- developed and
-> judged blind over many rounds in the Space Nerds In Space labs -- is here, and
+> judged blind over many rounds -- is here, and
 > `starcanopy render` turns a project file into OpenEXR, KTX2 and PNG, steered by
 > thirteen macros. The interface is to come; see `ROADMAP.md`. Nothing below marked
 > *planned* works yet.
@@ -141,9 +141,11 @@ collaboration with **Claude Opus 5.5**, working against the constraints in
 `PRINCIPLES.md` and the standing instructions in `AGENTS.md`, which is checked in
 as the honest record of how the work is done.
 
-Its model was developed in the labs of
+StarCanopy was first meant for
 [Space Nerds In Space](https://github.com/smcameron/space-nerds-in-space), whose
-author, Stephen M. Cameron, suggested making it a standalone tool. Every change
+author, Stephen M. Cameron, suggested making it a standalone tool; it was made
+generic along the way, and that game -- which does not yet load HDR skyboxes -- is
+still its first intended user. The whole is a work in progress. Every change
 to its look was decided by blind comparison, scored by eye. The aim was skies of
 a quality comparable to EVE Online's, made generatively: their skyboxes informed
 only measurements -- how bright, how colourful, at what lightness -- and no

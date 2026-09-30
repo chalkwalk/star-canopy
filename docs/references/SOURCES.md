@@ -15,7 +15,7 @@ should be.
 has not been checked against blind scores is a hypothesis (`PRINCIPLES §2`),
 and says so in the *Checked* column.
 
-Everything below was measured or fitted in the Space Nerds In Space labs
+Everything below was measured or fitted during the model's first development
 (`labs/features/nebula_sky`, branch `nebula-sky`); the commit named is where the
 numbers and their method are written up in full. The numbers now live in
 `src/core/` -- the palette space in `palette.cpp`, the cavity by seed in

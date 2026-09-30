@@ -134,7 +134,6 @@ testable without a window and give the A/B tools in-context sheets at once.
 Soft cloud edges read as indecisive at game field of view (Stephen's in-game
 test). Measured, diagnosed and prototyped in the labs: the mass's two density
 ramps are the cause; `neb-mass-edge` and `neb-mass-edge-patch` exist, default off.
-Full notes: `labs/features/nebula_sky/NEXT.md` in Space Nerds In Space.
 
 - [ ] Blind A/B at 45 degrees, 2048 per face (sheets exist, unscored)
 - [ ] Depending on the result: harden the billow gate alone; or a seeded field
@@ -374,7 +373,7 @@ holes, which the game renders itself.
 
 ## Outside this repository
 
-- [ ] Space Nerds In Space loads HDR skyboxes; a converter for its face order and
+- [ ] A target game that loads HDR skyboxes; a converter for its face order and
       mirroring
 
 ## Parked

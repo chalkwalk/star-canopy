@@ -31,9 +31,6 @@ changes. As of 2026-09-27 the model is lifted and the headless core is done
 and PNG with a key-light sidecar, steered by thirteen macros whose names were
 confirmed blind (`docs/studies/macros.md`; `tools/blind` makes the sheets). The
 interface is not built yet.
-The model lives in Space Nerds In Space, `labs/features/nebula_sky` on the
-`nebula-sky` branch (`/home/programming/space-nerds-in-space`), and its open work
-is in `labs/features/nebula_sky/NEXT.md` there.
 
 ## The things most easily got wrong
 
@@ -61,7 +58,9 @@ ever committed or copied into the working tree, including in docs, fixtures or
 history. Nor are they named: the game they come
 from appears once, in `README.md`, and never in code, parameters, docs or commit
 messages; no palette or parameter says which reference sky it was fitted to.
-The labs' commit messages name it freely -- rewrite them in the lift.
+The target game -- the one StarCanopy was first made for -- is likewise named
+once, in `README.md`, and otherwise only in the licence credit the vendored
+generator requires (`THIRDPARTY.md`, `extern/mtwist/`).
 
 **5. GPU watchdogs.** A single long draw hangs the desktop's GPU driver and
 resets it. Faces are drawn in tiles and the light volume in strips for this

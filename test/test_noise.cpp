@@ -1,6 +1,6 @@
 // The seeded generator and the noise make the same numbers as in the labs, so
-// a seed there is the same sky here. Expected values were computed by the SNIS
-// labs' own C (nebula_sky_noise.c, mtwist.c).
+// a seed there is the same sky here. Expected values were computed by the
+// original implementation's own C (nebula_sky_noise.c, mtwist.c).
 
 #include "check.h"
 #include "noise.h"

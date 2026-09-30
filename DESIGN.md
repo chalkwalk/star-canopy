@@ -297,7 +297,7 @@ example. Unknown keys are errors, since a typo ignored is a different sky.
   sky, made by the same code the viewer uses (§11). The KTX2 writer gains mip
   levels. It is derived from the HDR, not a change to it, but its filter is
   pinned and tested like the look, so it does not drift silently.
-- Game-specific layouts (Space Nerds In Space's face order and mirroring, for one)
+- Game-specific layouts (a target game's face order and mirroring, for one)
   are converters, not core formats.
 
 ## 9. Performance
