@@ -56,6 +56,10 @@ int main() {
       // Compact: a cluster's stars close enough together to read as one
       // object; at 3-12 pc they were a thin scatter lost in the field.
       CHECK(x.association || x.radius < 0.009f);
+      // Never so near it fills the screen, however strong the near bias: its
+      // stars spread to about four radii, at most 1/15 of a 75-degree view's
+      // height, about 3 degrees; a sixth of it read as a pasted patch.
+      CHECK(4.0f * x.radius / x.distance <= 0.055f);
       CHECK(std::fabs(std::sqrt(x.dir[0] * x.dir[0] + x.dir[1] * x.dir[1] + x.dir[2] * x.dir[2]) -
                       1.0f) < 1e-4f);
       if (x.distance > 1.0f) {
@@ -64,6 +68,7 @@ int main() {
       }
     }
     for (const Accent& x : generateAccents(seed, gs, close)) {
+      CHECK(4.0f * x.radius / x.distance <= 0.055f);
       nearTotal += x.distance;
       nearCount++;
     }

@@ -11,6 +11,8 @@ namespace {
 // kpc: no nearer than an association's own size, no further than the far side
 // of the arms seen along the disc.
 constexpr float kNearest = 0.05f, kFarthest = 8.0f;
+// Radians: the widest an accent may be seen, whatever the near bias.
+constexpr float kWidest = 0.055f;
 // Where the reference count is set: a place in the band, as the seed's own
 // place is (observerPlace()).
 constexpr float kReferenceRadius = 2.6f;
@@ -131,6 +133,12 @@ std::vector<Accent> generateAccents(uint32_t seed, const Galaxy& g, const Accent
     // their stars were too thinly spread to read as one object, and at 1.5-5
     // a cluster a kiloparsec off was a speck.
     a.radius = a.association ? rng.range(0.02f, 0.06f) : rng.range(0.0025f, 0.008f);
+    // Never so near that it fills the screen: its stars spread to about four
+    // radii, at most about 3 degrees -- 1/15 of a 75-degree view's height. A
+    // sixth of it read as a pasted patch (PRINCIPLES §4). Too near, drawn again.
+    if (4.0f * a.radius / d > kWidest) {
+      continue;
+    }
     a.seed = static_cast<uint32_t>(rng.below(0x7fffffff));
     a.distance = d;
     for (int j = 0; j < 3; j++) {
