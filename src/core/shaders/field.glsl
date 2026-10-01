@@ -83,7 +83,7 @@ float nsky_footprint = 0.02;
  * fading to 0 at twice it.  The same rule nsky_detail() uses. */
 float nsky_octave(float feature)
 {
-	return clamp(feature / (2.0 * nsky_footprint) - 1.0, 0.0, 1.0);
+	return clamp(feature / max(2.0 * nsky_footprint, 1e-6) - 1.0, 0.0, 1.0);
 }
 
 /* What the coarse field says about a point. */
@@ -300,7 +300,7 @@ float nsky_detail(int b, vec3 q, float footprint)
 	int i;
 
 	for (i = 0; i < NSKY_MAX_OCTAVES; i++) {
-		float w = clamp(feature / (2.0 * footprint) - 1.0, 0.0, 1.0);
+		float w = clamp(feature / max(2.0 * footprint, 1e-6) - 1.0, 0.0, 1.0);
 
 		norm += a;
 		if (w > 0.0) {

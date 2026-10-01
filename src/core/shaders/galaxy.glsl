@@ -51,7 +51,9 @@ float gal_dust_field(vec3 p, float footprint)
 	int k;
 
 	for (k = 0; k < GAL_DUST_OCTAVES; k++) {
-		float w = clamp(1.0 / (f * 2.0 * footprint) - 1.0, 0.0, 1.0);
+		/* A footprint of 0 is full detail; dividing by it is undefined in GLSL, and Mesa 21
+		 * took it for none. */
+		float w = clamp(1.0 / max(f * 2.0 * footprint, 1e-6) - 1.0, 0.0, 1.0);
 
 		if (w > 0.0) {
 			vec4 n = nsky_noise(p * f + float(k) * 7.31);

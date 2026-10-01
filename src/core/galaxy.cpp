@@ -33,7 +33,7 @@ constexpr int kDustRidged = 2;
 float dustField(const float p[3], float footprint, float sigma) {
   float f = 2.6f, a = 1.0f, sum = 0.0f, kept = 0.0f, scale = 1.0f / sqrtf(0.073f * kDustNorm);
   for (int k = 0; k < kDustOctaves; k++) {
-    float w = fminf(fmaxf(1.0f / (f * 2.0f * footprint) - 1.0f, 0.0f), 1.0f);
+    float w = fminf(fmaxf(1.0f / fmaxf(f * 2.0f * footprint, 1e-6f) - 1.0f, 0.0f), 1.0f);
     if (w > 0.0f) {
       float q[3];
       for (int i = 0; i < 3; i++) {
