@@ -55,6 +55,10 @@ int main() {
   glBindVertexArray(vertexArray);
 
   double worst[3] = {0.0, 0.0, 0.0};
+  // Where each term's worst was, so a failure says where the twins part; and
+  // values that are not finite, which fmax would pass over.
+  char where[3][160] = {"", "", ""};
+  int nonFinite = 0;
   // At full detail, and at footprints where the dust's finer octaves fade.
   for (float footprint : {0.0f, 0.02f, 0.3f}) {
   for (uint32_t seed : {1u, 7u, 42u}) {
@@ -104,7 +108,21 @@ int main() {
       for (int i = 0; i < n; i++) {
         const float c[3] = {cpu[i].old, cpu[i].young, cpu[i].dust};
         for (int k = 0; k < 3; k++) {
-          worst[k] = std::fmax(worst[k], std::fabs(gpu[i * 4 + k] - c[k]) / scale[k]);
+          if (!std::isfinite(gpu[i * 4 + k])) {
+            if (nonFinite++ < 5) {
+              std::printf("not finite: term %d, seed %u style %d footprint %g point %d\n", k,
+                          seed, style, footprint, i);
+            }
+            continue;
+          }
+          double d = std::fabs(gpu[i * 4 + k] - c[k]) / scale[k];
+          if (d > worst[k]) {
+            worst[k] = d;
+            std::snprintf(where[k], sizeof where[k],
+                          "seed %u style %d footprint %g point %d (%.3f %.3f %.3f): gpu %g cpu %g",
+                          seed, style, footprint, i, points[i * 3], points[i * 3 + 1],
+                          points[i * 3 + 2], gpu[i * 4 + k], c[k]);
+          }
         }
       }
     }
@@ -112,6 +130,10 @@ int main() {
   }
   std::printf("worst difference, relative to each term's largest: old %.4f young %.4f dust %.4f\n",
               worst[0], worst[1], worst[2]);
+  for (int k = 0; k < 3; k++) {
+    std::printf("  %s worst at %s\n", k == 0 ? "old" : k == 1 ? "young" : "dust", where[k]);
+  }
+  CHECK(nonFinite == 0);
   CHECK(glGetError() == GL_NO_ERROR);
   // The noise volume's 8 bits and trilinear filtering move a clump factor by a
   // little: measured, at most 0.6% of old light and 1.5% of young on these

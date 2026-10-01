@@ -30,6 +30,21 @@ uniform vec3 u_GalWaves;	/* amplitude, wavelength, phase */
 #define GAL_DUST_NORM 2.2448
 #define GAL_DUST_RIDGED 2
 
+/* pow() is undefined for a negative base, which these squares have, and a cos a hair
+ * below -1 makes one too; a driver may give NaN. */
+float gal_sq(float x)
+{
+	return x * x;
+}
+
+/* One component of a vec4, chosen without indexing it by a variable: some drivers (Mesa 21's
+ * for Intel) compiled n[k % 4] in the dust's loop wrongly, and the dust came out several
+ * times what the CPU twin makes. */
+float gal_component(vec4 n, int i)
+{
+	return i == 0 ? n.x : i == 1 ? n.y : i == 2 ? n.z : n.w;
+}
+
 float gal_dust_field(vec3 p, float footprint)
 {
 	float f = 2.6, a = 1.0, sum = 0.0, kept = 0.0, scale = 1.0 / sqrt(0.073 * GAL_DUST_NORM);
@@ -41,7 +56,7 @@ float gal_dust_field(vec3 p, float footprint)
 		if (w > 0.0) {
 			vec4 n = nsky_noise(p * f + float(k) * 7.31);
 
-			float v = n[k - 4 * (k / 4)];
+			float v = gal_component(n, k - 4 * (k / 4));
 
 			/* The finer octaves ridged, folded where the noise crosses zero and
 			 * centred again (0.219 is the mean of |n|, and 1.72 scales it to the smooth
@@ -73,7 +88,7 @@ gal_sample gal_density(vec3 p, float footprint)
 	float zmid, h, dz, radial, psi, arm, lane, hy, dh, clump, knot, width, segment, outer;
 	gal_sample s;
 
-	zmid = u_GalWarp.x * pow(max(r_disc - u_GalWarp.y, 0.0), 2.0) * sin(phi - u_GalWarp.z);
+	zmid = u_GalWarp.x * gal_sq(max(r_disc - u_GalWarp.y, 0.0)) * sin(phi - u_GalWarp.z);
 	zmid += u_GalWaves.x * sin(6.2831853 * r_disc / u_GalWaves.y + u_GalWaves.z) *
 			smoothstep(u_GalWarp.y - 3.0, u_GalWarp.y + 1.0, r_disc) *
 			cos(phi - 0.5 * u_GalWaves.z);
@@ -88,11 +103,11 @@ gal_sample gal_density(vec3 p, float footprint)
 	psi = u_GalArms.x * (phi - log(max(r_disc, 0.5)) / u_GalArms.y) + u_GalArms.z +
 			0.3 * nsky_noise(p * 0.3 + 23.0).z;
 	width = u_GalArmShape.x * exp(0.5 * nsky_noise(p * 0.4 + 17.0).x);
-	arm = pow(0.5 + 0.5 * cos(psi), width);
+	arm = pow(max(0.5 + 0.5 * cos(psi), 0.0), width);
 	/* The dust lane on the arm's inner edge, where the gas is compressed as it enters the
 	 * arm: half a radian upstream, which in a trailing spiral is toward the centre, and
 	 * narrower than the arm. */
-	lane = pow(0.5 + 0.5 * cos(psi - 0.5), 1.5 * width);
+	lane = pow(max(0.5 + 0.5 * cos(psi - 0.5), 0.0), 1.5 * width);
 	segment = clamp(1.0 + 1.2 * nsky_noise(p * 0.35 + 11.0).y, 0.5, 1.5);
 	outer = smoothstep(2.0 * u_GalDisc.x, 4.0 * u_GalDisc.x, r_disc);
 	segment *= 1.0 + outer * (clamp(0.3 + 2.5 * nsky_noise(p * 0.9 + 29.0).w, 0.0, 1.8) - 1.0);
@@ -155,8 +170,8 @@ gal_sample gal_density(vec3 p, float footprint)
 
 		s.old += vert * (u_GalLens.y * exp(-r_disc / (4.0 * u_GalDisc.x)) *
 				(1.0 - smoothstep(0.92 * u_GalLens.x, u_GalLens.x, r_disc)) +
-				radial * (u_GalLens.z * exp(-pow((r_disc - ri) / (0.08 * ri), 2.0)) +
-				u_GalLens.w * exp(-pow((r_disc - ro) / (0.1 * ro), 2.0))));
+				radial * (u_GalLens.z * exp(-gal_sq((r_disc - ri) / (0.08 * ri))) +
+				u_GalLens.w * exp(-gal_sq((r_disc - ro) / (0.1 * ro)))));
 	}
 	s.old += 0.0008 / pow(1.0 + r * r / 4.0, 1.5);
 
@@ -175,8 +190,8 @@ gal_sample gal_density(vec3 p, float footprint)
 	if (u_GalDust.w > 0.0) {
 		float r1 = u_GalDust.w, r2 = 1.7 * u_GalDust.w;
 
-		s.dust *= u_GalBulge.z + 4.0 * (exp(-pow((r_disc - r1) / (0.12 * r1), 2.0)) +
-				0.6 * exp(-pow((r_disc - r2) / (0.1 * r2), 2.0)));
+		s.dust *= u_GalBulge.z + 4.0 * (exp(-gal_sq((r_disc - r1) / (0.12 * r1))) +
+				0.6 * exp(-gal_sq((r_disc - r2) / (0.1 * r2))));
 	}
 	return s;
 }
