@@ -36,3 +36,17 @@ seed for a different sky, or move a [macro](macros) to steer this one:
 
 A sky at 2048 texels a face takes about a minute on an integrated GPU; add
 `--size 512` for a quick look.
+
+## Two GPUs
+
+On a laptop with both an integrated GPU and a dedicated one, StarCanopy uses
+whichever the system gives by default, which is usually the integrated one. The
+`context:` line `render` prints names the GPU it got. On Linux with Mesa,
+ask for the dedicated one with `DRI_PRIME=1`:
+
+```bash
+DRI_PRIME=1 ./build/starcanopy render night.toml
+DRI_PRIME=1 ctest --test-dir build --output-on-failure
+```
+
+The dedicated GPU is much faster for large exports.
