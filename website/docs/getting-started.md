@@ -19,6 +19,9 @@ cmake --build build -j $(nproc)
 ctest --test-dir build --output-on-failure
 ```
 
+With [pandoc](https://pandoc.org) installed, the build also makes the man page,
+from the [command reference](man): `man ./build/starcanopy.1`.
+
 ## Make a first sky
 
 ```bash

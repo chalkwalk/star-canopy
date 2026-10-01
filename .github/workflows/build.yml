@@ -51,7 +51,8 @@ jobs:
             libegl-dev libgl-dev libegl-mesa0 libgl1-mesa-dri \
             libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxfixes-dev \
             libxi-dev libxss-dev libxkbcommon-dev libwayland-dev \
-            libdrm-dev libgbm-dev
+            libdrm-dev libgbm-dev \
+            pandoc
 
       - name: Install Ninja (macOS)
         if: runner.os == 'macOS'
@@ -98,5 +99,6 @@ jobs:
           if-no-files-found: warn
           path: |
             build/starcanopy
+            build/starcanopy.1
             build/Release/starcanopy.exe
             build/starcanopy.exe

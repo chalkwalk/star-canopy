@@ -37,3 +37,13 @@ set_tests_properties(bake_window PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600)
 add_test(NAME cli
   COMMAND ${CMAKE_COMMAND} -DSTARCANOPY=$<TARGET_FILE:starcanopy> -DSCRATCH=${scratch}
           -P ${CMAKE_CURRENT_SOURCE_DIR}/cli.cmake)
+
+# The command reference keeps up with --help; the man page too, where pandoc
+# made one (the root CMakeLists.txt).
+if(STARCANOPY_MAN_PAGE)
+  set(man_page_arg -DMAN=${STARCANOPY_MAN_PAGE})
+endif()
+add_test(NAME man
+  COMMAND ${CMAKE_COMMAND} -DSTARCANOPY=$<TARGET_FILE:starcanopy>
+          -DPAGE=${PROJECT_SOURCE_DIR}/website/docs/man.md ${man_page_arg}
+          -P ${CMAKE_CURRENT_SOURCE_DIR}/man.cmake)

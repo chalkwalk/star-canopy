@@ -82,6 +82,26 @@ endif()
 
 add_subdirectory(src/core)
 add_subdirectory(src/cli)
+
+# The man page, made by pandoc from the manual's command reference, so the two
+# never differ: man ./build/starcanopy.1. Only where pandoc is installed; nothing
+# else needs it. The page keeps to what both read -- ## sections, paragraphs,
+# lists and code, no tables or admonitions -- and test/man.cmake checks it names
+# every command and option --help does.
+find_program(PANDOC pandoc)
+if(PANDOC)
+  set(STARCANOPY_MAN_PAGE ${CMAKE_BINARY_DIR}/starcanopy.1)
+  set(man_source ${CMAKE_SOURCE_DIR}/website/docs/man.md)
+  add_custom_command(OUTPUT ${STARCANOPY_MAN_PAGE}
+    COMMAND ${PANDOC} ${man_source} --from markdown-smart-implicit_header_references
+            --standalone --to man --shift-heading-level-by=-1
+            --lua-filter ${CMAKE_SOURCE_DIR}/cmake/man.lua
+            -M title=starcanopy -M section=1 -M "header=StarCanopy manual"
+            -M "footer=StarCanopy ${PROJECT_VERSION}" -o ${STARCANOPY_MAN_PAGE}
+    DEPENDS ${man_source} ${CMAKE_SOURCE_DIR}/cmake/man.lua
+    COMMENT "Making the man page")
+  add_custom_target(man ALL DEPENDS ${STARCANOPY_MAN_PAGE})
+endif()
 if(STARCANOPY_BUILD_TOOLS)
   add_subdirectory(tools/study)
   add_subdirectory(tools/blind)
