@@ -30,7 +30,8 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif()
 add_test(NAME bake_window COMMAND test_bake window)
 # A display it cannot open can leave SDL waiting for ever; fail rather than hang.
-set_tests_properties(bake_window PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120)
+# Ten minutes: on a software renderer (Windows CI) the bake alone takes three.
+set_tests_properties(bake_window PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600)
 
 # The command line end to end: a new project, rendered small in every format.
 add_test(NAME cli

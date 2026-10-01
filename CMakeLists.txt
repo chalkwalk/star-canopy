@@ -34,6 +34,14 @@ set(SDL_X11_XTEST OFF CACHE BOOL "" FORCE)
 add_subdirectory(extern/SDL EXCLUDE_FROM_ALL SYSTEM)
 
 # The labs' Mersenne Twister, unchanged, so a seed is the same sky here as there.
+# No fused multiply-adds: a compiler that fuses a*b+c where the machine has an
+# FMA instruction (clang on Apple silicon does by default) rounds once where we
+# round twice, and a seed's noise and scene move in their last bits from one
+# machine to the next (PRINCIPLES §7).
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+  add_compile_options(-ffp-contract=off)
+endif()
+
 add_library(mtwist STATIC extern/mtwist/mtwist.c)
 target_include_directories(mtwist SYSTEM PUBLIC extern/mtwist)
 
